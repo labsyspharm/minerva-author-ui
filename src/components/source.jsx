@@ -1,22 +1,28 @@
 import React, { Component } from "react";
+import Channels from "./channels"
 
-class Source extends Component {
-  constructor() {
-    super();
-    this.state = {
-			id: 1000,
-      type: "aws",
-      url: "https://minerva-test-images.s3.amazonaws.com/png_tiles",
-      channels: [
-        { id: 1000, min: 0, max: 1, color: "FF0000" },
-        { id: 1001, min: 0.05, max: 0.1, color: "00FF00" }
-      ]
-    }
-  }
-  render() {
-    const { channels } = this.state;
-    return <ul>{channels.map(el => <li key={el.id}>{el.color}</li>)}</ul>;
-  }
+/** 
+ * @param {Object} source - {url, type, id, channels}.
+ */
+const Source = ({source}) => {
+  const {url, type, id, channels} = source;
+  return (
+    <div>
+      <a href={url}> Source #{id}</a>
+      <span> has: </span>
+      <ul>
+        <li>
+        <span> type: </span>
+        <span> {type} </span>
+        </li>
+        <li>
+        <span> channels: </span>
+        <Channels ids={channels}/>
+        </li>
+      </ul>
+    </div>
+  );
 }
+
 
 export default Source;

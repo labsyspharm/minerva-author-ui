@@ -1,15 +1,18 @@
 import React, { Component } from "react";
-import Source from "./components/source";
+import Sources from "./components/sources";
 
-const title = "TODO";
+const title = "Sources";
 
 class App extends Component {
 
   render() {
     return (
       <div className="App">
-				<h1>{title}</h1>
-        <Source />
+				<h2>{title}</h2>
+        <Sources sources={[
+          {id:1, type:'aws', url:'http://example.com', channels:[1001, 1002]},
+          {id:2, type:'image', url:'http://example.com', channels:[2001]}
+        ]}/>
       </div>
     );
   }
