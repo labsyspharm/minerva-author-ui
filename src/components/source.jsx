@@ -7,7 +7,7 @@ import Channels from "./channels"
 const Source = ({source}) => {
   const {url, type, id, channels} = source;
   return (
-    <div>
+    <ul>
       <a href={url}> Source #{id}</a>
       <span> has: </span>
       <ul>
@@ -20,7 +20,7 @@ const Source = ({source}) => {
         <Channels ids={channels}/>
         </li>
       </ul>
-    </div>
+    </ul>
   );
 }
 
