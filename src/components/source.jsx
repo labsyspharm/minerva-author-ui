@@ -14,7 +14,7 @@ class Source extends Component {
     }
   }
   render() {
-    const { channels } = this.state.channels;
+    const { channels } = this.state;
     return <ul>{channels.map(el => <li key={el.id}>{el.color}</li>)}</ul>;
   }
 }
