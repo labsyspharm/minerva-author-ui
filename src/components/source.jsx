@@ -18,3 +18,5 @@ class Source extends Component {
     return <ul>{channels.map(el => <li key={el.id}>{el.color}</li>)}</ul>;
   }
 }
+
+export default Source;
