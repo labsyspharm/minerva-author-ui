@@ -1,8 +1,9 @@
 const webpack = require('webpack');
+var CopyWebpackPlugin = require('copy-webpack-plugin');
 
 module.exports = {
   entry: [
-    './src/index.js',
+    './src/index.jsx',
     'react-hot-loader/patch',
     'webpack/hot/only-dev-server',
     'webpack-dev-server/client?http://0.0.0.0:8487'
@@ -12,7 +13,10 @@ module.exports = {
       {
         test: /\.jsx?$/,
         exclude: /node_modules/,
-        use: ['babel-loader']
+        loader: 'babel-loader',
+        query: {
+          presets: ['react', 'env']
+        }
       }
     ]
   },
@@ -27,7 +31,7 @@ module.exports = {
   plugins: [
     new webpack.HotModuleReplacementPlugin(),
     new CopyWebpackPlugin([{
-        from: 'src/static',
+        from: 'static',
         to: '.'
     }]),
   ],
