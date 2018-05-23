@@ -1,5 +1,6 @@
 import React, { Component } from "react";
-import Sources from "../components/sources";
+import ImportList from "../components/importlist";
+import Import from "../components/import";
 
 // CSS
 import '../style/repo';
@@ -9,20 +10,21 @@ class Repo extends Component {
   constructor() {
     super();
     this.state = {
-      sources: {
-         1: {
+      importMap: new Map([
+         [1, {
           id: 1,
-          type: 'aws',
+          name: 'Some Import',
           url: 'http://example.com',
-          channels:[1001, 1002]
-         },
-         2: {
-          id:2,
-          type:'image',
-          url:'http://example.com',
-          channels:[2001]
-         }
-      },
+          images: [1001, 1002]
+         }],
+         [2, {
+          id: 2,
+          name: 'Another Import',
+          url: 'http://example.com',
+          images: [2001]
+         }]
+      ]),
+      imports: [1, 2],
       activeSource: 1
     };
 
@@ -31,10 +33,14 @@ class Repo extends Component {
   render() {
     return (
       <div className="Repo">
-        <Sources sources={[
-          {id:1, type:'aws', url:'http://example.com', channels:[1001, 1002]},
-          {id:2, type:'image', url:'http://example.com', channels:[2001]}
-        ]}/>
+        <ImportList>
+          {this.state.imports.map(id => {
+            const imported = this.state.importMap.get(id);
+            return (
+              <Import imported={imported}></Import>
+            );
+          })} 
+        </ImportList>
       </div>
     );
   }
