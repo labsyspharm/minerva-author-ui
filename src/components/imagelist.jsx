@@ -1,6 +1,6 @@
 import React, { Component } from "react";
 
-/** 
+/**
  * Make a list of children
  */
 const ImageList = params => {

@@ -10,12 +10,12 @@ class Repo extends Component {
       importMap: new Map([
          [1, {
           id: 1,
-          name: 'Some Import',
+          name: "Some Import",
           images: [1, 2]
          }],
          [2, {
           id: 2,
-          name: 'Another Import',
+          name: "Another Import",
           images: [1]
          }]
       ]),
@@ -23,20 +23,20 @@ class Repo extends Component {
         1: new Map([
           [1, {
             id: 1,
-            name: 'Some Image',
-            url: 'http://example.com'
+            name: "Some Image",
+            url: "http://example.com"
           }],
           [2, {
             id: 2,
-            name: 'Second Image',
-            url: 'http://example.com'
+            name: "Second Image",
+            url: "http://example.com"
           }]
         ]),
         2: new Map([
           [1, {
             id: 1,
-            name: 'Another Image',
-            url: 'http://example.com'
+            name: "Another Image",
+            url: "http://example.com"
           }]
         ]),
       },
@@ -54,7 +54,7 @@ class Repo extends Component {
             return (
               <Import key={id} imageMap={imageMap} imported={imported}/>
             );
-          })} 
+          })}
         </ImportList>
       </div>
     );

@@ -2,7 +2,7 @@ import React, { Component } from "react";
 import ImageList from "./imagelist"
 import ImageName from "./imagename"
 
-/** 
+/**
  * @param {Map} imageMap - From id to image
  * @param {Object} imported
  */
@@ -18,7 +18,7 @@ const Import = ({imageMap, imported}) => {
             return (
               <ImageName key={id} image={image}/>
             );
-          })} 
+          })}
         </ImageList>
       </ul>
     </ul>

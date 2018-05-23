@@ -50,7 +50,7 @@ class ChannelControl extends Component {
             return (
               <Channel key={id} channel={channel}/>
             );
-          })} 
+          })}
         </ChannelList>
       </div>
     );

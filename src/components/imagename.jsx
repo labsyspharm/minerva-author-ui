@@ -1,6 +1,6 @@
 import React, { Component } from "react";
 
-/** 
+/**
  * @param {Object} image
  */
 const ImageName = ({image}) => {

@@ -1,4 +1,4 @@
-const path = require("path"); 
+const path = require("path");
 const webpack = require("webpack");
 const CopyWebpackPlugin = require("copy-webpack-plugin");
 
@@ -17,18 +17,18 @@ module.exports = {
         loader: "babel-loader",
         query: {
           presets: ["react", "env"]
-        } 
+        }
       }, {
         test: /\.css$/,
-        loader: "style-loader!css-loader" 
+        loader: "style-loader!css-loader"
       }
     ]
   },
   resolve: {
     extensions: [".css", ".js", ".jsx"],
     alias: {
-			// Fake jquery needed for 
-    	"jquery": path.join(__dirname, "./src/jquery-stub.js")
+      // Fake jquery needed for
+      "jquery": path.join(__dirname, "./src/jquery-stub.js")
     }
   },
   output: {
