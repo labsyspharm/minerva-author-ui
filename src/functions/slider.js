@@ -22,6 +22,7 @@ const makeSlider = id => {
   slider.on("slide", function(sliderValue) {
     document.getElementById(minId).textContent = sliderValue;
   });
+  document.getElementById(sliderId).style.display = '';
 
   return sliderId;
 }

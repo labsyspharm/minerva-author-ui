@@ -14,10 +14,12 @@ const Channel = ({channel}) => {
         <span id={minId}>0</span>
         <span id={maxId}>1</span>
       </div>
+      <div>
       <input id={sliderId} type="text"
         data-slider-min="0" data-slider-max="1"
         data-slider-step="0.01" data-slider-value="0.1"
       />
+      </div>
     </div>
   );
 }
