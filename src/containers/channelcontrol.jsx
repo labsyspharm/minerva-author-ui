@@ -9,7 +9,6 @@ class ChannelControl extends Component {
     super();
     this.state = {
       channelMap: new Map(),
-      sliderSet: new Set(),
       channels: [],
     };
   }
@@ -28,28 +27,6 @@ class ChannelControl extends Component {
       })
    ; });
 
-  }
-
-  componentDidUpdate() {
-  
-    const {channels, channelMap, sliderSet} = this.state;
-    var newSliderSet = new Set();
-
-    channels.map((id) => {
-      if ( !sliderSet.has(id)) {
-        return newSliderSet.add(id);
-      }
-    });
-
-    if (newSliderSet.size != 0) {
-      this.setState({
-        channels: channels,
-        channelMap: channelMap,
-        sliderSet: new Set([
-          ...sliderSet, ...newSliderSet
-        ])
-      })  
-    }
   }
 
   addChannel(channel, callback=()=>{}) {
