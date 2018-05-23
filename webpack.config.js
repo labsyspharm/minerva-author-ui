@@ -21,7 +21,11 @@ module.exports = {
       }, {
         test: /\.css$/,
         loader: "style-loader!css-loader"
-      }
+      },
+			{
+				test: /\.(ttf|svg|eot|woff)/,
+				loader: 'file-loader'
+			},
     ]
   },
   resolve: {

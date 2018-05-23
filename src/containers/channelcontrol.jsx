@@ -1,5 +1,4 @@
 import React, { Component } from "react";
-import {getSliderIds, makeSlider} from "../functions/slider"
 
 import ChannelList from "../components/channellist";
 import Channel from "../components/channel";
@@ -38,7 +37,6 @@ class ChannelControl extends Component {
 
     channels.map((id) => {
       if ( !sliderSet.has(id)) {
-        makeSlider(id);
         return newSliderSet.add(id);
       }
     });
