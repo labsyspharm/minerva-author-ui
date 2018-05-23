@@ -1,21 +1,11 @@
-import React, { Component } from "react";
-import Sources from "./components/sources";
+import React from 'react';
+import ReactDOM from 'react-dom';
 
-const title = "Sources";
+import Repo from './containers/repo';
 
-class App extends Component {
+ReactDOM.render(
+  <Repo />,
+  document.getElementById('app')
+);
 
-  render() {
-    return (
-      <div className="App">
-				<h2>{title}</h2>
-        <Sources sources={[
-          {id:1, type:'aws', url:'http://example.com', channels:[1001, 1002]},
-          {id:2, type:'image', url:'http://example.com', channels:[2001]}
-        ]}/>
-      </div>
-    );
-  }
-}
-
-export default App;
+module.hot.accept();
