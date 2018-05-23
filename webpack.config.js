@@ -4,7 +4,7 @@ const CopyWebpackPlugin = require("copy-webpack-plugin");
 
 module.exports = {
   entry: [
-    "./src/app.jsx",
+    "./src/demo.jsx",
     "react-hot-loader/patch",
     "webpack/hot/only-dev-server",
     "webpack-dev-server/client?http://0.0.0.0:8487"

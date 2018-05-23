@@ -6,10 +6,10 @@ import ChannelControl from "./containers/channelcontrol";
 
 import "./style/bootstrap.min";
 import "./style/bootstrap-slider.min";
-import "./style/app";
+import "./style/demo";
 
 ReactDOM.render(
-  <div className="App">
+  <div className="Demo">
     <Repo/>
     <ChannelControl/>
   </div>,

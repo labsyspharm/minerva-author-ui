@@ -2,7 +2,7 @@
   "name": "todo",
   "version": "0.0.0",
   "description": "todo",
-  "main": "index.js",
+  "main": "demo.js",
   "scripts": {
     "start": "webpack-dev-server --host 0.0.0.0 --port 8487 --config ./webpack.config.js --mode development",
     "build": "webpack"
