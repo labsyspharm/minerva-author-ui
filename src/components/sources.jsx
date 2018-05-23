@@ -7,7 +7,11 @@ import Source from "./source"
 const Sources = ({sources}) => {
 
   const sourceNode = sources.map((source) => {
-    return (<Source source={source} key={source.id}/>)
+    return (
+      <li>
+      <Source source={source} key={source.id}/>
+      </li>
+    );
   });
 
   return (<ul>{sourceNode}</ul>);

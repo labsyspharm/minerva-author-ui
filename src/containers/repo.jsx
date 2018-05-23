@@ -1,7 +1,8 @@
 import React, { Component } from "react";
 import Sources from "../components/sources";
 
-const title = "Sources";
+// CSS
+import '../style/repo';
 
 class Repo extends Component {
 
@@ -30,7 +31,6 @@ class Repo extends Component {
   render() {
     return (
       <div className="Repo">
-				<h2>{title}</h2>
         <Sources sources={[
           {id:1, type:'aws', url:'http://example.com', channels:[1001, 1002]},
           {id:2, type:'image', url:'http://example.com', channels:[2001]}

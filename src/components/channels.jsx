@@ -7,7 +7,11 @@ import Channel from "./channel"
 const Channels = ({ids}) => {
 
   const channelNode = ids.map((id) => {
-    return (<Channel id={id} key={id}/>)
+    return (
+      <li>
+        <Channel id={id} key={id}/>
+      </li>
+    );
   });
 
   return (<ul>{channelNode}</ul>);

@@ -16,12 +16,15 @@ module.exports = {
         loader: 'babel-loader',
         query: {
           presets: ['react', 'env']
-        }
+        } 
+      }, {
+        test: /\.css$/,
+        loader: "style-loader!css-loader" 
       }
     ]
   },
   resolve: {
-    extensions: ['*', '.js', '.jsx']
+    extensions: ['.css', '.js', '.jsx']
   },
   output: {
     path: __dirname + '/build',
