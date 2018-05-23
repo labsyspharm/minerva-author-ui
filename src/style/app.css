@@ -1,12 +1,12 @@
-.Repo ul {
+div ul {
   padding-left: 1em;
   list-style-type: none;
 }
 
-.Repo > ul {
+div > ul {
   padding-left: 0;
 }
 
-.Repo > ul > li > ul {
+div > ul > li > ul {
   padding-left: 0;
 }

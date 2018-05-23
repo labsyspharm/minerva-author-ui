@@ -16,7 +16,7 @@ const Import = ({imageMap, imported}) => {
           {images.map(id => {
             const image = imageMap.get(id);
             return (
-              <ImageName image={image}></ImageName>
+              <ImageName key={id} image={image}/>
             );
           })} 
         </ImageList>

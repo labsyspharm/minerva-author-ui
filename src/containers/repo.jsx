@@ -2,8 +2,6 @@ import React, { Component } from "react";
 import ImportList from "../components/importlist";
 import Import from "../components/import";
 
-import '../style/repo.css';
-
 class Repo extends Component {
 
   constructor() {
@@ -42,10 +40,8 @@ class Repo extends Component {
           }]
         ]),
       },
-      imports: [1, 2],
-      activeSource: 1
+      imports: [1, 2]
     };
-
   }
 
   render() {
@@ -56,7 +52,7 @@ class Repo extends Component {
             const imported = this.state.importMap.get(id);
             const imageMap = this.state.imageMaps[id];
             return (
-              <Import imageMap={imageMap} imported={imported}></Import>
+              <Import key={id} imageMap={imageMap} imported={imported}/>
             );
           })} 
         </ImportList>

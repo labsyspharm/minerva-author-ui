@@ -1,15 +1,13 @@
 import React, { Component } from "react";
 
 /** 
- * @param {number} image
+ * @param {Object} image
  */
 const ImageName = ({image}) => {
   const {id, name, url} = image;
 
   return (
-    <li key={id}>
-      <a href={url}>{name}</a>
-    </li>
+    <a href={url}>{name}</a>
   );
 }
 
