@@ -1,4 +1,6 @@
 import React, { Component } from "react";
+import {getSliderIds, makeSlider} from "../functions/slider"
+
 import ChannelList from "../components/channellist";
 import Channel from "../components/channel";
 
@@ -8,6 +10,7 @@ class ChannelControl extends Component {
     super();
     this.state = {
       channelMap: new Map(),
+      sliderSet: new Set(),
       channels: [],
     };
   }
@@ -24,18 +27,43 @@ class ChannelControl extends Component {
         color: "0000FF",
         range: [0, 1]
       })
+   ; });
+
+  }
+
+  componentDidUpdate() {
+  
+    const {channels, channelMap, sliderSet} = this.state;
+    var newSliderSet = new Set();
+
+    channels.map((id) => {
+      if ( !sliderSet.has(id)) {
+        makeSlider(id);
+        return newSliderSet.add(id);
+      }
     });
 
+    if (newSliderSet.size != 0) {
+      this.setState({
+        channels: channels,
+        channelMap: channelMap,
+        sliderSet: new Set([
+          ...sliderSet, ...newSliderSet
+        ])
+      })  
+    }
   }
 
   addChannel(channel, callback=()=>{}) {
     const {id} = channel;
-    var channelMap = new Map(this.state.channelMap);
-    channelMap.set(id, channel);
+    const {channels, channelMap} = this.state;
+
+    var newChannelMap = new Map(channelMap);
+    newChannelMap.set(id, channel);
 
     this.setState({
-      channelMap: channelMap,
-      channels: this.state.channels.concat([id])
+      channelMap: newChannelMap,
+      channels: channels.concat([id])
     }, callback)
   }
 
