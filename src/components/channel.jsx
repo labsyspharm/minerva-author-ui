@@ -1,4 +1,5 @@
 import React, { Component } from "react";
+import ReactBootstrapSlider from 'react-bootstrap-slider';
 
 /** 
  * @param {Object} channel

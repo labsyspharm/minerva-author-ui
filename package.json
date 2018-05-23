@@ -17,6 +17,7 @@
   "devDependencies": {
     "babel-core": "^6.23.1",
     "babel-loader": "^7.1.2",
+    "babel-preset-env": "^1.6.1",
     "babel-preset-react": "^6.23.0",
     "copy-webpack-plugin": "^4.5.1",
     "css-loader": "^0.28.11",
@@ -27,8 +28,9 @@
     "webpack-dev-server": "^3.1.0"
   },
   "dependencies": {
-    "babel-preset-env": "^1.6.1",
-    "react-dom": "^16.2.0",
-    "react": "^16.2.0"
+    "bootstrap": "^4.1.1",
+    "react": "^16.2.0",
+    "react-bootstrap-slider": "^2.1.5",
+    "react-dom": "^16.2.0"
   }
 }

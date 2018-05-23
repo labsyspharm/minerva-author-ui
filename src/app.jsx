@@ -4,7 +4,7 @@ import ReactDOM from 'react-dom';
 import Repo from './containers/repo';
 import ChannelControl from './containers/channelcontrol';
 
-import './style/bootstrap.min.css';
+import 'bootstrap/dist/css/bootstrap';
 import './style/app.css';
 
 ReactDOM.render(

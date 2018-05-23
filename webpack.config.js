@@ -1,21 +1,22 @@
-const webpack = require('webpack');
-var CopyWebpackPlugin = require('copy-webpack-plugin');
+const path = require("path"); 
+const webpack = require("webpack");
+const CopyWebpackPlugin = require("copy-webpack-plugin");
 
 module.exports = {
   entry: [
-    './src/app.jsx',
-    'react-hot-loader/patch',
-    'webpack/hot/only-dev-server',
-    'webpack-dev-server/client?http://0.0.0.0:8487'
+    "./src/app.jsx",
+    "react-hot-loader/patch",
+    "webpack/hot/only-dev-server",
+    "webpack-dev-server/client?http://0.0.0.0:8487"
   ],
   module: {
     rules: [
       {
         test: /\.jsx?$/,
         exclude: /node_modules/,
-        loader: 'babel-loader',
+        loader: "babel-loader",
         query: {
-          presets: ['react', 'env']
+          presets: ["react", "env"]
         } 
       }, {
         test: /\.css$/,
@@ -24,22 +25,26 @@ module.exports = {
     ]
   },
   resolve: {
-    extensions: ['.css', '.js', '.jsx']
+    extensions: [".css", ".js", ".jsx"],
+    alias: {
+			// Fake jquery needed for 
+    	"jquery": path.join(__dirname, "./src/jquery-stub.js")
+    }
   },
   output: {
-    path: __dirname + '/build',
-    publicPath: '/',
-    filename: 'bundle.js'
+    path: path.join(__dirname, "/build"),
+    publicPath: "/",
+    filename: "bundle.js"
   },
   plugins: [
     new webpack.HotModuleReplacementPlugin(),
     new CopyWebpackPlugin([{
-        from: 'static',
-        to: '.'
+        from: "static",
+        to: "."
     }]),
   ],
   devServer: {
-    contentBase: './build',
+    contentBase: "./build",
     hot: true
   }
 };
