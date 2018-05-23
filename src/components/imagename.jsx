@@ -1,13 +1,14 @@
 import React, { Component } from "react";
 
 /** 
- * @param {number} id - which channel.
+ * @param {number} image
  */
-const ImageName = ({id}) => {
+const ImageName = ({image}) => {
+  const {id, name, url} = image;
 
   return (
     <li key={id}>
-      #{id}
+      <a href={url}>{name}</a>
     </li>
   );
 }

@@ -2,8 +2,7 @@ import React, { Component } from "react";
 import ImportList from "../components/importlist";
 import Import from "../components/import";
 
-// CSS
-import '../style/repo';
+import '../style/repo.css';
 
 class Repo extends Component {
 
@@ -14,16 +13,35 @@ class Repo extends Component {
          [1, {
           id: 1,
           name: 'Some Import',
-          url: 'http://example.com',
-          images: [1001, 1002]
+          images: [1, 2]
          }],
          [2, {
           id: 2,
           name: 'Another Import',
-          url: 'http://example.com',
-          images: [2001]
+          images: [1]
          }]
       ]),
+      imageMaps: {
+        1: new Map([
+          [1, {
+            id: 1,
+            name: 'Some Image',
+            url: 'http://example.com'
+          }],
+          [2, {
+            id: 2,
+            name: 'Second Image',
+            url: 'http://example.com'
+          }]
+        ]),
+        2: new Map([
+          [1, {
+            id: 1,
+            name: 'Another Image',
+            url: 'http://example.com'
+          }]
+        ]),
+      },
       imports: [1, 2],
       activeSource: 1
     };
@@ -36,8 +54,9 @@ class Repo extends Component {
         <ImportList>
           {this.state.imports.map(id => {
             const imported = this.state.importMap.get(id);
+            const imageMap = this.state.imageMaps[id];
             return (
-              <Import imported={imported}></Import>
+              <Import imageMap={imageMap} imported={imported}></Import>
             );
           })} 
         </ImportList>

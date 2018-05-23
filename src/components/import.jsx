@@ -3,29 +3,23 @@ import ImageList from "./imagelist"
 import ImageName from "./imagename"
 
 /** 
- * @param {Object} imported - {url, name, id, images}.
+ * @param {Map} imageMap - From id to image
+ * @param {Object} imported
  */
-const Import = ({imported}) => {
-  const {url, name, id, images} = imported;
+const Import = ({imageMap, imported}) => {
+  const {id, name, images} = imported;
   return (
     <ul>
-      <a href={url}> Import #{id}</a>
-      <span> has: </span>
       <ul>
-        <li key="0">
-        <span> name: </span>
-        <span> {name} </span>
-        </li>
-        <li key="1">
-        <span> images: </span>
+        <span> {name}: </span>
         <ImageList>
-          {images.map(image => {
+          {images.map(id => {
+            const image = imageMap.get(id);
             return (
-              <ImageName id={image}></ImageName>
+              <ImageName image={image}></ImageName>
             );
           })} 
         </ImageList>
-        </li>
       </ul>
     </ul>
   );
