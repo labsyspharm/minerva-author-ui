@@ -1,6 +1,6 @@
 import React, { Component } from "react";
 
-import ChannelList from "../components/channellist";
+import ChannelControlList from "../components/channelcontrollist";
 import Channel from "../components/channel";
 
 class ChannelControls extends Component {
@@ -77,7 +77,7 @@ class ChannelControls extends Component {
     const {channels, channelMap} = this.state;
     return (
       <div>
-        <ChannelList>
+        <ChannelControlList>
           {channels.map(id => {
             const channel = channelMap.get(id);
             const {color, range} = channel;
@@ -87,7 +87,7 @@ class ChannelControls extends Component {
                onRangeChange={this.updateChannelRange.bind(this, id)}/>
             );
           })}
-        </ChannelList>
+        </ChannelControlList>
       </div>
     );
   }

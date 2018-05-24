@@ -3,7 +3,7 @@ import React, { Component } from "react";
 /**
  * Make a list of children
  */
-const ChannelList = params => {
+const ChannelControlList = params => {
 
   return(
     <ul>
@@ -14,4 +14,4 @@ const ChannelList = params => {
   );
 }
 
-export default ChannelList;
+export default ChannelControlList;
