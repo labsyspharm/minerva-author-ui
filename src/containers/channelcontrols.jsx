@@ -1,7 +1,7 @@
 import React, { Component } from "react";
 
 import ChannelControlList from "../components/channelcontrollist";
-import Channel from "../components/channel";
+import ChannelControl from "../components/channelcontrol";
 
 class ChannelControls extends Component {
 
@@ -29,12 +29,12 @@ class ChannelControls extends Component {
 
   }
 
-  addChannel(channel, callback=()=>{}) {
-    const {id} = channel;
+  addChannel(channelcontrol, callback=()=>{}) {
+    const {id} = channelcontrol;
     const {channels, channelMap} = this.state;
 
     var newChannelMap = new Map(channelMap);
-    newChannelMap.set(id, channel);
+    newChannelMap.set(id, channelcontrol);
 
     this.setState({
       channelMap: newChannelMap,
@@ -79,10 +79,10 @@ class ChannelControls extends Component {
       <div>
         <ChannelControlList>
           {channels.map(id => {
-            const channel = channelMap.get(id);
-            const {color, range} = channel;
+            const channelcontrol = channelMap.get(id);
+            const {color, range} = channelcontrol;
             return (
-              <Channel key={id} channel={channel}
+              <ChannelControl key={id} channelcontrol={channelcontrol}
                onColorChange={this.updateChannelColor.bind(this, id)}
                onRangeChange={this.updateChannelRange.bind(this, id)}/>
             );

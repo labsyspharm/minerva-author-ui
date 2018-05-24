@@ -1,8 +1,6 @@
 import React, { Component } from "react";
 import Slider from "react-bootstrap-slider";
 
-import '../style/channel'
-
 class RangeText extends Component {
 
   constructor({value, onChange}) {

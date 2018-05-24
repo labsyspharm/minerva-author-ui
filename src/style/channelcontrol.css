@@ -1,21 +1,21 @@
-.Channel {
+.ChannelControl {
   width: 80vw;
   margin: auto;
   position: relative;
 }
 
-.Channel .RangeForm {
+.ChannelControl .RangeForm {
   margin-bottom: 2em;
   padding-left: 3em;
   display: flex;
   width: 100%;
 }
 
-.Channel .RangeForm > .slider {
+.ChannelControl .RangeForm > .slider {
   flex: 1 0 300px;
 }
 
-.Channel .RangeForm > input[type="text"] {
+.ChannelControl .RangeForm > input[type="text"] {
   text-align: center;
   width: 4em;
 }

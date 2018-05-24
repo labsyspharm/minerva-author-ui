@@ -4,14 +4,14 @@ import RangeText from "./rangetext";
 import HuePicker from "./huepicker";
 import Slider from "react-bootstrap-slider";
 
-import '../style/channel'
+import '../style/channelcontrol'
 
 /** 
- * @param {Object} channel
+ * @param {Object} channelcontrol
  * @param {function} onRangeChange - update range state
  */
-const Channel = ({channel, onRangeChange, onColorChange}) => {
-  const {id, color, range} = channel;
+const ChannelControl = ({channelcontrol, onRangeChange, onColorChange}) => {
+  const {id, color, range} = channelcontrol;
   const [min, max] = range.map(v => {
     return Math.round(100 * v);
   });
@@ -19,7 +19,7 @@ const Channel = ({channel, onRangeChange, onColorChange}) => {
 	const step = 1;
 
   return (
-    <div className="Channel">
+    <div className="ChannelControl">
       <HuePicker
         color={color}
         change={color => {
@@ -49,4 +49,4 @@ const Channel = ({channel, onRangeChange, onColorChange}) => {
   );
 }
 
-export default Channel;
+export default ChannelControl;
