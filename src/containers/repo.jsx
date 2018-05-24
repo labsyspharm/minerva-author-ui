@@ -50,6 +50,7 @@ class Repo extends Component {
         ['2,1', new Map()]
       ]),
       imports: [1, 2],
+      activeChannel: 1,
       activeImport: 1,
       activeImage: 1
     };

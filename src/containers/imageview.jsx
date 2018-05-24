@@ -19,25 +19,33 @@ class ImageView extends Component {
   }
 
   makeTileSource(entry) {
-    const {imageOptions} = this.props;
     const [id, channelcontrol] = entry;
+    const {imageOptions} = this.props;
     const {color, range} = channelcontrol;
 
     var output = {
       many_channel_id: id,
       many_channel_range: range,
-      many_channel_color: map(color, c => c / 255.),
-      many_channel_active: selected
+      many_channel_color: map(color, c => c / 255.)
     }
 
-    return TileSourceOptions(channel, source_url, source_type, is_active, aws_creds);
+    // Many channels in tiled image
+    output.getTileUrl = getTileUrl;
+    output.many_channel_url = url;
+    output.tileSize = 1024;
+    output.height = 4080;
+    output.width = 7220;
+    output.minLevel = 0;
+    output.maxLevel = 3;
+
+    return output
   }
 
   makeTileSources() {
     const {channelMap} = this.props;
     const entries = channelMap.entries();
 
-    return Array.from(entries).map(readSouurce);
+    return Array.from(entries).map(this.makeTileSource);
   }
 
   componentDidMount() {
