@@ -17,12 +17,12 @@ class ChannelControl extends Component {
 
     this.addChannel({
       id: 0,
-      color: "FF0000",
+      color: [255, 0, 0],
       range: [0, 0.1]
     },  () => {
       this.addChannel({
         id: 1,
-        color: "0000FF",
+        color: [0, 0, 255],
         range: [0, 1]
       })
    ; });
@@ -40,6 +40,17 @@ class ChannelControl extends Component {
       channelMap: newChannelMap,
       channels: channels.concat([id])
     }, callback)
+  }
+
+  updateChannelColor(id, rgbColor) {
+    const {channelMap} = this.state;
+    
+    var newChannelMap = new Map(channelMap);
+    newChannelMap.get(id).color = rgbColor;
+
+    this.setState({
+      ChannelMap: newChannelMap
+    })
   }
 
   updateChannelRange(id, range_percent) {
@@ -72,6 +83,7 @@ class ChannelControl extends Component {
             const {color, range} = channel;
             return (
               <Channel key={id} channel={channel}
+               onColorChange={this.updateChannelColor.bind(this, id)}
                onRangeChange={this.updateChannelRange.bind(this, id)}/>
             );
           })}

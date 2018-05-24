@@ -10,7 +10,7 @@ import '../style/channel'
  * @param {Object} channel
  * @param {function} onRangeChange - update range state
  */
-const Channel = ({channel, onRangeChange}) => {
+const Channel = ({channel, onRangeChange, onColorChange}) => {
   const {id, color, range} = channel;
   const [min, max] = range.map(v => {
     return Math.round(100 * v);
@@ -20,7 +20,13 @@ const Channel = ({channel, onRangeChange}) => {
 
   return (
     <div className="Channel">
-      <HuePicker/>
+      <HuePicker
+        color={color}
+        change={color => {
+          const {r, g, b} = color.rgb;
+          onColorChange([r, g, b]);
+        }}
+      />
       <form className="RangeForm">
         <RangeText
         onChange={val => onRangeChange([val, max])}
