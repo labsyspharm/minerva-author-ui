@@ -1,7 +1,7 @@
-import React from 'react'
-import reactCSS from 'reactcss'
+import React from "react"
+import reactCSS from "reactcss"
 
-import { CustomPicker, SliderPicker } from 'react-color'
+import { CustomPicker, SliderPicker } from "react-color"
 
 class HuePicker extends React.Component {
 
@@ -10,10 +10,10 @@ class HuePicker extends React.Component {
 		this.state = {
 			display: false,
 			color: {
-				r: '241',
-				g: '112',
-				b: '19',
-				a: '1',
+				r: "241",
+				g: "112",
+				b: "19",
+				a: "1",
 			},
 		};
   }
@@ -38,18 +38,18 @@ class HuePicker extends React.Component {
 		const {display, color} = this.state;
 
     const styles = reactCSS({
-      'default': {
+      "default": {
         color: {
-          width: '3em',
-          height: '1em',
-          cursor: 'pointer',
+          width: "3em",
+          height: "2em",
+          cursor: "pointer",
           background: `rgba(${ this.state.color.r }, ${ this.state.color.g }, ${ this.state.color.b }, ${ this.state.color.a })`
         },
         popover: {
-          backgroundColor: 'white',
-          flex: '1 0 300px',
-					height: '3em',
-          zIndex: '2'
+          backgroundColor: "white",
+          flex: "1 0 300px",
+					height: "3em",
+          zIndex: "2"
         }
       },
     });
