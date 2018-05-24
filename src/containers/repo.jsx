@@ -1,5 +1,6 @@
 import React, { Component } from "react";
 
+import ImageView from "./imageview";
 import ChannelControls from "./channelcontrols";
 import ImportList from "../components/importlist";
 import Import from "../components/import";
@@ -184,6 +185,10 @@ class Repo extends Component {
           channelMap={channelMap}
           updateColor={this.updateColor.bind(this, activeImport, activeImage)}
           updateRange={this.updateRange.bind(this, activeImport, activeImage)}
+        />
+        <ImageView
+          imageOptions={imageOptions}
+          channelMap={channelMap}
         />
       </div>
     );
