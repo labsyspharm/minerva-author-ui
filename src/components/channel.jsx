@@ -20,11 +20,12 @@ const Channel = ({channel, onRangeChange}) => {
 
   return (
     <div className="Channel">
-      <form>
+      <HuePicker/>
+      <form className="RangeForm">
         <RangeText
         onChange={val => onRangeChange([val, max])}
         value={min} min={full[0]} max={max - 1}
-				step={step} full={full}/>
+        step={step} full={full}/>
         <Slider
           value={[min, max]}
           tooltip="hide"
@@ -36,7 +37,7 @@ const Channel = ({channel, onRangeChange}) => {
         <RangeText
         onChange={val => onRangeChange([min, val])}
         value={max} min={min + 1} max={full[1]}
-				step={step} full={full}/>
+        step={step} full={full}/>
       </form>
     </div>
   );

@@ -1,4 +1,25 @@
-.Channel > form > input[type="text"] {
+.channel {
+  width: 100vw;
+}
+
+.Channel .HuePicker {
+  position: absolute;
+  display: flex;
+  width: 100%;
+}
+
+.Channel .RangeForm {
+  margin-bottom: 1em;
+  margin-left: 3em;
+  display: flex;
+  width: 100%;
+}
+
+.Channel .RangeForm > .slider {
+  flex: 1 0 300px;
+}
+
+.Channel .RangeForm > input[type="text"] {
   text-align: center;
-  width: 3em;
+  width: 30px;
 }

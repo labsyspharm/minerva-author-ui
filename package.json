@@ -35,6 +35,7 @@
     "react": "^16.3.2",
     "react-bootstrap-slider": "^2.1.5",
     "react-color": "^2.14.1",
-    "react-dom": "^16.3.2"
+    "react-dom": "^16.3.2",
+    "reactcss": "^1.2.3"
   }
 }
