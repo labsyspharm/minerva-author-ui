@@ -30,6 +30,16 @@ class HuePicker extends React.Component {
 
     const styles = reactCSS({
       "default": {
+        pickerOff: {
+          position: "absolute",
+          display: "flex",
+          width: "3em"
+        },
+        pickerOn: {
+          position: "absolute",
+          display: "flex",
+          width: "100%"
+        },
         color: {
           width: "3em",
           height: "2em",
@@ -47,17 +57,17 @@ class HuePicker extends React.Component {
 
     if (!display) {
       return (
-        <span className="HuePicker">
+        <span style={ styles.pickerOff }>
           <div style={ styles.color } onClick={ this.handleClick.bind(this) }>
           </div>
         </span>
       )
     }
     return (
-      <span className="HuePicker">
+      <span style={ styles.pickerOn }>
         <div style={ styles.color } onClick={ this.handleClick.bind(this) }>
         </div>
-        <div className="ColorSlider" style={ styles.popover }>
+        <div style={ styles.popover }>
           <SliderPicker color={{
             r: color[0],
             g: color[1],

@@ -1,11 +1,7 @@
-.channel {
-  width: 100vw;
-}
-
-.Channel .HuePicker {
-  position: absolute;
-  display: flex;
-  width: 100%;
+.Channel {
+  width: 80vw;
+  margin: auto;
+  position: relative;
 }
 
 .Channel .RangeForm {
