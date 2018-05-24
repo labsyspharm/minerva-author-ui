@@ -3,7 +3,7 @@ import React, { Component } from "react";
 import ChannelList from "../components/channellist";
 import Channel from "../components/channel";
 
-class ChannelControl extends Component {
+class ChannelControls extends Component {
 
   constructor() {
     super();
@@ -76,7 +76,7 @@ class ChannelControl extends Component {
   render() {
     const {channels, channelMap} = this.state;
     return (
-      <div className="ChannelControl">
+      <div>
         <ChannelList>
           {channels.map(id => {
             const channel = channelMap.get(id);
@@ -93,4 +93,4 @@ class ChannelControl extends Component {
   }
 }
 
-export default ChannelControl;
+export default ChannelControls;
