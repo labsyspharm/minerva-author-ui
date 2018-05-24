@@ -45,9 +45,42 @@ class Repo extends Component {
         ]
       ]),
       channelMaps: new Map([
-        ['1,1', new Map()],
-        ['1,2', new Map()],
-        ['2,1', new Map()]
+        ['1,1', new Map([
+          [0, {
+            id: 0,
+            color: [255, 0, 0],
+            range: [0, 0.5]
+          }],
+          [1, {
+            id: 1,
+            color: [0, 0, 255],
+            range: [0, 0.5]
+          }]
+        ])],
+        ['1,2', new Map([
+          [0, {
+            id: 0,
+            color: [255, 255, 0],
+            range: [0, 0.7]
+          }],
+          [1, {
+            id: 1,
+            color: [0, 255, 255],
+            range: [0, 0.3]
+          }]
+        ])],
+        ['2,1', new Map([
+          [0, {
+            id: 0,
+            color: [255, 127, 127],
+            range: [0, 1.0]
+          }],
+          [1, {
+            id: 1,
+            color: [127, 127, 255],
+            range: [0, 0.1]
+          }]
+        ])]
       ]),
       imports: [1, 2],
       activeChannel: 1,
@@ -56,49 +89,6 @@ class Repo extends Component {
     };
   }
 
-  componentDidMount() {
-
-
-    // Import 1, Image 1
-    this.addChannel(1, 1, {
-      id: 0,
-      color: [255, 0, 0],
-      range: [0, 0.5]
-    },  () => {
-      this.addChannel(1, 1, {
-        id: 1,
-        color: [0, 0, 255],
-        range: [0, 0.5]
-      })
-    });
-
-    // Import 1, Image 2
-    this.addChannel(1, 1, {
-      id: 0,
-      color: [255, 255, 0],
-      range: [0, 0.7]
-    },  () => {
-      this.addChannel(1, 1, {
-        id: 1,
-        color: [0, 255, 255],
-        range: [0, 0.3]
-      })
-    });
-
-    // Import 1, Image 2
-    this.addChannel(1, 1, {
-      id: 0,
-      color: [255, 127, 127],
-      range: [0, 1.0]
-    },  () => {
-      this.addChannel(1, 1, {
-        id: 1,
-        color: [127, 127, 255],
-        range: [0, 0.1]
-      })
-    });
-
-  }
   addChannel(imported, imaged, channelcontrol, callback=()=>{}) {
 
     const {id} = channelcontrol;

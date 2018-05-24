@@ -46,7 +46,7 @@ class ImageView extends Component {
 			return url + '/' + name;
 		}
 
-    var output = {
+    return {
 			// Custom functions
     	makeAjaxRequest: new AmazonWebSource(auth).makeAjaxRequest,
 			getTileUrl: getTileUrl,
@@ -54,7 +54,7 @@ class ImageView extends Component {
       many_channel_id: id,
 			many_channel_url: url,
       many_channel_range: range,
-      many_channel_color: map(color, c => c / 255.),
+      many_channel_color: color.map(c => c / 255.),
 			// Standard parameters
 			tileSize: 1024,
 			height: 4080,
@@ -62,18 +62,13 @@ class ImageView extends Component {
 			minLevel: 0,
 			maxLevel: 3
     }
-
-    // Make AWS request
-    output.makeAjaxRequest = aws; 
-
-    return output
   }
 
   makeTileSources() {
     const {channelMap} = this.props;
     const entries = channelMap.entries();
 
-    return Array.from(entries).map(this.makeTileSource);
+    return Array.from(entries).map(this.makeTileSource.bind(this));
   }
 
   componentDidMount() {
@@ -102,8 +97,8 @@ class ImageView extends Component {
 
     // Define interface to shaders
     var seaGL = new viaWebGL.openSeadragonGL(viewer);
-    seaGL.vShader = 'static/vert.glsl';
-    seaGL.fShader = 'static/frag.glsl';
+    seaGL.vShader = 'vert.glsl';
+    seaGL.fShader = 'frag.glsl';
 
     seaGL.addHandler('tile-drawing',  function(callback, e) {
 			// Read parameters from each tile 
@@ -140,6 +135,8 @@ class ImageView extends Component {
 			this.u_tile_color = this.gl.getUniformLocation(program, 'u_tile_color');
 			this.u_tile_range = this.gl.getUniformLocation(program, 'u_tile_range');
 		});
+
+		seaGL.addHandler('tile-loaded', (callback, e) => callback(e));
 
     seaGL.init();
   }
