@@ -29,15 +29,17 @@
     "webpack-dev-server": "^3.1.0"
   },
   "dependencies": {
+    "aws-sdk": "^2.243.1",
     "bootstrap": "^3.3.7",
     "bootstrap-slider": "^10.0.2",
+    "dotenv": "^5.0.1",
+    "dotenv-webpack": "^1.5.5",
     "prop-types": "^15.6.1",
     "react": "^16.3.2",
     "react-bootstrap-slider": "^2.1.5",
     "react-color": "^2.14.1",
     "react-dom": "^16.3.2",
     "reactcss": "^1.2.3",
-    "aws-sdk": "^2.243.1",
     "viawebgl": "git://github.com/thejohnhoffer/viaWebGL.git#webgl2"
   }
 }

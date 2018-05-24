@@ -25,12 +25,12 @@ class Repo extends Component {
             [1, {
               id: 1,
               name: "Some Image",
-              url: "http://example.com"
+              url: "https://minerva-test-images.s3.amazonaws.com/png_tiles"
             }],
             [2, {
               id: 2,
               name: "Second Image",
-              url: "http://example.com"
+              url: "https://minerva-test-images.s3.amazonaws.com/png_tiles"
             }]
           ])
         ],

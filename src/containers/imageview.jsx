@@ -1,6 +1,7 @@
 import React, { Component } from "react";
 
 import viaWebGL from 'viawebgl';
+import AmazonWebSource from '../amazonwebsource'
 
 class ImageView extends Component {
 
@@ -16,6 +17,7 @@ class ImageView extends Component {
         prefixUrl: "images/openseadragon/"
       }
     }
+		console.log(process.env);
   }
 
   makeTileSource(entry) {
@@ -37,6 +39,10 @@ class ImageView extends Component {
     output.width = 7220;
     output.minLevel = 0;
     output.maxLevel = 3;
+
+    // Make AWS request
+    var aws = new AmazonWebSource(credentials);
+    output.makeAjaxRequest = aws.makeAjaxRequest; 
 
     return output
   }
