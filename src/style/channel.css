@@ -1,0 +1,4 @@
+.Channel > form > input[type="text"] {
+  text-align: center;
+  width: 3em;
+}

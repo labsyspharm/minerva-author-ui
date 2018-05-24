@@ -42,6 +42,26 @@ class ChannelControl extends Component {
     }, callback)
   }
 
+  updateChannelRange(id, range_percent) {
+    const {channelMap} = this.state;
+    
+    // input validation
+    const range = range_percent.map(v => {
+      return v / 100;
+    });
+    if (!(0 <= range[0] < range[1] <= 1)) {
+      return;
+    }
+
+    var newChannelMap = new Map(channelMap);
+    newChannelMap.get(id).range = range
+
+    this.setState({
+      ChannelMap: newChannelMap
+    })
+
+  }
+
   render() {
     const {channels, channelMap} = this.state;
     return (
@@ -51,7 +71,8 @@ class ChannelControl extends Component {
             const channel = channelMap.get(id);
             const {color, range} = channel;
             return (
-              <Channel key={id} channel={channel}/>
+              <Channel key={id} channel={channel}
+               onRangeChange={this.updateChannelRange.bind(this, id)}/>
             );
           })}
         </ChannelList>
