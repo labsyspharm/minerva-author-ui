@@ -7,14 +7,16 @@ import ImageName from "./imagename"
  * @param {Object} imported
  */
 const Import = ({imageMap, imported}) => {
-  const {id, name, images} = imported;
+  const {id, name} = imported;
+  const entries = imageMap.entries();
+
   return (
     <ul>
       <ul>
         <span> {name}: </span>
         <ImageList>
-          {images.map(id => {
-            const image = imageMap.get(id);
+          {Array.from(entries).map(entry => {
+            const [id, image] = entry;
             return (
               <ImageName key={id} image={image}/>
             );
