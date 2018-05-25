@@ -10,3 +10,15 @@ div > ul {
 div > ul > li > ul {
   padding-left: 0;
 }
+
+.Demo {
+  display: grid;
+  grid-template-rows: 4em 1fr;
+  background-color: #000;
+  color: #CCC;
+}
+
+.Banner {
+  background-color: #CCC;
+  color: #000;
+}

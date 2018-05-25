@@ -5,6 +5,8 @@ import ChannelControls from "./channelcontrols";
 import ImportList from "../components/importlist";
 import Import from "../components/import";
 
+import '../style/repo'
+
 class Repo extends Component {
 
   constructor() {
@@ -117,22 +119,29 @@ class Repo extends Component {
 
     return (
       <div className="Repo">
-        <ImportList>
-          {Array.from(entries).map(entry => {
-            const [uuid, imp] = entry;
-            return (
-              <Import key={uuid}
-							click={this.dummyAjax.bind(this)}
-							imgs={imgs} imp={imp}/>
-            );
-          })}
-        </ImportList>
-        <ChannelControls
-          channels={channels}
-          updateColor={this.updateColor.bind(this)}
-          updateRange={this.updateRange.bind(this)}
-        />
-        <ImageView
+        <div className="RepoWrapper">
+          <div className="RepoImports">
+            <ImportList>
+              {Array.from(entries).map(entry => {
+                const [uuid, imp] = entry;
+                return (
+                  <Import key={uuid}
+                  click={this.dummyAjax.bind(this)}
+                  imgs={imgs} imp={imp}/>
+                );
+              })}
+            </ImportList>
+          </div>
+          <div className="RepoSpacer"></div>
+          <div className="RepoControls">
+            <ChannelControls className="ChannelControls"
+              channels={channels}
+              updateColor={this.updateColor.bind(this)}
+              updateRange={this.updateRange.bind(this)}
+            />
+          </div>
+        </div>
+        <ImageView className="ImageView"
           img={img}
           channels={channels}
         />

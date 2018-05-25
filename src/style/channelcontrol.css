@@ -12,7 +12,7 @@
 }
 
 .ChannelControl .RangeForm > .slider {
-  flex: 1 0 300px;
+  flex: 1 0 4em;
 }
 
 .ChannelControl .RangeForm > input[type="text"] {
