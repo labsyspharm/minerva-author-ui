@@ -113,7 +113,6 @@ class ImageView extends Component {
           source.many_channel_range = range;
         }
       })
-      world.update();
     }
   }
 
@@ -121,7 +120,11 @@ class ImageView extends Component {
     const {viewer} = this;
     if (viewer !== undefined) {
       const tileSources = this.makeTileSources(ids);
-      tileSources.map(viewer.addTiledImage, viewer);
+      tileSources.forEach(tileSource => {
+        viewer.addTiledImage({
+          tileSource: tileSource
+        });
+      });
     }
   }
 
