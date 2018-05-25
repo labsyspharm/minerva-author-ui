@@ -10,10 +10,11 @@ class ImageView extends Component {
   constructor() {
     super();
     this.viewer = undefined;
-    this.cache = new Map([
-      ["uuid", undefined],
-      ["ids", new Set()]
-    ]);
+    this.cache = {
+      img: new Map(),
+      channels: new Map()
+    };
+    this.changes = {},
     this.state = {
   		auth: {
 				AccessKeyId: process.env.ACCESSKEYID,
@@ -90,7 +91,7 @@ class ImageView extends Component {
     }
   }
 
-  updateChannels(ids) {
+  redrawChannels(ids) {
     if (this.viewer !== undefined) {
       const {world} = this.viewer;
       const {channels} = this.props;
@@ -121,44 +122,61 @@ class ImageView extends Component {
   }
 
   /**
-    * @returns Map<string, number[]> - channel ids to lose, gain, update
+    * @returns Object - channels to lose, gain, update
     */
-  updateCache() {
-    const {cache} = this;
-    const ids = cache.get("ids");
-    const uuid = cache.get("uuid");
-    const {channels, img} = this.props;
+  getChanges() {
+    const img = {...this.props.img};
+    const imgCache = {...this.cache.img};
+    const channels = new Map(this.props.channels);
+    const channelsCache = new Map(this.cache.channels);
+    // Actually update the cache
+    this.cache = {
+      channels: channels,
+      img: img
+    };
 
-    // Get new Values
-    var cacheNext = new Map(cache);
-    const uuidNext = '' + img.uuid;
-    const idsNext = new Set(channels.keys());
-
-    // Set new Values
-    cacheNext.set("ids", idsNext);
-    cacheNext.set("uuid", uuidNext);
-    this.cache = cacheNext;
+    // derived properties
+    const uuid = '' + img.uuid;
+    const uuidCache = '' + imgCache.uuid;
+    const ids = new Set(channels.keys());
+    const idsCache = new Set(channels.keys());
 
     // Update the whole image
-    if (uuidNext != uuid) {
-      return new Map([
-        ["lose", [...ids]],
-        ["gain", [...idsNext]]
-      ])
+    if (uuidCache != uuid) {
+      return {
+        lose: [...idsCache],
+        gain: [...ids]
+      };
     }
 
     // Ids that differ will hide/show, those that intersect will update
     const differ = (a, b) => [...a].filter(i => !b.has(i));
     const intersect = (a, b) => [...a].filter(b.has.bind(b));
 
-    return new Map([
-      ["update", intersect(idsNext, ids)],
-      ["hide", differ(ids, idsNext)],
-      ["show", differ(idsNext, ids)],
-    ]);
+    const redrawn = intersect(ids, idsCache);
+    const hidden = differ(idsCache, ids);
+    const shown = differ(ids, idsCache);
+
+    // Check if really need to update
+    if (!hidden.size && !shown.size) {
+      
+
+    }
+
+    // Allow hide/show or redraw
+    return {
+      show: shown,
+      hide: hidden,
+      redraw: redrawn
+    };
   }
 
   shouldComponentUpdate() {
+    this.changes = this.getChanges()
+    const {changes} = this;
+    if (!Object.keys(changes).length) {
+      return false;
+    }
     return true;
   }
 
@@ -168,7 +186,7 @@ class ImageView extends Component {
 
     // Update the cache with the initial tileSources
     const tileSources = this.makeTileSources(ids);
-    this.updateCache();
+    this.getChanges();
 
     // Set up openseadragon viewer
     this.viewer = viaWebGL.OpenSeadragon({
@@ -236,14 +254,14 @@ class ImageView extends Component {
   }
 
   render() {
+    const {changes} = this;
     const {img, channels} = this.props;
     const entries = channels.entries();
 
     // Handle changes
-    const changes = this.updateCache();
-    this.updateChannels(changes.get('update') || []);
-    this.gainChannels(changes.get('gain') || []);
-    this.loseChannels(changes.get('lose') || []);
+    this.redrawChannels(changes.redraw || []);
+    this.gainChannels(changes.gain || []);
+    this.loseChannels(changes.lose || []);
 
     return (
       <div id="ImageView"></div>
