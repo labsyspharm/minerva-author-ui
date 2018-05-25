@@ -4,7 +4,7 @@ import React, { Component } from "react";
  * @param {Object} img
  */
 const ImageName = ({img}) => {
-  const {id, name, url} = img;
+  const {name, url} = img;
 
   return (
     <a href={url}>{name}</a>

@@ -28,7 +28,7 @@ class ImageView extends Component {
 
   makeTileSource(entry) {
     const {auth} = this.state;
-    const {url} = this.props.imageOptions;
+    const {url} = this.props.img;
 
     const [id, chan] = entry;
     const {color, range} = chan;
@@ -65,8 +65,8 @@ class ImageView extends Component {
   }
 
   makeTileSources() {
-    const {channelMap} = this.props;
-    const entries = channelMap.entries();
+    const {channels} = this.props;
+    const entries = channels.entries();
 
     return Array.from(entries).map(this.makeTileSource.bind(this));
   }
@@ -142,8 +142,8 @@ class ImageView extends Component {
   }
 
   render() {
-    const {imageOptions, channelMap} = this.props;
-    const entries = channelMap.entries();
+    const {img, channels} = this.props;
+    const entries = channels.entries();
 
     return (
       <div id="ImageView"></div>

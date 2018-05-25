@@ -3,22 +3,20 @@ import ImageList from "./imagelist"
 import ImageName from "./imagename"
 
 /**
- * @param {Map} imageMap - From id to img
+ * @param {Map} imgs - From uuid to img
  * @param {Object} imp
  */
-const Import = ({imageMap, imp}) => {
-  const {id, name} = imp;
-  const entries = imageMap.entries();
+const Import = ({imgs, imp}) => {
 
   return (
     <ul>
       <ul>
-        <span> {name}: </span>
+        <span> {imp.name}: </span>
         <ImageList>
-          {Array.from(entries).map(entry => {
-            const [id, img] = entry;
+          {imp.imgs.map(entry => {
+            const [uuid, img] = entry;
             return (
-              <ImageName key={id} img={img}/>
+              <ImageName key={uuid} img={img}/>
             );
           })}
         </ImageList>

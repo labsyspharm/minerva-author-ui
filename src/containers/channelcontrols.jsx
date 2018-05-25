@@ -7,8 +7,8 @@ class ChannelControls extends Component {
 
   render() {
     const {updateColor, updateRange} = this.props;
-    const {imageOptions, channelMap} = this.props;
-    const entries = channelMap.entries();
+    const {channels} = this.props;
+    const entries = channels.entries();
 
     return (
       <div>
