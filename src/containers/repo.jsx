@@ -32,7 +32,7 @@ class Repo extends Component {
 				uuid: 'uuid4',
 				channels: new Map([
 					[0, { id: 0, color: [255, 0, 0], range: [0, 0.5]}],
-					[1, { id: 1, color: [0, 0, 255], range: [0.5, 1]}]
+					[1, { id: 1, color: [0, 0, 255], range: [0, 0.1]}]
 				])
 			}
     };
