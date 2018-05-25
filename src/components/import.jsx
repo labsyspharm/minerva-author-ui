@@ -13,8 +13,8 @@ const Import = ({imgs, imp}) => {
       <ul>
         <span> {imp.name}: </span>
         <ImageList>
-          {imp.imgs.map(entry => {
-            const [uuid, img] = entry;
+          {imp.imgs.map(uuid => {
+            const img = imgs.get(uuid);
             return (
               <ImageName key={uuid} img={img}/>
             );
