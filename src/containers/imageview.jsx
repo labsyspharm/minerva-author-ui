@@ -5,6 +5,10 @@ import AmazonWebSource from '../amazonwebsource';
 
 import '../style/imageview';
 
+
+const differSet = (a, b) => [...a].filter(i => !b.has(i));
+const intersectSet = (a, b) => [...a].filter(b.has.bind(b));
+
 class ImageView extends Component {
 
   constructor() {
@@ -14,7 +18,11 @@ class ImageView extends Component {
       img: new Map(),
       channels: new Map()
     };
-    this.changes = {},
+    this.changes = {
+      redrawn: [],
+      gained: [],
+      lost: [],
+    },
     this.state = {
   		auth: {
 				AccessKeyId: process.env.ACCESSKEYID,
@@ -104,12 +112,6 @@ class ImageView extends Component {
       ids.forEach((id) => {
         let channel = channels.get(id);
         if (channel === undefined) {
-          /// TODO: fix changes vs props discrepency
-          let countCache = this.cache.channels.size;
-          let count = channels.size;
-          if (id == count) {
-            console.log('Lost '+(countCache-count)+' channels');
-          }
           return;
         }
         let {color, range} = channel;
@@ -159,18 +161,17 @@ class ImageView extends Component {
     // Update the whole image
     if (uuidCache != uuid) {
       return {
-        lose: [...idsCache],
-        gain: [...ids]
+        lost: [...idsCache],
+        gained: [...ids],
+        redrawn: []
       };
     }
 
     // Lose or Gain ids that differ, update those that intersect
-    const differ = (a, b) => [...a].filter(i => !b.has(i));
-    const intersect = (a, b) => [...a].filter(b.has.bind(b));
 
-    const redrawn = intersect(ids, idsCache);
-    const gained = differ(ids, idsCache);
-    const lost = differ(idsCache, ids);
+    const redrawn = intersectSet(ids, idsCache);
+    const gained = differSet(ids, idsCache);
+    const lost = differSet(idsCache, ids);
 
     // Check if really need to update
     if (!lost.size && !gained.size) {
@@ -179,9 +180,9 @@ class ImageView extends Component {
     }
 
     return {
-      redraw: redrawn,
-      gain: gained,
-      lose: lost,
+      redrawn: redrawn,
+      gained: gained,
+      lost: lost,
     };
   }
 
@@ -271,10 +272,13 @@ class ImageView extends Component {
     const {img, channels} = this.props;
     const entries = channels.entries();
 
-    // Handle changes
-    this.redrawChannels(changes.redraw || []);
-    this.gainChannels(changes.gain || []);
-    this.loseChannels(changes.lose || []);
+    var {redrawn, gained, lost} = changes;
+
+    // TODO why need set operations here?
+    const ids = new Set(channels.keys());
+    this.redrawChannels(intersectSet(ids, new Set(redrawn)));
+    this.gainChannels(intersectSet(ids, new Set(gained)));
+    this.loseChannels(differSet(new Set(lost), ids));
 
     return (
       <div id="ImageView"></div>
