@@ -2,12 +2,13 @@ import React, { Component } from "react";
 
 /**
  * @param {Object} img
+ * @param {function} click
  */
-const ImageName = ({img}) => {
+const ImageName = ({img, click}) => {
   const {name, url} = img;
 
   return (
-    <a href={url}>{name}</a>
+    <a onClick={(e) => click(img)}>{name}</a>
   );
 }
 

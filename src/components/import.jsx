@@ -5,8 +5,9 @@ import ImageName from "./imagename"
 /**
  * @param {Map} imgs - From uuid to img
  * @param {Object} imp
+ * @param {function} click
  */
-const Import = ({imgs, imp}) => {
+const Import = ({imgs, imp, click}) => {
 
   return (
     <ul>
@@ -16,7 +17,9 @@ const Import = ({imgs, imp}) => {
           {imp.imgs.map(uuid => {
             const img = imgs.get(uuid);
             return (
-              <ImageName key={uuid} img={img}/>
+              <ImageName key={uuid}
+              click={click}
+              img={img}/>
             );
           })}
         </ImageList>

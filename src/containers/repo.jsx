@@ -38,6 +38,46 @@ class Repo extends Component {
     };
   }
 
+	/**
+	 * This function is for testing without a real backend
+	 */
+	dummyAjax(img) {
+
+		var channels = new Map();
+
+		// Get a random integer, color, range
+		const randInt = n => Math.floor(Math.random() * n);
+		const randColor = () => {
+			return [
+			[0,0,255],[0,127,255],[0,255,0],[0,255,127],[0,255,255],
+			[127,0,255],[127,127,127],[127,127,255],[127,255,0],[127,255,127],
+			[255,0,0],[255,0,127],[255,0,255],[255,127,0],[255,127,127],[255,255,0]
+			][randInt(16)]
+		}
+		const randRange = () => {
+			return [
+ 			[0, .3], [0, .5], [0, .7], [0, 1], 
+ 			[.3, .5], [.3, .7], [.3, 1], 
+ 			[.5, .7], [.5, 1], [.7, 1]
+			][randInt(10)]
+		}
+
+		for (let id of Array(randInt(4)+1).keys()) {
+  		channels.set(id, {
+				id: id,
+				range: randRange(),
+				color: randColor(),
+			});
+		}
+
+		this.setState({
+			'active': {
+				uuid: img.uuid,
+				channels: channels
+			}
+		});
+	}
+
   updateColor(id, colorRGB) {
 
     const {channels} = this.state.active;
@@ -82,7 +122,9 @@ class Repo extends Component {
           {Array.from(entries).map(entry => {
             const [uuid, imp] = entry;
             return (
-              <Import key={uuid} imgs={imgs} imp={imp}/>
+              <Import key={uuid}
+							click={this.dummyAjax.bind(this)}
+							imgs={imgs} imp={imp}/>
             );
           })}
         </ImportList>

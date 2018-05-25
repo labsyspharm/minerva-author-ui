@@ -9,6 +9,11 @@ class ImageView extends Component {
 
   constructor() {
     super();
+    this.viewer = undefined;
+    this.cache = new Map([
+      ["uuid", undefined],
+      ["ids", new Set()]
+    ]);
     this.state = {
       defaults: {
         rows: 1,
@@ -26,12 +31,13 @@ class ImageView extends Component {
     }
   }
 
-  makeTileSource(entry) {
+  makeTileSource(id) {
     const {auth} = this.state;
-    const {url} = this.props.img;
+    const {img, channels} = this.props;
 
-    const [id, chan] = entry;
-    const {color, range} = chan;
+    const channel = channels.get(id);
+    const {color, range} = channel;
+    const {url} = img;
 
 		const getTileName = (x, y, level, channel) => {
 			return "C" + channel + "-T0-Z0-L" + level + "-Y" + y + "-X" + x + ".png";
@@ -64,19 +70,103 @@ class ImageView extends Component {
     }
   }
 
-  makeTileSources() {
-    const {channels} = this.props;
-    const entries = channels.entries();
+  makeTileSources(ids) {
+    return ids.map(this.makeTileSource, this);
+  }
 
-    return Array.from(entries).map(this.makeTileSource.bind(this));
+  getTiledImageById(id) {
+    if (this.viewer !== undefined) {
+      const {world} = this.viewer;
+
+      for (var i = 0; i < world.getItemCount(); i++) {
+        var tiledImage = world.getItemAt(i);
+        var {many_channel_id} = tiledImage.source;
+
+        if (id == many_channel_id)
+          return tiledImage;
+      }
+    }
+    return undefined;
+  }
+
+  loseChannels(ids) {
+    if (this.viewer !== undefined) {
+      const {world} = this.viewer;
+      var tiledImages = ids.map(this.getTiledImageById, this);
+      tiledImages = tiledImages.filter(i=>i !== undefined);
+      tiledImages.map(world.removeItem, world);
+    }
+  }
+
+  updateChannels(ids) {
+    if (this.viewer !== undefined) {
+      const {world} = this.viewer;
+      const {channels} = this.props;
+
+      ids.forEach((id) => {
+        let {color, range} = channels.get(id);
+        let tiledImage = this.getTiledImageById(id);
+        if (tiledImage !== undefined) {
+          tiledImage._needsDraw = true;
+          let {source} = tiledImage;
+          source.many_channel_color = color.map(c => c / 255.);
+          source.many_channel_range = range;
+        }
+      })
+      world.update();
+    }
+  }
+
+  gainChannels(ids) {
+    const {viewer} = this;
+    if (viewer !== undefined) {
+      const tileSources = this.makeTileSources(ids);
+      tileSources.map(viewer.addTiledImage, viewer);
+    }
+  }
+
+  updateCache() {
+    const {cache} = this;
+    const ids = cache.get("ids");
+    const uuid = cache.get("uuid");
+    const {channels, img} = this.props;
+
+    // Get new Values
+    var cacheNext = new Map(cache);
+    const uuidNext = '' + img.uuid;
+    const idsNext = new Set(channels.keys());
+
+    // Set new Values
+    cacheNext.set("ids", idsNext);
+    cacheNext.set("uuid", uuidNext);
+
+    // Update the whole image
+    if (uuidNext != uuid) {
+      this.loseChannels([...ids]);
+      this.gainChannels([...idsNext]);
+      return cacheNext;
+    }
+
+    const differ = (a, b) => [...a].filter(i => !b.has(i));
+    const intersect = (a, b) => [...a].filter(b.has.bind(b));
+
+    // Lose, gain, or update channels
+    this.loseChannels(differ(ids, idsNext));
+    this.gainChannels(differ(idsNext, ids));
+    this.updateChannels(intersect(idsNext, ids));
+    return cacheNext;
   }
 
   componentDidMount() {
     const {defaults} = this.state;
-    var tileSources = this.makeTileSources();
+    const {channels} = this.props;
+    const ids = [...channels.keys()];
+
+    // Update Tile Sources
+    var tileSources = this.makeTileSources(ids);
 
     // Set up openseadragon viewer
-    var viewer = viaWebGL.OpenSeadragon({
+    this.viewer = viaWebGL.OpenSeadragon({
       id: "ImageView",
       debugMode: false,
       collectionMode: true,
@@ -96,7 +186,7 @@ class ImageView extends Component {
     });
 
     // Define interface to shaders
-    var seaGL = new viaWebGL.openSeadragonGL(viewer);
+    var seaGL = new viaWebGL.openSeadragonGL(this.viewer);
     seaGL.vShader = 'vert.glsl';
     seaGL.fShader = 'frag.glsl';
 
@@ -144,6 +234,9 @@ class ImageView extends Component {
   render() {
     const {img, channels} = this.props;
     const entries = channels.entries();
+
+    // Handle changes
+    this.cache = this.updateCache();
 
     return (
       <div id="ImageView"></div>
