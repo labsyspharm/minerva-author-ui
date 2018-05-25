@@ -56,10 +56,9 @@ class Repo extends Component {
 		}
 		const randRange = () => {
 			return [
- 			[0, .3], [0, .5], [0, .7], [0, 1], 
- 			[.3, .5], [.3, .7], [.3, 1], 
- 			[.5, .7], [.5, 1], [.7, 1]
-			][randInt(10)]
+ 			[0, .1], [0, .3], [0, .5], 
+ 			[.1, .3], [.1, .5], 
+			][randInt(5)]
 		}
 
 		for (let id of Array(randInt(4)+1).keys()) {

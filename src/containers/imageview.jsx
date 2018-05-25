@@ -13,12 +13,7 @@ class ImageView extends Component {
 
   constructor() {
     super();
-    this.viewer = undefined;
-    this.cache = {
-      img: new Map(),
-      channels: new Map()
-    };
-    this.changes = undefined,
+
     this.state = {
   		auth: {
 				AccessKeyId: process.env.ACCESSKEYID,
@@ -33,7 +28,7 @@ class ImageView extends Component {
     const {img, channels} = this.props;
 
     const channel = channels.get(id);
-    if (channel == undefined) {
+    if (channel === undefined) {
       return undefined;
     }
 
@@ -76,127 +71,78 @@ class ImageView extends Component {
               .filter(s => s !== undefined);
   }
 
-  getTiledImageById(id) {
-    if (this.viewer !== undefined) {
-      const {world} = this.viewer;
+  getTiledImageIds() {
+    const {world} = this.viewer;
+    const itemCount = world.getItemCount();
 
-      for (var i = 0; i < world.getItemCount(); i++) {
-        const tiledImage = world.getItemAt(i);
-        const {many_channel_id} = tiledImage.source;
-
-        if (id == many_channel_id)
-          return tiledImage;
-      }
-    }
-    return undefined;
+    return [...Array(itemCount).keys()].map(i => {
+      const tiledImage = world.getItemAt(i);
+      const {many_channel_id} = tiledImage.source;
+      return many_channel_id;
+    });
   }
 
-  loseChannels(ids) {
-    if (this.viewer !== undefined) {
-      const {world} = this.viewer;
-      var tiledImages = ids.map(this.getTiledImageById, this);
-      tiledImages = tiledImages.filter(i=>i !== undefined);
-      tiledImages.map(world.removeItem, world);
+  getTiledImageById(id) {
+    const {world} = this.viewer;
+    const itemCount = world.getItemCount();
+
+    for (let i in [...Array(itemCount).keys()]) {
+      const tiledImage = world.getItemAt(i);
+      const {many_channel_id} = tiledImage.source;
+
+      if (id == many_channel_id)
+        return tiledImage;
     }
   }
 
   redrawChannels(ids) {
-    if (this.viewer !== undefined) {
-      const {world} = this.viewer;
-      const {channels} = this.props;
+    const {world} = this.viewer;
+    const {channels} = this.props;
 
-      ids.forEach((id) => {
-        let channel = channels.get(id);
-        if (channel === undefined) {
-          return;
-        }
-        let {color, range} = channel;
-        let tiledImage = this.getTiledImageById(id);
-        if (tiledImage !== undefined) {
-          tiledImage._needsDraw = true;
-          let {source} = tiledImage;
-          source.many_channel_color = color.map(c => c / 255.);
-          source.many_channel_range = range;
-        }
-      })
-    }
+    // Update each channel's tiledImage
+    const values = [...channels.values()];
+    values.map(this.setChannel, this);
   }
 
-  gainChannels(ids) {
+  addChannels(ids) {
     const {viewer} = this;
-    if (viewer !== undefined) {
-      const tileSources = this.makeTileSources(ids);
-      tileSources.forEach(tileSource => {
-        viewer.addTiledImage({
-          tileSource: tileSource
-        });
+    const tileSources = this.makeTileSources(ids);
+    tileSources.map(tileSource => {
+      viewer.addTiledImage({
+        tileSource: tileSource
       });
-    }
+    });
   }
 
-  /**
-    * @returns Object - channels to lose, gain, update
-    */
-  getChanges() {
-    const img = {...this.props.img};
-    const imgCache = {...this.cache.img};
-    const channels = new Map(this.props.channels);
-    const channelsCache = new Map(this.cache.channels);
-    // Actually update the cache
-    this.cache = {
-      channels: channels,
-      img: img
-    };
-
-    // derived properties
-    const uuid = '' + img.uuid;
-    const uuidCache = '' + imgCache.uuid;
-    const ids = new Set(channels.keys());
-    const idsCache = new Set(channels.keys());
-
-    // Update the whole image
-    if (uuidCache != uuid) {
-      return {
-        lost: [...idsCache],
-        gained: [...ids],
-        redrawn: []
-      };
+  setChannel(channel) {
+    const {id, color, range} = channel;
+    var tiledImage = this.getTiledImageById(id);
+    if (tiledImage === undefined) {
+      return;
     }
+    let {source} = tiledImage;
+    tiledImage._needsDraw = true;
 
-    // Lose or Gain ids that differ, update those that intersect
+    source.many_channel_color = color.map(c => c / 255.);
+    source.many_channel_range = range;
+  }
 
-    const redrawn = intersectSet(ids, idsCache);
-    const gained = differSet(ids, idsCache);
-    const lost = differSet(idsCache, ids);
-
-    // Check if really need to update
-    if (!lost.size && !gained.size) {
-      
-
+  getChannel(id) {
+    var tiledImage = this.getTiledImageById(id);
+    if (tiledImage === undefined) {
+      return undefined;
     }
-
+    let {source} = tiledImage;
     return {
-      redrawn: redrawn,
-      gained: gained,
-      lost: lost,
-    };
-  }
-
-  shouldComponentUpdate() {
-    this.changes = this.getChanges()
-    const {changes} = this;
-    if (changes === undefined) {
-      return false;
+      id: id,
+      range: source.many_channel_range,
+      color: source.many_channel_color.map(c => Math.round(c * 255))
     }
-    return true;
   }
 
   componentDidMount() {
     const {channels, img} = this.props;
     const ids = [...channels.keys()];
-
-    // Update the cache
-    this.getChanges();
 
     // Set up openseadragon viewer
     this.viewer = viaWebGL.OpenSeadragon({
@@ -213,9 +159,10 @@ class ImageView extends Component {
       collectionTileMargin: -1,
       compositeOperation: "lighter",
       prefixUrl: "images/openseadragon/",
-      // Intiial image channels
       tileSources: this.makeTileSources(ids)
     });
+
+    this.viewer.uuid = img.uuid; 
 
     // Define interface to shaders
     const seaGL = new viaWebGL.openSeadragonGL(this.viewer);
@@ -264,24 +211,43 @@ class ImageView extends Component {
   }
 
   render() {
-    const {changes} = this;
-    const {img, channels} = this.props;
-    const entries = channels.entries();
+    const {viewer} = this;
 
-
-    if (changes !== undefined) {
-      var {redrawn, gained, lost} = changes;
-
-      // TODO why need set operations here?
+    // After first render
+    if (viewer !== undefined) {
+      const {world} = viewer;
+      const {uuid} = this.props.img;
+      const {channels} = this.props;
       const ids = new Set(channels.keys());
-      this.redrawChannels(intersectSet(ids, new Set(redrawn)));
-      this.gainChannels(intersectSet(ids, new Set(gained)));
-      this.loseChannels(differSet(new Set(lost), ids));
+
+      if (viewer.uuid != uuid) {
+        // Update the whole image
+        world.removeAll();
+        viewer.uuid = uuid; 
+        this.addChannels([...ids]);
+      }
+      else {
+        // Compare the channel ids
+        const idsNow = new Set(this.getTiledImageIds());
+        const redrawn = intersectSet(ids, idsNow);
+
+        // Redraw channels that differ
+        this.redrawChannels(redrawn.filter(id => {
+          const channel = this.getChannel(id);
+          const {color, range} = channels.get(id);
+          // True if any property value differs
+          return (
+            channel.range[0] != range[0] |
+            channel.range[1] != range[1] |
+            channel.color[0] != color[0] |
+            channel.color[1] != color[1] |
+            channel.color[2] != color[2]
+          ) 
+        }));
+      }
     }
 
-    return (
-      <div id="ImageView"></div>
-    );
+    return (<div id="ImageView"></div>);
   }
 }
 
