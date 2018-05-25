@@ -97,7 +97,11 @@ class ImageView extends Component {
       const {channels} = this.props;
 
       ids.forEach((id) => {
-        let {color, range} = channels.get(id);
+        let channel = channels.get(id);
+        if (channel === undefined) {
+          return;
+        }
+        let {color, range} = channel;
         let tiledImage = this.getTiledImageById(id);
         if (tiledImage !== undefined) {
           tiledImage._needsDraw = true;
@@ -149,25 +153,24 @@ class ImageView extends Component {
       };
     }
 
-    // Ids that differ will hide/show, those that intersect will update
+    // Lose or Gain ids that differ, update those that intersect
     const differ = (a, b) => [...a].filter(i => !b.has(i));
     const intersect = (a, b) => [...a].filter(b.has.bind(b));
 
     const redrawn = intersect(ids, idsCache);
-    const hidden = differ(idsCache, ids);
-    const shown = differ(ids, idsCache);
+    const gained = differ(ids, idsCache);
+    const lost = differ(idsCache, ids);
 
     // Check if really need to update
-    if (!hidden.size && !shown.size) {
+    if (!lost.size && !gained.size) {
       
 
     }
 
-    // Allow hide/show or redraw
     return {
-      show: shown,
-      hide: hidden,
-      redraw: redrawn
+      redraw: redrawn,
+      gain: gained,
+      lose: lost,
     };
   }
 
@@ -181,11 +184,10 @@ class ImageView extends Component {
   }
 
   componentDidMount() {
-    const {channels} = this.props;
+    const {channels, img} = this.props;
     const ids = [...channels.keys()];
 
-    // Update the cache with the initial tileSources
-    const tileSources = this.makeTileSources(ids);
+    // Update the cache
     this.getChanges();
 
     // Set up openseadragon viewer
@@ -204,7 +206,7 @@ class ImageView extends Component {
       compositeOperation: "lighter",
       prefixUrl: "images/openseadragon/",
       // Intiial image channels
-      tileSources: tileSources
+      tileSources: this.makeTileSources(ids)
     });
 
     // Define interface to shaders
