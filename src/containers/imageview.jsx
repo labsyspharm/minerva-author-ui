@@ -30,8 +30,8 @@ class ImageView extends Component {
     const {auth} = this.state;
     const {url} = this.props.imageOptions;
 
-    const [id, channelcontrol] = entry;
-    const {color, range} = channelcontrol;
+    const [id, chan] = entry;
+    const {color, range} = chan;
 
 		const getTileName = (x, y, level, channel) => {
 			return "C" + channel + "-T0-Z0-L" + level + "-Y" + y + "-X" + x + ".png";

@@ -89,17 +89,17 @@ class Repo extends Component {
     };
   }
 
-  addChannel(imported, imaged, channelcontrol, callback=()=>{}) {
+  addChannel(imp, img, chan, callback=()=>{}) {
 
-    const {id} = channelcontrol;
+    const {id} = chan;
     const {channelMaps} = this.state;
-    const keys = [imported, imaged].join();
+    const keys = [imp, img].join();
     const channelMap = channelMaps.get(keys);
 
     var newChannelMap = new Map(channelMap);
     var newChannelMaps = new Map(channelMaps);
 
-    newChannelMap.set(id, channelcontrol);
+    newChannelMap.set(id, chan);
     newChannelMaps.set(keys, newChannelMap);
 
     this.setState({
@@ -107,11 +107,11 @@ class Repo extends Component {
     }, callback)
   }
 
-  updateColor(imported, imaged, id, rgbColor) {
+  updateColor(imp, img, id, rgbColor) {
 
     const {channelMaps} = this.state;
 
-    const keys = [imported, imaged].join();
+    const keys = [imp, img].join();
     const channelMap = channelMaps.get(keys);
     
     var newChannelMap = new Map(channelMap);
@@ -125,11 +125,11 @@ class Repo extends Component {
     })
   }
 
-  updateRange(imported, imaged, id, range_percent) {
+  updateRange(imp, img, id, range_percent) {
 
     const {channels, channelMaps} = this.state;
 
-    const keys = [imported, imaged].join();
+    const keys = [imp, img].join();
     const channelMap = channelMaps.get(keys);
 
     var newChannelMap = new Map(channelMap);
@@ -164,10 +164,10 @@ class Repo extends Component {
       <div className="Repo">
         <ImportList>
           {this.state.imports.map(id => {
-            const imported = importMap.get(id);
+            const imp = importMap.get(id);
             const imageMap = imageMaps.get(id);
             return (
-              <Import key={id} imageMap={imageMap} imported={imported}/>
+              <Import key={id} imageMap={imageMap} imp={imp}/>
             );
           })}
         </ImportList>

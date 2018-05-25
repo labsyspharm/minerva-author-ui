@@ -1,10 +1,10 @@
 import React, { Component } from "react";
 
 /**
- * @param {Object} image
+ * @param {Object} img
  */
-const ImageName = ({image}) => {
-  const {id, name, url} = image;
+const ImageName = ({img}) => {
+  const {id, name, url} = img;
 
   return (
     <a href={url}>{name}</a>

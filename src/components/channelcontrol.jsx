@@ -7,11 +7,11 @@ import Slider from "react-bootstrap-slider";
 import '../style/channelcontrol'
 
 /** 
- * @param {Object} channelcontrol
+ * @param {Object} chan
  * @param {function} onRangeChange - update range state
  */
-const ChannelControl = ({channelcontrol, onRangeChange, onColorChange}) => {
-  const {id, color, range} = channelcontrol;
+const ChannelControl = ({chan, onRangeChange, onColorChange}) => {
+  const {id, color, range} = chan;
   const [min, max] = range.map(v => {
     return Math.round(100 * v);
   });

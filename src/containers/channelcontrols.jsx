@@ -14,10 +14,10 @@ class ChannelControls extends Component {
       <div>
         <ChannelControlList>
           {Array.from(entries).map(entry => { 
-            const [id, channelcontrol] = entry;
-            const {color, range} = channelcontrol;
+            const [id, chan] = entry;
+            const {color, range} = chan;
             return (
-              <ChannelControl key={id} channelcontrol={channelcontrol}
+              <ChannelControl key={id} chan={chan}
                onColorChange={(c) => updateColor(id, c)}
                onRangeChange={(r) => updateRange(id, r)}/>
             );
