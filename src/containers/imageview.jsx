@@ -18,11 +18,7 @@ class ImageView extends Component {
       img: new Map(),
       channels: new Map()
     };
-    this.changes = {
-      redrawn: [],
-      gained: [],
-      lost: [],
-    },
+    this.changes = undefined,
     this.state = {
   		auth: {
 				AccessKeyId: process.env.ACCESSKEYID,
@@ -189,7 +185,7 @@ class ImageView extends Component {
   shouldComponentUpdate() {
     this.changes = this.getChanges()
     const {changes} = this;
-    if (!Object.keys(changes).length) {
+    if (changes === undefined) {
       return false;
     }
     return true;
@@ -272,13 +268,16 @@ class ImageView extends Component {
     const {img, channels} = this.props;
     const entries = channels.entries();
 
-    var {redrawn, gained, lost} = changes;
 
-    // TODO why need set operations here?
-    const ids = new Set(channels.keys());
-    this.redrawChannels(intersectSet(ids, new Set(redrawn)));
-    this.gainChannels(intersectSet(ids, new Set(gained)));
-    this.loseChannels(differSet(new Set(lost), ids));
+    if (changes !== undefined) {
+      var {redrawn, gained, lost} = changes;
+
+      // TODO why need set operations here?
+      const ids = new Set(channels.keys());
+      this.redrawChannels(intersectSet(ids, new Set(redrawn)));
+      this.gainChannels(intersectSet(ids, new Set(gained)));
+      this.loseChannels(differSet(new Set(lost), ids));
+    }
 
     return (
       <div id="ImageView"></div>
