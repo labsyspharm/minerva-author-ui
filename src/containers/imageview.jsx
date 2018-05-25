@@ -29,6 +29,10 @@ class ImageView extends Component {
     const {img, channels} = this.props;
 
     const channel = channels.get(id);
+    if (channel == undefined) {
+      return undefined;
+    }
+
     const {color, range} = channel;
     const {url} = img;
 
@@ -64,7 +68,8 @@ class ImageView extends Component {
   }
 
   makeTileSources(ids) {
-    return ids.map(this.makeTileSource, this);
+    return ids.map(this.makeTileSource, this)
+              .filter(s => s !== undefined);
   }
 
   getTiledImageById(id) {
@@ -99,6 +104,12 @@ class ImageView extends Component {
       ids.forEach((id) => {
         let channel = channels.get(id);
         if (channel === undefined) {
+          /// TODO: fix changes vs props discrepency
+          let countCache = this.cache.channels.size;
+          let count = channels.size;
+          if (id == count) {
+            console.log('Lost '+(countCache-count)+' channels');
+          }
           return;
         }
         let {color, range} = channel;
