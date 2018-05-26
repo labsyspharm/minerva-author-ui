@@ -58,8 +58,8 @@ class Repo extends Component {
 		}
 		const randRange = () => {
 			return [
- 			[0, .1], [0, .3], [0, .5], 
- 			[.1, .3], [.1, .5], 
+ 			[0, .1], [0, .3], [0, .5],
+ 			[.1, .3], [.1, .5],
 			][randInt(5)]
 		}
 
@@ -110,6 +110,29 @@ class Repo extends Component {
     })
   }
 
+  // <div className="RepoWrapper">
+  //   <div className="RepoImports">
+  //     <ImportList>
+  //       {Array.from(entries).map(entry => {
+  //         const [uuid, imp] = entry;
+  //         return (
+  //           <Import key={uuid}
+  //           click={this.dummyAjax.bind(this)}
+  //           imgs={imgs} imp={imp}/>
+  //         );
+  //       })}
+  //     </ImportList>
+  //   </div>
+  //   <div className="RepoSpacer"></div>
+  //   <div className="RepoControls">
+  //     <ChannelControls className="ChannelControls"
+  //       channels={channels}
+  //       updateColor={this.updateColor.bind(this)}
+  //       updateRange={this.updateRange.bind(this)}
+  //     />
+  //   </div>
+  // </div>
+
   render() {
     const {imps, imgs, active} = this.state;
 
@@ -118,33 +141,22 @@ class Repo extends Component {
 		const {channels} = active;
 
     return (
-      <div className="Repo">
-        <div className="RepoWrapper">
-          <div className="RepoImports">
-            <ImportList>
-              {Array.from(entries).map(entry => {
-                const [uuid, imp] = entry;
-                return (
-                  <Import key={uuid}
-                  click={this.dummyAjax.bind(this)}
-                  imgs={imgs} imp={imp}/>
-                );
-              })}
-            </ImportList>
+
+      <div className="container Repo">
+      <ImageView className="ImageView"
+        img={img}
+        channels={channels}
+      />
+        <div className="row">
+          <div className="col-sm-2">
+            <nav className="navbar navbar-default navbar-fixed-side">
+              <button className="btn btn-default" type="submit">Button</button>
+            </nav>
           </div>
-          <div className="RepoSpacer"></div>
-          <div className="RepoControls">
-            <ChannelControls className="ChannelControls"
-              channels={channels}
-              updateColor={this.updateColor.bind(this)}
-              updateRange={this.updateRange.bind(this)}
-            />
-          </div>
+          <div className="col-sm-8">Test2</div>
+          <div className="col-sm-2">Test3</div>
         </div>
-        <ImageView className="ImageView"
-          img={img}
-          channels={channels}
-        />
+
       </div>
     );
   }

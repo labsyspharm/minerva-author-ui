@@ -12,13 +12,13 @@ div > ul > li > ul {
 }
 
 .Demo {
-  display: grid;
-  grid-template-rows: 4em 1fr;
-  background-color: #000;
-  color: #CCC;
+  /* display: grid; */
+  /* grid-template-rows: 4em 1fr; */
+  background-color: black;
+  /* color: #CCC; */
 }
 
 .Banner {
-  background-color: #CCC;
-  color: #000;
+  background-color: black;
+  color: white;
 }
