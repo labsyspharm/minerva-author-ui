@@ -63,8 +63,8 @@ export const login = (email, password) => {
     })
     .then(response => response.getIdToken().getJwtToken());
 
-  const credentialsSet = token
-    .then(setCredentials);
+  const credentialsSet = token;
+    // .then(setCredentials);
 
   const gotAttrs = token
     .then(() => getAttributes(cognitoUser))
@@ -87,10 +87,44 @@ export const login = (email, password) => {
     }));
 }
 
+export const fetchTile = credentialsHolder => options => {
+
+    // // Wait for credentials
+    // const getCredentials = () => {
+    //   return new Promise((resolve, reject) => {
+    //     AWS.config.credentials.get(err => err ? reject(err) : resolve());
+    //   });
+    // };
+
+    const getObject = (bucket, key) => {
+      return new Promise((resolve, reject) => {
+        const s3 = new AWS.S3({ credentials: credentialsHolder.credentials });
+        const params = { Bucket: bucket, Key: key };
+        s3.getObject(params, (err, data) => err ? reject(err) : resolve(data));
+      });
+    };
+
+    // Split the URL into bucket and key
+    var no_protocol = options.url.split('://')[1] || options.url;
+    var [bucket, key] = no_protocol.split('.s3.amazonaws.com/');
+    if (key === undefined) {
+      var first_slash = no_protocol.indexOf('/');
+      bucket = no_protocol.slice(0, first_slash);
+      key = no_protocol.slice(first_slash + 1);
+    }
+
+    getObject(bucket, key)
+      .then(obj => options.success({response: obj.Body}))
+      .catch(err => console.error(err));
+};
+
+
+
 // export const login = (email, password) => {
 //   console.log(email, password);
 // }
 
 export default {
-  login
+  login,
+  fetchTile
 };

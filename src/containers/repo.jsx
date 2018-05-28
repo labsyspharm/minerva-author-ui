@@ -38,7 +38,10 @@ class Repo extends Component {
 				channels: new Map([
 					[0, { id: 0, color: [255, 0, 0], range: { min: 0, max: 10000 }, minRange: 0, maxRange: 65535 }],
 					[1, { id: 1, color: [0, 0, 255], range: { min: 10000, max: 65535 }, minRange: 0, maxRange:65535 }]
-				])
+				]),
+        credentialsHolder: {
+          credentials: null
+        }
 			}
     };
 
@@ -130,13 +133,14 @@ class Repo extends Component {
 
 		const entries = imps.entries();
     const img = imgs.get(active.uuid);
-		const { channels } = active;
+		const { channels, credentialsHolder } = active;
 
     return (
       <React.Fragment>
         <ImageView className="ImageView"
           img={ img }
           channels={ channels }
+          credentialsHolder={ credentialsHolder }
         />
         <Banner session={ session }
                 handleLogin={ this.handleLogin }

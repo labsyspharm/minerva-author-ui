@@ -6,21 +6,21 @@ import AWS from 'aws-sdk';
  * @param {string} bucket: s3 bucket
  * @param {string} file: s3 file
  */
-// module.exports = function(keywords) {
-//
-// 	var credentials = new AWS.Credentials({
-//     accessKeyId: keywords.AccessKeyId,
-//     secretAccessKey: keywords.SecretAccessKey,
-//     sessionToken: keywords.SessionToken,
-// 	});
-//
-//   var config = new AWS.Config({
-// 		credentials: credentials,
-//     region: 'us-east-1'
-//   });
-//
-// 	AWS.config.credentials = credentials;
-// }
+module.exports = function(keywords) {
+
+	var credentials = new AWS.Credentials({
+    accessKeyId: keywords.AccessKeyId,
+    secretAccessKey: keywords.SecretAccessKey,
+    sessionToken: keywords.SessionToken,
+	});
+
+  var config = new AWS.Config({
+		credentials: credentials,
+    region: 'us-east-1'
+  });
+
+	AWS.config.credentials = credentials;
+}
 
 module.exports.prototype = {
 
