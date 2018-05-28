@@ -1,4 +1,4 @@
-.ChannelControl {
+/* .ChannelControl {
   width: 80vw;
   margin: auto;
   position: relative;
@@ -18,4 +18,15 @@
 .ChannelControl .RangeForm > input[type="text"] {
   text-align: center;
   width: 4em;
+} */
+
+.input-range__track.input-range__track--active,
+div.input-range__slider {
+  background-color: yellow;
+  border-color: yellow;
+}
+
+.list-group-item-slider {
+  margin-top: 20px;
+  background-color: transparent;
 }

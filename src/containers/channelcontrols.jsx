@@ -6,24 +6,22 @@ import ChannelControl from "../components/channelcontrol";
 class ChannelControls extends Component {
 
   render() {
-    const {updateColor, updateRange} = this.props;
-    const {channels} = this.props;
-    const entries = channels.entries();
+    const { channels, handleChange } = this.props;
+
+    const channelControls = Array.from(channels.values()).map(channel => {
+      const { id, color, range, minRange, maxRange } = channel;
+      return (
+        <ChannelControl key={ id } id={ id } color={ color } range={ range }
+                        minRange={ minRange } maxRange= { maxRange }
+                        handleChange={ handleChange } />
+      );
+
+    });
 
     return (
-      <div>
-        <ChannelControlList>
-          {Array.from(entries).map(entry => { 
-            const [id, chan] = entry;
-            const {color, range} = chan;
-            return (
-              <ChannelControl key={id} chan={chan}
-               onColorChange={(c) => updateColor(id, c)}
-               onRangeChange={(r) => updateRange(id, r)}/>
-            );
-          })}
-        </ChannelControlList>
-      </div>
+      <ChannelControlList>
+        { channelControls }
+      </ChannelControlList>
     );
   }
 }

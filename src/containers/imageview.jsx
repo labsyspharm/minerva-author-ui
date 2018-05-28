@@ -32,8 +32,8 @@ class ImageView extends Component {
       return undefined;
     }
 
-    const {color, range} = channel;
-    const {url} = img;
+    const { color, range, maxRange } = channel;
+    const { url } = img;
 
 		const getTileName = (x, y, level, channel) => {
 			return "C" + channel + "-T0-Z0-L" + level + "-Y" + y + "-X" + x + ".png";
@@ -55,7 +55,7 @@ class ImageView extends Component {
 			// CUstom parameters
       many_channel_id: id,
 			many_channel_url: url,
-      many_channel_range: range,
+      many_channel_range: [range['min'] / maxRange, range['max'] / maxRange],
       many_channel_color: color.map(c => c / 255.),
 			// Standard parameters
 			tileSize: 1024,
@@ -83,12 +83,12 @@ class ImageView extends Component {
   }
 
   getTiledImageById(id) {
-    const {world} = this.viewer;
+    const { world } = this.viewer;
     const itemCount = world.getItemCount();
 
     for (let i in [...Array(itemCount).keys()]) {
       const tiledImage = world.getItemAt(i);
-      const {many_channel_id} = tiledImage.source;
+      const { many_channel_id } = tiledImage.source;
 
       if (id == many_channel_id)
         return tiledImage;
@@ -96,8 +96,8 @@ class ImageView extends Component {
   }
 
   redrawChannels(ids) {
-    const {world} = this.viewer;
-    const {channels} = this.props;
+    const { world } = this.viewer;
+    const { channels } = this.props;
 
     // Update each channel's tiledImage
     const values = [...channels.values()];
@@ -115,7 +115,7 @@ class ImageView extends Component {
   }
 
   setChannel(channel) {
-    const {id, color, range} = channel;
+    const { id, color, range, maxRange } = channel;
     var tiledImage = this.getTiledImageById(id);
     if (tiledImage === undefined) {
       return;
@@ -124,7 +124,8 @@ class ImageView extends Component {
     tiledImage._needsDraw = true;
 
     source.many_channel_color = color.map(c => c / 255.);
-    source.many_channel_range = range;
+    source.many_channel_range = [range['min'] / maxRange,
+                                 range['max'] / maxRange];
   }
 
   getChannel(id) {
@@ -162,7 +163,7 @@ class ImageView extends Component {
       tileSources: this.makeTileSources(ids)
     });
 
-    this.viewer.uuid = img.uuid; 
+    this.viewer.uuid = img.uuid;
 
     // Define interface to shaders
     const seaGL = new viaWebGL.openSeadragonGL(this.viewer);
@@ -170,7 +171,7 @@ class ImageView extends Component {
     seaGL.fShader = 'frag.glsl';
 
     seaGL.addHandler('tile-drawing',  function(callback, e) {
-			// Read parameters from each tile 
+			// Read parameters from each tile
 			const tile = e.tile;
 			const via = this.viaGL;
 			const viewer = this.openSD;
@@ -180,7 +181,7 @@ class ImageView extends Component {
 			// Store channel color and range to send to shader
 			via.color_3fv = new Float32Array(source.many_channel_color);
 			via.range_2fv = new Float32Array(source.many_channel_range);
-	 
+
 			// Start webGL rendering
 			callback(e);
   	});
@@ -215,15 +216,15 @@ class ImageView extends Component {
 
     // After first render
     if (viewer !== undefined) {
-      const {world} = viewer;
-      const {uuid} = this.props.img;
-      const {channels} = this.props;
+      const { world } = viewer;
+      const { uuid } = this.props.img;
+      const { channels } = this.props;
       const ids = new Set(channels.keys());
 
       if (viewer.uuid != uuid) {
         // Update the whole image
         world.removeAll();
-        viewer.uuid = uuid; 
+        viewer.uuid = uuid;
         this.addChannels([...ids]);
       }
       else {
@@ -234,15 +235,15 @@ class ImageView extends Component {
         // Redraw channels that differ
         this.redrawChannels(redrawn.filter(id => {
           const channel = this.getChannel(id);
-          const {color, range} = channels.get(id);
+          const { color, range, maxRange } = channels.get(id);
           // True if any property value differs
           return (
-            channel.range[0] != range[0] |
-            channel.range[1] != range[1] |
+            channel.range[0] != range['min'] / maxRange |
+            channel.range[1] != range['max'] / maxRange |
             channel.color[0] != color[0] |
             channel.color[1] != color[1] |
             channel.color[2] != color[2]
-          ) 
+          )
         }));
       }
     }

@@ -1,50 +1,34 @@
 import React, { Component } from "react";
+import InputRange from 'react-input-range';
 
-import RangeText from "./rangetext";
 import HuePicker from "./huepicker";
-import Slider from "react-bootstrap-slider";
 
 import '../style/channelcontrol'
 
-/** 
+/**
  * @param {Object} chan
  * @param {function} onRangeChange - update range state
  */
-const ChannelControl = ({chan, onRangeChange, onColorChange}) => {
-  const {id, color, range} = chan;
-  const [min, max] = range.map(v => {
-    return Math.round(100 * v);
-  });
-	const full = [0, 100];
-	const step = 1;
+const ChannelControl = ({ id, color, range, minRange, maxRange,
+                          handleChange }) => {
 
   return (
-    <div className="ChannelControl">
-      <HuePicker
-        color={color}
-        change={color => {
-          const {r, g, b} = color.rgb;
-          onColorChange([r, g, b]);
-        }}
-      />
-      <form className="RangeForm">
-        <RangeText
-        onChange={val => onRangeChange([val, max])}
-        value={min} min={full[0]} max={max - 1}
-        step={step} full={full}/>
-        <Slider
-          value={[min, max]}
-          tooltip="hide"
-          change={e => onRangeChange(e.target.value)}
-          step={step}
-          min={full[0]}
-          max={full[1]}
+    <div className="ChannelControl row">
+      <div className="col-1">
+        <HuePicker
+          color={ color }
+          handleChange={ color => handleChange(id, color, null) }
         />
-        <RangeText
-        onChange={val => onRangeChange([min, val])}
-        value={max} min={min + 1} max={full[1]}
-        step={step} full={full}/>
-      </form>
+      </div>
+      <div className="col">
+        <InputRange
+          allowSameValues={ true }
+          draggableTrack={ true }
+          maxValue={ maxRange }
+          minValue={ minRange }
+          value={ range }
+          onChange={ range => handleChange(id, null, range) } />
+      </div>
     </div>
   );
 }

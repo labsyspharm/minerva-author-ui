@@ -3,8 +3,8 @@ import ReactDOM from "react-dom";
 
 import Repo from "./containers/repo";
 
-import "./style/bootstrap.min";
-import "./style/bootstrap-slider.min";
+// import "./style/bootstrap.min";
+import "react-input-range/lib/css/index.css"
 import "./style/demo";
 
 ReactDOM.render(

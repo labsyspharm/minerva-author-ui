@@ -33,11 +33,14 @@ class Repo extends Component {
 			'active': {
 				uuid: 'uuid4',
 				channels: new Map([
-					[0, { id: 0, color: [255, 0, 0], range: [0, 0.5]}],
-					[1, { id: 1, color: [0, 0, 255], range: [0, 0.1]}]
+					[0, { id: 0, color: [255, 0, 0], range: { min: 0, max: 10000 }, minRange: 0, maxRange: 65535 }],
+					[1, { id: 1, color: [0, 0, 255], range: { min: 10000, max: 65535 }, minRange: 0, maxRange:65535 }]
 				])
 			}
     };
+
+    // Bind
+    this.handleChange = this.handleChange.bind(this);
   }
 
 	/**
@@ -45,7 +48,7 @@ class Repo extends Component {
 	 */
 	dummyAjax(img) {
 
-		var channels = new Map();
+		const channels = new Map();
 
 		// Get a random integer, color, range
 		const randInt = n => Math.floor(Math.random() * n);
@@ -58,17 +61,28 @@ class Repo extends Component {
 		}
 		const randRange = () => {
 			return [
- 			[0, .1], [0, .3], [0, .5],
- 			[.1, .3], [.1, .5],
+        { min: 0, max: 0.1}, { min: 0, max: 0.3 }, { min: 0, max: 0.5 },
+        { min: 0.1, max: 0.3 }, { min: 0.1, max: 0.5 }
 			][randInt(5)]
 		}
 
 		for (let id of Array(randInt(4)+1).keys()) {
-  		channels.set(id, {
-				id: id,
-				range: randRange(),
-				color: randColor(),
-			});
+      const rawRange = randRange();
+      const range = {
+        min: Math.floor(rawRange['min'] * 65535),
+        max: Math.floor(rawRange['max'] * 65535)
+      };
+      const minRange = 0;
+      const maxRange = 65535;
+      const color = randColor();
+      const channel = {
+				id,
+        color,
+        range,
+        minRange,
+        maxRange
+			};
+  		channels.set(id, channel);
 		}
 
 		this.setState({
@@ -79,82 +93,63 @@ class Repo extends Component {
 		});
 	}
 
-  updateColor(id, colorRGB) {
+  handleChange(id, color, range) {
+    const { active } = this.state;
+    const { channels } = active;
+    const channel = channels.get(id);
 
-    const {channels} = this.state.active;
-    var channelsCopy = new Map(channels);
-
-    channelsCopy.get(id).color = colorRGB;
-
-    this.setState({
-      channels: channelsCopy
-    })
-  }
-
-  updateRange(id, rangeInt) {
-
-    const {channels} = this.state.active;
-    var channelsCopy = new Map(channels);
-
-    const range = rangeInt.map(v => {
-      return v / 100;
-    });
-    if (!(0 <= range[0] < range[1] <= 1)) {
-      return;
+    const newChannel = { ...channel };
+    if (color) {
+      newChannel['color'] = color;
     }
-
-    channelsCopy.get(id).range = range;
+    if (range) {
+      newChannel['range'] = range;
+    }
+    const newChannels = new Map([...channels,
+                                 ...(new Map([[id, newChannel]]))]);
+    const newActive = { ...this.state['active'], channels: newChannels };
 
     this.setState({
-      channels: channelsCopy
-    })
+      active: newActive
+    });
   }
 
-  // <div className="RepoWrapper">
-  //   <div className="RepoImports">
-  //     <ImportList>
-  //       {Array.from(entries).map(entry => {
-  //         const [uuid, imp] = entry;
-  //         return (
-  //           <Import key={uuid}
-  //           click={this.dummyAjax.bind(this)}
-  //           imgs={imgs} imp={imp}/>
-  //         );
-  //       })}
-  //     </ImportList>
-  //   </div>
-  //   <div className="RepoSpacer"></div>
-  //   <div className="RepoControls">
-  //     <ChannelControls className="ChannelControls"
-  //       channels={channels}
-  //       updateColor={this.updateColor.bind(this)}
-  //       updateRange={this.updateRange.bind(this)}
-  //     />
-  //   </div>
-  // </div>
+  // <nav className="navbar navbar-default navbar-fixed-side">
 
   render() {
-    const {imps, imgs, active} = this.state;
+    const { imps, imgs, active } = this.state;
 
 		const entries = imps.entries();
     const img = imgs.get(active.uuid);
-		const {channels} = active;
+		const { channels } = active;
 
     return (
 
-      <div className="container Repo">
+      <div className="container-fluid Repo">
       <ImageView className="ImageView"
-        img={img}
-        channels={channels}
+        img={ img }
+        channels={ channels }
       />
-        <div className="row">
-          <div className="col-sm-2">
-            <nav className="navbar navbar-default navbar-fixed-side">
-              <button className="btn btn-default" type="submit">Button</button>
-            </nav>
+        <div className="row justify-content-between">
+          <div className="col-md-2">
+            <ImportList>
+              {Array.from(entries).map(entry => {
+                const [uuid, imp] = entry;
+                return (
+                  <Import key={uuid}
+                  click={this.dummyAjax.bind(this)}
+                  imgs={imgs} imp={imp}/>
+                );
+              })}
+            </ImportList>
           </div>
-          <div className="col-sm-8">Test2</div>
-          <div className="col-sm-2">Test3</div>
+
+          <div className="col-md-3">
+            <ChannelControls className="ChannelControls"
+              channels={ channels }
+              handleChange={ this.handleChange }
+            />
+          </div>
         </div>
 
       </div>
