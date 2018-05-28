@@ -27,7 +27,6 @@ class HuePicker extends React.Component {
   handleChange({ rgb }) {
     const { handleChange } = this.props;
     handleChange([rgb.r, rgb.g, rgb.b]);
-    // this.setState({ color: color.rgb })
   };
 
   render() {
@@ -66,12 +65,13 @@ class HuePicker extends React.Component {
 
     return (
       <div>
-        <div style={ styles.swatch } onClick={ this.handleClick }>
+        <div className="ColorPickerSwatch" style={ styles.swatch }
+             onClick={ this.handleClick }>
           <div style={ styles.color } />
         </div>
         {
           this.state.displayColorPicker
-          ? <div style={ styles.popover }>
+          ? <div className="ColorPickerDialog" style={ styles.popover }>
               <div style={ styles.cover } onClick={ this.handleClose } />
               <SketchPicker color={ color }
                             onChange={ this.handleChange } />

@@ -2,3 +2,7 @@
   background-color: transparent;
   pointer-events: none;
 }
+
+.ImportList * {
+  pointer-events: initial;
+}
