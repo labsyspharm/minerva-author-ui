@@ -131,25 +131,21 @@ class Repo extends Component {
         channels={ channels }
       />
         <div className="row justify-content-between">
-          <div className="col-md-2">
-            <ImportList>
-              {Array.from(entries).map(entry => {
-                const [uuid, imp] = entry;
-                return (
-                  <Import key={uuid}
-                  click={this.dummyAjax.bind(this)}
-                  imgs={imgs} imp={imp}/>
-                );
-              })}
-            </ImportList>
-          </div>
+          <ImportList className="ImportList col-md-2">
+            {Array.from(entries).map(entry => {
+              const [uuid, imp] = entry;
+              return (
+                <Import key={uuid}
+                click={this.dummyAjax.bind(this)}
+                imgs={imgs} imp={imp}/>
+              );
+            })}
+          </ImportList>
 
-          <div className="col-md-3">
-            <ChannelControls className="ChannelControls"
-              channels={ channels }
-              handleChange={ this.handleChange }
-            />
-          </div>
+          <ChannelControls className="ChannelControls col-md-3"
+            channels={ channels }
+            handleChange={ this.handleChange }
+          />
         </div>
 
       </div>

@@ -3,7 +3,7 @@ import React, { Component } from "react";
 /**
  * Make a list of children
  */
-const ChannelControlList = ({ children }) => {
+const ChannelControlList = ({ children, className }) => {
 
   const listItems = React.Children
     .map(children, (child, id) => (
@@ -13,7 +13,7 @@ const ChannelControlList = ({ children }) => {
     ));
 
   return(
-    <ul className="list-group list-group-dark">
+    <ul className={ className + " list-group list-group-slider" }>
       { listItems }
     </ul>
   );

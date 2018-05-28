@@ -20,13 +20,30 @@
   width: 4em;
 } */
 
+/* Color and space out sliders */
+.list-group-item-slider {
+  margin-top: 20px;
+  background-color: transparent;
+}
+
+/* Color and clickthrough most aspects of the sliders */
+.list-group-slider {
+  background-color: transparent;
+  pointer-events: none;
+}
+
+/* Color of slider controls  */
 .input-range__track.input-range__track--active,
 div.input-range__slider {
   background-color: yellow;
   border-color: yellow;
 }
 
-.list-group-item-slider {
-  margin-top: 20px;
-  background-color: transparent;
+/* Retain interactivity in controls while parents have clickthrough */
+div.input-range__track,
+div.input_range__slider,
+div.ColorPickerSwatch,
+div.ColorPickerDialog
+{
+  pointer-events: all;
 }
