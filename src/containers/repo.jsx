@@ -14,6 +14,7 @@ class Repo extends Component {
   constructor() {
     super();
     this.state = {
+      session: null,
 			imps: new Map([
 				['uuid1', { uuid: 'uuid1', name: 'import1', imgs: ['uuid3', 'uuid4'] }],
 				['uuid2', { uuid: 'uuid2', name: 'import2', imgs: ['uuid5'] }]
@@ -118,12 +119,14 @@ class Repo extends Component {
   }
 
   handleLogin(email, password) {
-    api.login('dpwrussell@gmail.com', 'g58!Zz&eGH')
-      .then(token => console.log(token));
+    api.login(process.env.EMAIL, process.env.PASSWORD)
+      .then(session => this.setState({
+        session
+      }));
   }
 
   render() {
-    const { imps, imgs, active } = this.state;
+    const { session, imps, imgs, active } = this.state;
 
 		const entries = imps.entries();
     const img = imgs.get(active.uuid);
@@ -135,7 +138,8 @@ class Repo extends Component {
           img={ img }
           channels={ channels }
         />
-        <Banner handleLogin={ this.handleLogin }
+        <Banner session={ session }
+                handleLogin={ this.handleLogin }
                 handleLogout={ () => console.log('logout') } />
         <div className="container-fluid Repo">
 

@@ -1,10 +1,12 @@
 import React from "react";
 
-const Banner = ({ user, handleLogin, handleLogout }) => {
+const Banner = ({ session, handleLogin, handleLogout }) => {
 
-  const loggedIn = !!user;
+  const loggedIn = !!session;
   const logButtonClassName = loggedIn ? "btn-outline-dark" : "btn-outline-success";
   const handleLog = loggedIn ? handleLogout : handleLogin;
+  console.log(session);
+  const logText = loggedIn ? session['attrs']['preferred_username'] : 'Login';
 
   return (
     <nav className="navbar navbar-expand-lg navbar-dark">
@@ -31,7 +33,7 @@ const Banner = ({ user, handleLogin, handleLogout }) => {
                 </li>
                 <button className={ logButtonClassName + " btn my-2 my-sm-0" }
                         onClick={ handleLog }>
-                  Login
+                  { logText }
                 </button>
             </ul>
         </div>

@@ -1,7 +1,7 @@
 import React, { Component } from "react";
 
 import viaWebGL from 'viawebgl';
-import AmazonWebSource from '../amazonwebsource';
+// import AmazonWebSource from '../amazonwebsource';
 
 import '../style/imageview';
 
@@ -145,6 +145,7 @@ class ImageView extends Component {
     const {channels, img} = this.props;
     const ids = [...channels.keys()];
 
+    /*
     // Set up openseadragon viewer
     this.viewer = viaWebGL.OpenSeadragon({
       debugMode: false,
@@ -209,6 +210,7 @@ class ImageView extends Component {
 		seaGL.addHandler('tile-loaded', (callback, e) => callback(e));
 
     seaGL.init();
+    */
   }
 
   render() {
