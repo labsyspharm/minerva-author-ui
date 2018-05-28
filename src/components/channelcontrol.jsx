@@ -1,33 +1,49 @@
 import React, { Component } from "react";
 import InputRange from 'react-input-range';
-
+import RangeText from "./rangetext";
 import HuePicker from "./huepicker";
 
 import '../style/channelcontrol'
 
 /**
- * @param {Object} chan
- * @param {function} onRangeChange - update range state
+ * @param {function} handleChange - update color and range
  */
 const ChannelControl = ({ id, color, range, minRange, maxRange,
                           handleChange }) => {
 
+  // Large steps for text boxes
+  const step = Math.ceil((maxRange - minRange) / 255);
+
   return (
-    <div className="ChannelControl row">
+    <div className="row">
       <div className="col-1">
         <HuePicker
           color={ color }
           handleChange={ color => handleChange(id, color, null) }
         />
       </div>
-      <div className="col">
+      <div className="ChannelSlider col-11">
+        <RangeText
+          onChange={val => handleChange(id, null, {
+            min: val,
+            max: range.max
+          })}
+          value={range.min} min={minRange} max={range.max - step}
+          step={step} full={[minRange, maxRange]} />
         <InputRange
-          allowSameValues={ true }
-          draggableTrack={ true }
+          allowSameValues={ false }
+          draggableTrack={ false }
           maxValue={ maxRange }
           minValue={ minRange }
           value={ range }
           onChange={ range => handleChange(id, null, range) } />
+        <RangeText
+          onChange={val => handleChange(id, null, {
+            min: range.min,
+            max: val
+          })}
+          value={range.max} min={range.min + step} max={maxRange}
+          step={step} full={[minRange, maxRange]} />
       </div>
     </div>
   );

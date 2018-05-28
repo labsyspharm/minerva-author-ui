@@ -1,5 +1,4 @@
 import React, { Component } from "react";
-import Slider from "react-bootstrap-slider";
 
 class RangeText extends Component {
 
@@ -49,7 +48,7 @@ class RangeText extends Component {
    */
   render() {
 
-    const {value, min, max} = this.props;
+    const {value, min, max, step} = this.props;
     const shown_value = this.showValue(value);
 
     return (
@@ -58,10 +57,10 @@ class RangeText extends Component {
       onKeyDown={e => {
         switch (e.key) {
           case "ArrowUp":
-            this.updateValue(value + 1);
+            this.updateValue(value + step);
             break;
           case "ArrowDown":
-            this.updateValue(value - 1);
+            this.updateValue(value - step);
             break;
         }
       }}

@@ -1,24 +1,16 @@
-/* .ChannelControl {
-  width: 80vw;
-  margin: auto;
-  position: relative;
+.ChannelSlider {
+  display: grid;
+  grid-template-columns: 4em 1fr 4em;
 }
 
-.ChannelControl .RangeForm {
-  margin-bottom: 2em;
-  padding-left: 3em;
-  display: flex;
+.ChannelSlider input[type="text"] {
+  background: transparent;
+  text-align: center;
+  display: inline;
+  border: none;
+  color: white;
   width: 100%;
 }
-
-.ChannelControl .RangeForm > .slider {
-  flex: 1 0 4em;
-}
-
-.ChannelControl .RangeForm > input[type="text"] {
-  text-align: center;
-  width: 4em;
-} */
 
 /* Color and space out sliders */
 .list-group-item-slider {
@@ -43,7 +35,13 @@ div.input-range__slider {
 div.input-range__track,
 div.input_range__slider,
 div.ColorPickerSwatch,
-div.ColorPickerDialog
+div.ColorPickerDialog,
+input[type="text"]
 {
   pointer-events: all;
+}
+
+/* Hide tooltip */
+span.input-range__label {
+  display: none;
 }
