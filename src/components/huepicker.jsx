@@ -1,81 +1,85 @@
-import React from "react"
-import reactCSS from "reactcss"
+import React from "react";
+import reactCSS from "reactcss";
 
-import { CustomPicker, SliderPicker } from "react-color"
+import { SketchPicker } from "react-color";
 
 class HuePicker extends React.Component {
 
   constructor() {
     super();
     this.state = {
-      display: false
+      displayColorPicker: false
     };
+
+    this.handleClick = this.handleClick.bind(this);
+    this.handleClose = this.handleClose.bind(this);
+    this.handleChange = this.handleChange.bind(this);
   }
 
   handleClick() {
-    this.setState({
-      display: !this.state.display
-    });
-  }
+    this.setState({ displayColorPicker: !this.state.displayColorPicker })
+  };
 
   handleClose() {
-    this.setState({
-      display: false
-    });
-  }
+    this.setState({ displayColorPicker: false })
+  };
+
+  handleChange({ rgb }) {
+    const { handleChange } = this.props;
+    handleChange([rgb.r, rgb.g, rgb.b]);
+    // this.setState({ color: color.rgb })
+  };
 
   render() {
-    const {display} = this.state;
-    const {color, change} = this.props;
+    const { color:c } = this.props;
+    const color = { r: c[0], g: c[1], b: c[2] };
 
     const styles = reactCSS({
-      "default": {
-        pickerOff: {
-          position: "absolute",
-          display: "flex",
-          width: "3em"
-        },
-        pickerOn: {
-          position: "absolute",
-          display: "flex",
-          width: "100%"
-        },
+      'default': {
         color: {
-          width: "3em",
-          height: "2em",
-          cursor: "pointer",
-          background: `rgba(${ color[0] }, ${ color[1] }, ${ color[2] }, 1)`
+          width: '14px',
+          height: '14px',
+          borderRadius: '2px',
+          background: `rgb(${ color.r }, ${ color.g }, ${ color.b })`,
+        },
+        swatch: {
+          padding: '1px',
+          background: '#fff',
+          borderRadius: '1px',
+          boxShadow: '0 0 0 1px rgba(0,0,0,.1)',
+          display: 'inline-block',
+          cursor: 'pointer',
         },
         popover: {
-          backgroundColor: "white",
-          flex: "1 0 300px",
-          height: "3em",
-          zIndex: "2"
-      }
+          position: 'absolute',
+          zIndex: '2',
+        },
+        cover: {
+          position: 'fixed',
+          top: '0px',
+          right: '0px',
+          bottom: '0px',
+          left: '0px',
+        },
       },
     });
 
-    if (!display) {
-      return (
-        <span style={ styles.pickerOff }>
-          <div style={ styles.color } onClick={ this.handleClick.bind(this) }>
-          </div>
-        </span>
-      )
-    }
     return (
-      <span style={ styles.pickerOn }>
-        <div style={ styles.color } onClick={ this.handleClick.bind(this) }>
+      <div>
+        <div style={ styles.swatch } onClick={ this.handleClick }>
+          <div style={ styles.color } />
         </div>
-        <div style={ styles.popover }>
-          <SliderPicker color={{
-            r: color[0],
-            g: color[1],
-            b: color[2],
-          }}
-          onChange={ change }/>
-        </div>
-      </span>
+        {
+          this.state.displayColorPicker
+          ? <div style={ styles.popover }>
+              <div style={ styles.cover } onClick={ this.handleClose } />
+              <SketchPicker color={ color }
+                            onChange={ this.handleChange } />
+            </div>
+          : null
+        }
+
+      </div>
     )
   }
 }
