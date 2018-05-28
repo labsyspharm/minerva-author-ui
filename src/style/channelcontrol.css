@@ -30,3 +30,8 @@ div.input-range__slider {
   margin-top: 20px;
   background-color: transparent;
 }
+
+.list-group-slider {
+  background-color: transparent;
+  pointer-events: none;
+}

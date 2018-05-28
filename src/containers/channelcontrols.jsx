@@ -6,7 +6,7 @@ import ChannelControl from "../components/channelcontrol";
 class ChannelControls extends Component {
 
   render() {
-    const { channels, handleChange } = this.props;
+    const { channels, handleChange, className } = this.props;
 
     const channelControls = Array.from(channels.values()).map(channel => {
       const { id, color, range, minRange, maxRange } = channel;
@@ -19,7 +19,7 @@ class ChannelControls extends Component {
     });
 
     return (
-      <ChannelControlList>
+      <ChannelControlList className={ className }>
         { channelControls }
       </ChannelControlList>
     );

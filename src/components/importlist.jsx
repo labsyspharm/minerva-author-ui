@@ -1,13 +1,14 @@
 import React, { Component } from "react";
+import "../style/ImportList";
 
 /**
  * Make a list of children
  */
-const ImportList = params => {
+const ImportList = ({ children, className }) => {
 
   return(
-    <ul>
-      {React.Children.map(params.children, (child, id) => {
+    <ul className={ className }>
+      {React.Children.map(children, (child, id) => {
         return (<li key={id}> {child} </li>);
       })}
     </ul>
