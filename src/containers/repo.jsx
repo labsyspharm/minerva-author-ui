@@ -4,8 +4,10 @@ import ImageView from "./imageview";
 import ChannelControls from "./channelcontrols";
 import ImportList from "../components/importlist";
 import Import from "../components/import";
+import Banner from "../components/Banner";
+import api from "../api";
 
-import '../style/repo'
+import '../style/repo';
 
 class Repo extends Component {
 
@@ -41,6 +43,7 @@ class Repo extends Component {
 
     // Bind
     this.handleChange = this.handleChange.bind(this);
+    this.handleLogin = this.handleLogin.bind(this);
   }
 
 	/**
@@ -114,7 +117,10 @@ class Repo extends Component {
     });
   }
 
-  // <nav className="navbar navbar-default navbar-fixed-side">
+  handleLogin(email, password) {
+    api.login('dpwrussell@gmail.com', 'g58!Zz&eGH')
+      .then(token => console.log(token));
+  }
 
   render() {
     const { imps, imgs, active } = this.state;
@@ -124,31 +130,34 @@ class Repo extends Component {
 		const { channels } = active;
 
     return (
+      <React.Fragment>
+        <ImageView className="ImageView"
+          img={ img }
+          channels={ channels }
+        />
+        <Banner handleLogin={ this.handleLogin }
+                handleLogout={ () => console.log('logout') } />
+        <div className="container-fluid Repo">
 
-      <div className="container-fluid Repo">
-      <ImageView className="ImageView"
-        img={ img }
-        channels={ channels }
-      />
-        <div className="row justify-content-between">
-          <ImportList className="ImportList col-md-2">
-            {Array.from(entries).map(entry => {
-              const [uuid, imp] = entry;
-              return (
-                <Import key={uuid}
-                click={this.dummyAjax.bind(this)}
-                imgs={imgs} imp={imp}/>
-              );
-            })}
-          </ImportList>
+          <div className="row justify-content-between">
+            <ImportList className="ImportList col-md-2">
+              {Array.from(entries).map(entry => {
+                const [uuid, imp] = entry;
+                return (
+                  <Import key={uuid}
+                  click={this.dummyAjax.bind(this)}
+                  imgs={imgs} imp={imp}/>
+                );
+              })}
+            </ImportList>
 
-          <ChannelControls className="ChannelControls col-md-3"
-            channels={ channels }
-            handleChange={ this.handleChange }
-          />
+            <ChannelControls className="ChannelControls col-md-3"
+              channels={ channels }
+              handleChange={ this.handleChange }
+            />
+          </div>
         </div>
-
-      </div>
+      </React.Fragment>
     );
   }
 }

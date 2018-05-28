@@ -9,7 +9,6 @@ import "./style/demo";
 
 ReactDOM.render(
   <div className="Demo">
-    <div className="Banner"/>
     <Repo/>
   </div>,
   document.getElementById("minerva")
