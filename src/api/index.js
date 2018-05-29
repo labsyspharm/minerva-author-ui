@@ -15,6 +15,37 @@ const loginBase = 'cognito-idp.us-east-1.amazonaws.com/us-east-1_d9h9zgWpx';
 
 const userPool = new CognitoUserPool(poolData);
 
+const base = 'https://qq3kn9y5te.execute-api.us-east-1.amazonaws.com/dev';
+const doFetch = (method, route, params = {}) => token => {
+  const headers = new Headers({
+    'content-type': 'application/json',
+    Authorization: token
+  });
+
+  const queryParams = Object.keys(params)
+    .map(key => key + '=' + params[key])
+    .join('&');
+
+  const url = base + route + (queryParams.length > 0 ? '?' + queryParams : '');
+
+  console.log(url);
+
+  const request = new Request(
+    url,
+    {
+      method,
+      headers,
+      mode: 'cors',
+      cache: 'no-cache'
+    }
+  );
+
+  return fetch(request)
+    .then(response => response.json())
+    .then(data => console.log(data))
+    .then(() => token);
+};
+
 const authenticateUser = (cognitoUser, authenticationDetails) => {
 
   const handleCode = verification_code => {
@@ -140,10 +171,6 @@ export const login = (email, password) => {
   const authenticationDetails = new AuthenticationDetails(authenticationData);
 
   const token = authenticateUser(cognitoUser, authenticationDetails)
-    .then(response => {
-      console.log(response);
-      return response;
-    })
     .then(response => response.getIdToken().getJwtToken());
 
   const credentialsSet = token;
@@ -200,12 +227,6 @@ export const fetchTile = credentialsHolder => options => {
       .then(obj => options.success({response: obj.Body}))
       .catch(err => console.error(err));
 };
-
-
-
-// export const login = (email, password) => {
-//   console.log(email, password);
-// }
 
 export default {
   login,

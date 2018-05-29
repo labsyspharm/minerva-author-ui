@@ -1,7 +1,6 @@
 import React, { Component } from "react";
 
 import viaWebGL from 'viawebgl';
-import AmazonWebSource from '../amazonwebsource';
 import api from '../api';
 
 import '../style/imageview';
