@@ -20,7 +20,46 @@ const authenticateUser = (cognitoUser, authenticationDetails) => {
   const makeCallbacks = (resolve, reject) => {
     return {
       onSuccess: result => resolve(result),
-      onFailure: err => reject(err),
+      onFailure: err => {
+        switch (err.name) {
+          case "PasswordResetRequiredException":
+            reject({...err,
+              required: ["verification_code"],
+              retry: userInput => {
+                const {verification_code} = userInput;
+
+                // Handle confirmation
+                if (verification_code) {
+                  return new Promise((resolve, reject) => {
+                    cognitoUser.confirmRegistration(
+                      verification_code, true, (err, result) => {
+                      if (err) {
+                        reject(err);
+                      }
+                      reject(result);
+                    });
+                  });
+                }
+
+                // Send new confirmation email
+                return new Promise((resolve, reject) => {
+                  const notify = e => {
+                    const {Destination} = e.CodeDeliveryDetails;
+                    reject({
+                      message: "Email sent to "+ Destination
+                    })
+                  }
+                  cognitoUser.forgotPassword(
+                   makeCallbacks(notify, reject)
+                  );
+                });
+              }
+            });
+            break;
+          default:
+            reject(err);
+        }
+      },
       mfaRequired: codeDeliveryDetails => reject(codeDeliveryDetails),
       newPasswordRequired: (fields, required) => {
         reject({
@@ -36,7 +75,7 @@ const authenticateUser = (cognitoUser, authenticationDetails) => {
               required.forEach((key) => {
                 userAttributes[key] = userInput[key];
               })
-              delete userAttributes.email_verified; 
+              delete userAttributes.email_verified;
 
               // Reattempt the login
               cognitoUser.completeNewPasswordChallenge(
@@ -48,7 +87,7 @@ const authenticateUser = (cognitoUser, authenticationDetails) => {
       }
     };
   }
-    
+
   return new Promise((resolve, reject) => {
     cognitoUser.authenticateUser(
       authenticationDetails,

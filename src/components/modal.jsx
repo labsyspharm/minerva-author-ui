@@ -36,13 +36,14 @@ class Modal extends Component {
 						</div>
 
 						<div className="modal-body">
+              {this.props.children}
 							<form onSubmit={(ev) => {
 								ev.preventDefault();
 								onClose(values);
 							}}>
-								{fields.map(field => {
+								{fields.map((field, key) => {
 									return (
-										<ModalText field={field}
+										<ModalText key={key} field={field}
 											value={values[field] || ''}
 											onChange={ev => {
 												let update = {};

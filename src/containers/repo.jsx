@@ -49,7 +49,8 @@ class Repo extends Component {
         action: 'Close',
         title: 'Message',
         fields: [],
-        show: false
+        show: false,
+        body: ''
       }
     };
 
@@ -133,9 +134,62 @@ class Repo extends Component {
     this.setState({
       modal: {
         ...this.state.modal,
-        show
+      show
       }
     });
+  }
+
+  handleLoginError(error) {
+    const {modal} = this.state;
+    const {name, message, retry} = error;
+    var onClose = this.toggleModal.bind(this, false);
+    var action = "Close";
+    var fields = [];
+    var body = '';
+
+    // Close the modal then retry
+    if (retry) {
+      onClose = (userInput) => {
+        this.toggleModal(false);
+
+        // Sucessfully set the session
+        retry(userInput).then(session => {
+          this.setState({
+            modal: {...modal},
+            session,
+          })
+        }).catch(e => {
+          // Avoid retry loop
+          delete error.retry;
+          this.handleLoginError(e);
+        });
+      }
+    }
+
+    switch(name) {
+      case "PasswordResetException":
+        fields = error.required || [];
+        action = "Reset";
+        break;
+      case "PasswordResetRequiredException":
+        body = "Enter code or leave blank to resend:"
+        fields = error.required || [];
+        action = "Verify";
+        break;
+      default:
+    }
+
+    this.setState({
+      modal: {
+        show: true,
+        body: body,
+        title: message,
+        fields: fields,
+        onClose: onClose,
+        action: action
+      }
+    });
+
   }
 
   handleLogin(userInput) {
@@ -144,41 +198,8 @@ class Repo extends Component {
       .then(session => this.setState({
         session
       }))
-      .catch(error => {
-        const {modal} = this.state;
-        const {name, message, retry} = error;
-        var onClose = this.toggleModal.bind(this, false);
-        var action = "Close";
-        var fields = [];
-
-        // Close the modal then retry
-        if (retry) {
-            onClose = (userInput) => {
-              this.toggleModal(false);
-              retry(userInput).then(session => this.setState({
-                modal: {...modal},
-                session,
-              }))
-            }
-        }
-
-        switch(name) {
-          case "PasswordResetException":
-            fields = error.required || [];
-            action = "Reset";
-            break;
-          default:
-        }
-      
-        this.setState({
-          modal: {
-            show: true,
-            title: message,
-            fields: fields,
-            onClose: onClose,
-            action: action
-          }
-        });
+      .catch(e => {
+        this.handleLoginError(e);
       });
   }
 
@@ -194,6 +215,7 @@ class Repo extends Component {
         <Modal show={modal.show} title={modal.title}
           action={modal.action} fields={modal.fields}
           onClose={modal.onClose.bind(this)}>
+        {modal.body}
         </Modal>
         <ImageView className="ImageView"
           img={ img }
@@ -201,7 +223,7 @@ class Repo extends Component {
           credentialsHolder={ credentialsHolder }
         />
         <Banner session={ session }
-                handleLogin={ ()=> { 
+                handleLogin={ ()=> {
                   this.setState({
                     modal: {
                       show: true,
