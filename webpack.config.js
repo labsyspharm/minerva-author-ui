@@ -13,28 +13,31 @@ module.exports = {
   module: {
     rules: [
       {
-        test: /\.jsx?$/,
+        test: /\.(js|jsx)$/,
+        include: /src/,
         exclude: /node_modules/,
         loader: "babel-loader",
         query: {
           presets: ["react", "env"]
         }
-      }, {
+      },
+      {
+        test: /\.json$/,
+        exclude: /node_modules/,
+        loader: 'json-loader'
+      },
+      {
         test: /\.css$/,
         loader: "style-loader!css-loader"
       },
 			{
 				test: /\.(ttf|svg|eot|woff)/,
 				loader: 'file-loader'
-			},
+			}
     ]
   },
   resolve: {
-    extensions: [".css", ".js", ".jsx"],
-    alias: {
-      // Fake jquery needed for slider
-      "jquery": path.join(__dirname, "./src/jquery-stub.js")
-    }
+    extensions: [".css", ".js", ".jsx", ".json"]
   },
   output: {
     path: path.join(__dirname, "/build"),

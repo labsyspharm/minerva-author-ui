@@ -2,6 +2,7 @@ import React, { Component } from "react";
 
 import viaWebGL from 'viawebgl';
 import AmazonWebSource from '../amazonwebsource';
+import api from '../api';
 
 import '../style/imageview';
 
@@ -13,19 +14,11 @@ class ImageView extends Component {
 
   constructor() {
     super();
-
-    this.state = {
-  		auth: {
-				AccessKeyId: process.env.ACCESSKEYID,
-				SessionToken: process.env.SESSIONTOKEN,
-			  SecretAccessKey: process.env.SECRETACCESSKEY
-			}
-    }
   }
 
   makeTileSource(id) {
-    const {auth} = this.state;
-    const {img, channels} = this.props;
+    const { auth } = this.state;
+    const { img, channels, credentialsHolder } = this.props;
 
     const channel = channels.get(id);
     if (channel === undefined) {
@@ -50,7 +43,7 @@ class ImageView extends Component {
 
     return {
 			// Custom functions
-    	makeAjaxRequest: new AmazonWebSource(auth).makeAjaxRequest,
+    	makeAjaxRequest: api.fetchTile(credentialsHolder),
 			getTileUrl: getTileUrl,
 			// CUstom parameters
       many_channel_id: id,
@@ -145,6 +138,7 @@ class ImageView extends Component {
     const {channels, img} = this.props;
     const ids = [...channels.keys()];
 
+
     // Set up openseadragon viewer
     this.viewer = viaWebGL.OpenSeadragon({
       debugMode: false,
@@ -209,10 +203,11 @@ class ImageView extends Component {
 		seaGL.addHandler('tile-loaded', (callback, e) => callback(e));
 
     seaGL.init();
+
   }
 
   render() {
-    const {viewer} = this;
+    const { viewer } = this;
 
     // After first render
     if (viewer !== undefined) {

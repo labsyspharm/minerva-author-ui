@@ -46,7 +46,7 @@ module.exports.prototype = {
 
 		// Split the URL into bucket and key
 		var no_protocol = options.url.split('://')[1] || options.url;
-	  var [bucket, key] = no_protocol.split('.s3.amazonaws.com/');	
+	  var [bucket, key] = no_protocol.split('.s3.amazonaws.com/');
     if (key === undefined) {
       var first_slash = no_protocol.indexOf('/');
       bucket = no_protocol.slice(0, first_slash);

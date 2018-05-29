@@ -4,14 +4,17 @@ import ImageView from "./imageview";
 import ChannelControls from "./channelcontrols";
 import ImportList from "../components/importlist";
 import Import from "../components/import";
+import Banner from "../components/Banner";
+import api from "../api";
 
-import '../style/repo'
+import '../style/repo';
 
 class Repo extends Component {
 
   constructor() {
     super();
     this.state = {
+      session: null,
 			imps: new Map([
 				['uuid1', { uuid: 'uuid1', name: 'import1', imgs: ['uuid3', 'uuid4'] }],
 				['uuid2', { uuid: 'uuid2', name: 'import2', imgs: ['uuid5'] }]
@@ -35,12 +38,16 @@ class Repo extends Component {
 				channels: new Map([
 					[0, { id: 0, color: [255, 0, 0], range: { min: 0, max: 10000 }, minRange: 0, maxRange: 65535 }],
 					[1, { id: 1, color: [0, 0, 255], range: { min: 10000, max: 65535 }, minRange: 0, maxRange:65535 }]
-				])
+				]),
+        credentialsHolder: {
+          credentials: null
+        }
 			}
     };
 
     // Bind
     this.handleChange = this.handleChange.bind(this);
+    this.handleLogin = this.handleLogin.bind(this);
   }
 
 	/**
@@ -114,41 +121,51 @@ class Repo extends Component {
     });
   }
 
-  // <nav className="navbar navbar-default navbar-fixed-side">
+  handleLogin(email, password) {
+    api.login(process.env.EMAIL, process.env.PASSWORD)
+      .then(session => this.setState({
+        session
+      }));
+  }
 
   render() {
-    const { imps, imgs, active } = this.state;
+    const { session, imps, imgs, active } = this.state;
 
 		const entries = imps.entries();
     const img = imgs.get(active.uuid);
-		const { channels } = active;
+		const { channels, credentialsHolder } = active;
 
     return (
+      <React.Fragment>
+        <ImageView className="ImageView"
+          img={ img }
+          channels={ channels }
+          credentialsHolder={ credentialsHolder }
+        />
+        <Banner session={ session }
+                handleLogin={ this.handleLogin }
+                handleLogout={ () => console.log('logout') } />
+        <div className="container-fluid Repo">
 
-      <div className="container-fluid Repo">
-      <ImageView className="ImageView"
-        img={ img }
-        channels={ channels }
-      />
-        <div className="row justify-content-between">
-          <ImportList className="ImportList col-md-2">
-            {Array.from(entries).map(entry => {
-              const [uuid, imp] = entry;
-              return (
-                <Import key={uuid}
-                click={this.dummyAjax.bind(this)}
-                imgs={imgs} imp={imp}/>
-              );
-            })}
-          </ImportList>
+          <div className="row justify-content-between">
+            <ImportList className="ImportList col-md-2">
+              {Array.from(entries).map(entry => {
+                const [uuid, imp] = entry;
+                return (
+                  <Import key={uuid}
+                  click={this.dummyAjax.bind(this)}
+                  imgs={imgs} imp={imp}/>
+                );
+              })}
+            </ImportList>
 
-          <ChannelControls className="ChannelControls col-md-3"
-            channels={ channels }
-            handleChange={ this.handleChange }
-          />
+            <ChannelControls className="ChannelControls col-md-3"
+              channels={ channels }
+              handleChange={ this.handleChange }
+            />
+          </div>
         </div>
-
-      </div>
+      </React.Fragment>
     );
   }
 }

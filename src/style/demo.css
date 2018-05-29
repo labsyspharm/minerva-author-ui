@@ -15,9 +15,5 @@ div > ul > li > ul {
   /* display: grid; */
   /* grid-template-rows: 4em 1fr; */
   background-color: black;
-  /* color: #CCC; */
-}
-
-.Banner {
-  /* color: white; */
+  color: white;
 }
