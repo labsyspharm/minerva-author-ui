@@ -16,13 +16,42 @@ const loginBase = 'cognito-idp.us-east-1.amazonaws.com/us-east-1_d9h9zgWpx';
 const userPool = new CognitoUserPool(poolData);
 
 const authenticateUser = (cognitoUser, authenticationDetails) => {
-  return new Promise((resolve, reject) => {
-    cognitoUser.authenticateUser(authenticationDetails, {
+
+  const makeCallbacks = (resolve, reject) => {
+    return {
       onSuccess: result => resolve(result),
       onFailure: err => reject(err),
       mfaRequired: codeDeliveryDetails => reject(codeDeliveryDetails),
-      newPasswordRequired: (fields, required) => reject({fields, required})
-    });
+      newPasswordRequired: (fields, required) => {
+        reject({
+          name: 'Password Reset Required',
+          required: required.concat('new_password'),
+          retry: userInput => {
+            return new Promise((resolve, reject) => {
+              const {new_password} = userInput;
+
+              // Take all new attributes from user
+              let userAttributes = {...fields};
+              for (key of required) {
+                userAttributes[key] = userInput[key];
+              }
+              delete userAttributes.email_verified; 
+
+              // Reattempt the login
+              cognitoUser.completeNewPasswordChallenge(
+                new_password, userAttributes,
+                makeCallbacks(resolve, reject));
+            });
+          }
+        });
+      }
+    };
+  }
+    
+  return new Promise((resolve, reject) => {
+    cognitoUser.authenticateUser(
+      authenticationDetails,
+      makeCallbacks(resolve, reject));
   });
 };
 

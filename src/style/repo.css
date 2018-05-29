@@ -1,3 +1,8 @@
 nav.navbar {
   background-color: black;
 }
+
+.modal {
+  display: block;
+  color: black;
+}

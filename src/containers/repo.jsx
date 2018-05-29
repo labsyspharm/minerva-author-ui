@@ -5,6 +5,8 @@ import ChannelControls from "./channelcontrols";
 import ImportList from "../components/importlist";
 import Import from "../components/import";
 import Banner from "../components/Banner";
+import ModalText from "../components/modaltext";
+import Modal from "../components/modal";
 import api from "../api";
 
 import '../style/repo';
@@ -42,7 +44,13 @@ class Repo extends Component {
         credentialsHolder: {
           credentials: null
         }
-			}
+			},
+      'modal': {
+        onClose: this.toggleModal.bind(this, false),
+        title: 'Message',
+        fields: [],
+        show: false
+      }
     };
 
     // Bind
@@ -121,22 +129,65 @@ class Repo extends Component {
     });
   }
 
+  toggleModal(show) {
+    this.setState({
+      modal: {
+        ...this.state.modal,
+        show
+      }
+    });
+  }
+
   handleLogin(email, password) {
     api.login(process.env.EMAIL, process.env.PASSWORD)
       .then(session => this.setState({
         session
-      }));
+      }))
+      .catch(error => {
+        try {
+          const {modal} = this.state;
+          const {name, required, retry} = error;
+          
+          this.setState({
+            modal: {
+              show: true,
+              title: name,
+              fields: required,
+              onClose: (e) => {
+                console.log(e);
+                this.toggleModal(false);
+                retry(userInput).then(session => this.setState({
+                  modal: {...modal},
+                  session,
+                }))
+              }
+            }
+          });
+        }
+        catch(e) {
+          console.log(e);
+        }
+      });
   }
 
   render() {
     const { session, imps, imgs, active } = this.state;
+    const { modal } = this.state;
 
-		const entries = imps.entries();
     const img = imgs.get(active.uuid);
 		const { channels, credentialsHolder } = active;
 
     return (
       <React.Fragment>
+        <Modal show={modal.show} title={modal.title}
+          onClose={this.toggleModal.bind(this, false)}>
+          {modal.fields.map(field => {
+            return (
+              <ModalText field={field}>
+              </ModalText> 
+            );                                           
+          })}
+        </Modal>
         <ImageView className="ImageView"
           img={ img }
           channels={ channels }
@@ -149,7 +200,7 @@ class Repo extends Component {
 
           <div className="row justify-content-between">
             <ImportList className="ImportList col-md-2">
-              {Array.from(entries).map(entry => {
+              {Array.from(imps.entries()).map(entry => {
                 const [uuid, imp] = entry;
                 return (
                   <Import key={uuid}
