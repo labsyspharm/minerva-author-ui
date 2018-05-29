@@ -7,12 +7,6 @@ pip install awscli
 aws configure
 ```
 
-Run this to write temporary credentials to `.env`
-
-```
-python dotenv.py
-```
-
 ### Building the demo
 
 ```

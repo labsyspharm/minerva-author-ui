@@ -5,6 +5,7 @@ import ChannelControls from "./channelcontrols";
 import ImportList from "../components/importlist";
 import Import from "../components/import";
 import Banner from "../components/Banner";
+import Modal from "../components/modal";
 import api from "../api";
 
 import '../style/repo';
@@ -42,7 +43,15 @@ class Repo extends Component {
         credentialsHolder: {
           credentials: null
         }
-			}
+			},
+      'modal': {
+        onClose: this.toggleModal.bind(this, false),
+        action: 'Close',
+        title: 'Message',
+        fields: [],
+        show: false,
+        body: ''
+      }
     };
 
     // Bind
@@ -121,35 +130,120 @@ class Repo extends Component {
     });
   }
 
-  handleLogin(email, password) {
-    api.login(process.env.EMAIL, process.env.PASSWORD)
+  toggleModal(show) {
+    this.setState({
+      modal: {
+        ...this.state.modal,
+      show
+      }
+    });
+  }
+
+  handleLoginError(error) {
+    const {modal} = this.state;
+    const {name, message, retry} = error;
+    var onClose = this.toggleModal.bind(this, false);
+    var action = "Close";
+    var fields = [];
+    var body = '';
+
+    // Close the modal then retry
+    if (retry) {
+      onClose = (userInput) => {
+        this.toggleModal(false);
+
+        // Sucessfully set the session
+        retry(userInput).then(session => {
+          this.setState({
+            modal: {...modal},
+            session,
+          })
+        }).catch(e => {
+          this.handleLoginError(e);
+        });
+      }
+    }
+
+    switch(name) {
+      case "PasswordResetException":
+        fields = error.required || [];
+        action = "Reset";
+        break;
+      case "PasswordResetRequiredException":
+        body = "Enter code or leave blank to resend:"
+        fields = error.required || [];
+        action = "Verify";
+        break;
+      default:
+    }
+
+    this.setState({
+      modal: {
+        show: true,
+        body: body,
+        title: message,
+        fields: fields,
+        onClose: onClose,
+        action: action
+      }
+    });
+
+  }
+
+  handleLogin(userInput) {
+    const {email, password} = userInput;
+    api.login(email, password)
       .then(session => this.setState({
         session
-      }));
+      }))
+      .catch(e => {
+        this.handleLoginError(e);
+      });
   }
 
   render() {
     const { session, imps, imgs, active } = this.state;
+    const { modal } = this.state;
 
-		const entries = imps.entries();
     const img = imgs.get(active.uuid);
 		const { channels, credentialsHolder } = active;
 
     return (
       <React.Fragment>
+        <Modal show={modal.show} title={modal.title}
+          action={modal.action} fields={modal.fields}
+          onClose={modal.onClose.bind(this)}>
+        {modal.body}
+        </Modal>
         <ImageView className="ImageView"
           img={ img }
           channels={ channels }
           credentialsHolder={ credentialsHolder }
         />
         <Banner session={ session }
-                handleLogin={ this.handleLogin }
+                handleLogin={ ()=> {
+                  this.setState({
+                    modal: {
+                      show: true,
+                      title: "Login to Minerva",
+                      fields: [
+                        "email",
+                        "password"
+                      ],
+                      onClose: (userInput) => {
+                        this.toggleModal(false);
+                        this.handleLogin(userInput);
+                      },
+                      action: "Login"
+                    }
+                  });
+                }}
                 handleLogout={ () => console.log('logout') } />
         <div className="container-fluid Repo">
 
           <div className="row justify-content-between">
             <ImportList className="ImportList col-md-2">
-              {Array.from(entries).map(entry => {
+              {Array.from(imps.entries()).map(entry => {
                 const [uuid, imp] = entry;
                 return (
                   <Import key={uuid}

@@ -16,13 +16,96 @@ const loginBase = 'cognito-idp.us-east-1.amazonaws.com/us-east-1_d9h9zgWpx';
 const userPool = new CognitoUserPool(poolData);
 
 const authenticateUser = (cognitoUser, authenticationDetails) => {
-  return new Promise((resolve, reject) => {
-    cognitoUser.authenticateUser(authenticationDetails, {
-      onSuccess: result => resolve(result),
-      onFailure: err => reject(err),
-      mfaRequired: codeDeliveryDetails => reject(codeDeliveryDetails),
-      newPasswordRequired: (fields, required) => reject({fields, required})
+
+  const handleCode = verification_code => {
+    return new Promise((resolve, reject) => {
+      reject({
+        required: ["new_password"],
+        name: "PasswordResetException",
+        retry: userInput => {
+          // Handle new password
+          const {new_password} = userInput;
+          return new Promise((resolve, reject) => {
+            cognitoUser.confirmPassword(
+              verification_code,
+              new_password, makeCallbacks(
+                () => {},
+                reject
+              )
+            )
+          });
+        }
+      });
     });
+  }
+
+  const sendCode = () => {
+    return new Promise((resolve, reject) => {
+      const notify = e => {
+        const {Destination} = e.CodeDeliveryDetails;
+        reject({
+          message: "Email sent to "+ Destination
+        })
+      }
+      cognitoUser.forgotPassword(
+       makeCallbacks(notify, reject)
+      );
+    });
+  }
+
+  const makeCallbacks = (resolve, reject) => {
+    return {
+      onSuccess: resolve,
+      onFailure: err => {
+        switch (err.name) {
+          case "PasswordResetRequiredException":
+            reject({...err,
+              required: ["verification_code"],
+              retry: userInput => {
+                const {verification_code} = userInput;
+                if (verification_code) {
+                  return handleCode(verification_code);
+                }
+                return sendCode();
+              }
+            });
+            break;
+          default:
+            reject(err);
+        }
+      },
+      mfaRequired: codeDeliveryDetails => reject(codeDeliveryDetails),
+      newPasswordRequired: (fields, required) => {
+        reject({
+          name: "PasswordResetException",
+          message: "Password Reset Required",
+          required: required.concat("new_password"),
+          retry: userInput => {
+            return new Promise((resolve, reject) => {
+              const {new_password} = userInput;
+
+              // Take all new attributes from user
+              let userAttributes = {...fields};
+              required.forEach((key) => {
+                userAttributes[key] = userInput[key];
+              })
+              delete userAttributes.email_verified;
+
+              // Reattempt the login
+              cognitoUser.completeNewPasswordChallenge(
+                new_password, userAttributes,
+                makeCallbacks(resolve, reject));
+            });
+          }
+        });
+      }
+    };
+  }
+
+  return new Promise((resolve, reject) => {
+    cognitoUser.authenticateUser(
+      authenticationDetails,
+      makeCallbacks(resolve, reject));
   });
 };
 
