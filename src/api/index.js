@@ -22,17 +22,16 @@ const authenticateUser = (cognitoUser, authenticationDetails) => {
       reject({
         required: ["new_password"],
         name: "PasswordResetException",
-        retry: UserInput => {
+        retry: userInput => {
           // Handle new password
           const {new_password} = userInput;
           return new Promise((resolve, reject) => {
             cognitoUser.confirmPassword(
               verification_code,
-              new_password,
-              {
-                onSuccess: r => console.log(r),
-                onFailure: e => console.error(e)
-              }
+              new_password, makeCallbacks(
+                () => {},
+                reject
+              )
             )
           });
         }
@@ -56,7 +55,7 @@ const authenticateUser = (cognitoUser, authenticationDetails) => {
 
   const makeCallbacks = (resolve, reject) => {
     return {
-      onSuccess: result => resolve(result),
+      onSuccess: resolve,
       onFailure: err => {
         switch (err.name) {
           case "PasswordResetRequiredException":

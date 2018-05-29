@@ -19,7 +19,7 @@ class Modal extends Component {
       return null;
     }
 
-    const buttonClass = ((action) => {
+    const buttonClass = "btn btn-lg btn-block " + ((action) => {
       if (action == "Close") {
         return 'btn-danger';
       } 
@@ -29,41 +29,37 @@ class Modal extends Component {
     return (
       <div className="modal">
         <div className="modal-dialog">
-					<div className="modal-content">
+					<div className="modal-body">
+						<form>
 
-						<div className="modal-header">
-							<h4 className="modal-title">{title}</h4>
-						</div>
+							<h1 className="h3 mb-3 font-weight-normal">{title}</h1>
+							<p> {this.props.children} </p>
+							{fields.map((field, key) => {
+								return (
+									<ModalText key={key} field={field}
+										value={values[field] || ''}
+										onChange={ev => {
+											let update = {};
+											update[field] = ev.target.value; 
+											this.setState({
+												values: { ...values, ...update}
+											});
+										}}>
+									</ModalText>
+								);
+							})}
 
-						<div className="modal-body">
-              {this.props.children}
-							<form onSubmit={(ev) => {
-								ev.preventDefault();
-								onClose(values);
-							}}>
-								{fields.map((field, key) => {
-									return (
-										<ModalText key={key} field={field}
-											value={values[field] || ''}
-											onChange={ev => {
-												let update = {};
-												update[field] = ev.target.value; 
-												this.setState({
-													values: { ...values, ...update}
-												});
-											}}>
-										</ModalText>
-									);
-								})}
-								<input type="submit" value={action}
-									className={"btn " + buttonClass}>
-								</input>
-							</form>
-						</div>
-
+							<button type="submit" className={buttonClass}
+								onClick={(ev) => {
+									ev.preventDefault();
+									onClose(values);
+								}}>
+							{action}	
+							</button>
+						</form>
 					</div>
-        </div>
-      </div>
+				</div>
+			</div>
     );
   }
 }

@@ -12,11 +12,9 @@ class ModalText extends Component {
     const name = toCapital(field).replace("_", " ");
 
     return (
-      <div className="form-group">
-        <label> {name}: </label>
-        <input type="text" value={value}
-          onChange={onChange} />
-      </div>
+      <input className="form-control" type="text"
+        value={value} placeholder={name}
+        onChange={onChange} />
     );
   }
 }

@@ -4,5 +4,8 @@ nav.navbar {
 
 .modal {
   display: block;
-  color: black;
+}
+
+.modal button {
+  pointer-events: all;
 }
