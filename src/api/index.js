@@ -17,6 +17,43 @@ const userPool = new CognitoUserPool(poolData);
 
 const authenticateUser = (cognitoUser, authenticationDetails) => {
 
+  const handleCode = verification_code => {
+    return new Promise((resolve, reject) => {
+      reject({
+        required: ["new_password"],
+        name: "PasswordResetException",
+        retry: UserInput => {
+          // Handle new password
+          const {new_password} = userInput;
+          return new Promise((resolve, reject) => {
+            cognitoUser.confirmPassword(
+              verification_code,
+              new_password,
+              {
+                onSuccess: r => console.log(r),
+                onFailure: e => console.error(e)
+              }
+            )
+          });
+        }
+      });
+    });
+  }
+
+  const sendCode = () => {
+    return new Promise((resolve, reject) => {
+      const notify = e => {
+        const {Destination} = e.CodeDeliveryDetails;
+        reject({
+          message: "Email sent to "+ Destination
+        })
+      }
+      cognitoUser.forgotPassword(
+       makeCallbacks(notify, reject)
+      );
+    });
+  }
+
   const makeCallbacks = (resolve, reject) => {
     return {
       onSuccess: result => resolve(result),
@@ -27,32 +64,10 @@ const authenticateUser = (cognitoUser, authenticationDetails) => {
               required: ["verification_code"],
               retry: userInput => {
                 const {verification_code} = userInput;
-
-                // Handle confirmation
                 if (verification_code) {
-                  return new Promise((resolve, reject) => {
-                    cognitoUser.confirmRegistration(
-                      verification_code, true, (err, result) => {
-                      if (err) {
-                        reject(err);
-                      }
-                      reject(result);
-                    });
-                  });
+                  return handleCode(verification_code);
                 }
-
-                // Send new confirmation email
-                return new Promise((resolve, reject) => {
-                  const notify = e => {
-                    const {Destination} = e.CodeDeliveryDetails;
-                    reject({
-                      message: "Email sent to "+ Destination
-                    })
-                  }
-                  cognitoUser.forgotPassword(
-                   makeCallbacks(notify, reject)
-                  );
-                });
+                return sendCode();
               }
             });
             break;

@@ -159,8 +159,6 @@ class Repo extends Component {
             session,
           })
         }).catch(e => {
-          // Avoid retry loop
-          delete error.retry;
           this.handleLoginError(e);
         });
       }
