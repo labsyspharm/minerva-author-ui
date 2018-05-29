@@ -138,8 +138,9 @@ class Repo extends Component {
     });
   }
 
-  handleLogin(email, password) {
-    api.login(process.env.EMAIL, process.env.PASSWORD)
+  handleLogin(userInput) {
+    const {email, password} = userInput;
+    api.login(email, password)
       .then(session => this.setState({
         session
       }))
@@ -200,7 +201,23 @@ class Repo extends Component {
           credentialsHolder={ credentialsHolder }
         />
         <Banner session={ session }
-                handleLogin={ this.handleLogin }
+                handleLogin={ ()=> { 
+                  this.setState({
+                    modal: {
+                      show: true,
+                      title: "Login to Minerva",
+                      fields: [
+                        "email",
+                        "password"
+                      ],
+                      onClose: (userInput) => {
+                        this.toggleModal(false);
+                        this.handleLogin(userInput);
+                      },
+                      action: "Login"
+                    }
+                  });
+                }}
                 handleLogout={ () => console.log('logout') } />
         <div className="container-fluid Repo">
 
