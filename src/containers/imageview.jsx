@@ -17,7 +17,6 @@ class ImageView extends Component {
   }
 
   makeTileSource(id) {
-    const { auth } = this.state;
     const { img, channels, credentialsHolder } = this.props;
 
     const channel = channels.get(id);
