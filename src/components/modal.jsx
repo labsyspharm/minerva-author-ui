@@ -1,8 +1,18 @@
-import React from 'react';
+import React, { Component } from "react";
+import ModalText from "../components/modaltext";
 
-class Modal extends React.Component {
+class Modal extends Component {
+
+  constructor(props) {
+    super(props);
+    this.state = {
+      values: {}
+    };
+  }
+
   render() {
-    const {show, title, children, onClose} = this.props;
+    const {show, title, fields, onClose} = this.props;
+		const {values} = this.state;
 
     if(!show) {
       return null;
@@ -11,33 +21,38 @@ class Modal extends React.Component {
     return (
       <div className="modal">
         <div className="modal-dialog">
-          <form action="#" onsubmit={onClose}>
-            <div className="modal-content">
+					<div className="modal-content">
 
-              <div className="modal-header">
-                <h4 className="modal-title">{title}</h4>
-              </div>
+						<div className="modal-header">
+							<h4 className="modal-title">{title}</h4>
+						</div>
 
-              <div className="modal-body">
+						<div className="modal-body">
+							<form onSubmit={(ev) => {
+								ev.preventDefault();
+								onClose(values);
+							}}>
+								{fields.map(field => {
+									return (
+										<ModalText field={field}
+											value={values[field] || ''}
+											onChange={ev => {
+												let update = {};
+												update[field] = ev.target.value; 
+												this.setState({
+													values: { ...values, ...update}
+												});
+											}}>
+										</ModalText>
+									);
+								})}
+								<input type="submit" value={"Submit"}
+									className="btn btn-success">
+								</input>
+							</form>
+						</div>
 
-                {React.Children.map(children, (child, id) => {
-                  return (
-                    <div class="form-group" key={id}>
-                    {child}
-                    <input type="text"/>
-                    </div>
-                  );
-                })}
-
-              </div>
-
-              <div className="modal-footer">
-                <input type="submit"
-                  className="btn btn-success">
-                </input>
-              </div>
-            </div>
-          </form>
+					</div>
         </div>
       </div>
     );

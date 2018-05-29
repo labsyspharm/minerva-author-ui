@@ -5,7 +5,6 @@ import ChannelControls from "./channelcontrols";
 import ImportList from "../components/importlist";
 import Import from "../components/import";
 import Banner from "../components/Banner";
-import ModalText from "../components/modaltext";
 import Modal from "../components/modal";
 import api from "../api";
 
@@ -153,8 +152,7 @@ class Repo extends Component {
               show: true,
               title: name,
               fields: required,
-              onClose: (e) => {
-                console.log(e);
+              onClose: (userInput) => {
                 this.toggleModal(false);
                 retry(userInput).then(session => this.setState({
                   modal: {...modal},
@@ -179,14 +177,8 @@ class Repo extends Component {
 
     return (
       <React.Fragment>
-        <Modal show={modal.show} title={modal.title}
-          onClose={this.toggleModal.bind(this, false)}>
-          {modal.fields.map(field => {
-            return (
-              <ModalText field={field}>
-              </ModalText> 
-            );                                           
-          })}
+        <Modal show={modal.show} title={modal.title} fields={modal.fields}
+          onClose={modal.onClose.bind(this)}>
         </Modal>
         <ImageView className="ImageView"
           img={ img }

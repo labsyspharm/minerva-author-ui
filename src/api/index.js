@@ -32,9 +32,9 @@ const authenticateUser = (cognitoUser, authenticationDetails) => {
 
               // Take all new attributes from user
               let userAttributes = {...fields};
-              for (key of required) {
+              required.forEach((key) => {
                 userAttributes[key] = userInput[key];
-              }
+              })
               delete userAttributes.email_verified; 
 
               // Reattempt the login
