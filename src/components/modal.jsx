@@ -12,11 +12,19 @@ class Modal extends Component {
 
   render() {
     const {show, title, fields, onClose} = this.props;
+    const {action} = this.props;
 		const {values} = this.state;
 
     if(!show) {
       return null;
     }
+
+    const buttonClass = ((action) => {
+      if (action == "Close") {
+        return 'btn-danger';
+      } 
+      return 'btn-success';
+    })(action);
 
     return (
       <div className="modal">
@@ -46,8 +54,8 @@ class Modal extends Component {
 										</ModalText>
 									);
 								})}
-								<input type="submit" value={"Submit"}
-									className="btn btn-success">
+								<input type="submit" value={action}
+									className={"btn " + buttonClass}>
 								</input>
 							</form>
 						</div>

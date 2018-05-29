@@ -24,8 +24,9 @@ const authenticateUser = (cognitoUser, authenticationDetails) => {
       mfaRequired: codeDeliveryDetails => reject(codeDeliveryDetails),
       newPasswordRequired: (fields, required) => {
         reject({
-          name: 'Password Reset Required',
-          required: required.concat('new_password'),
+          name: "PasswordResetException",
+          message: "Password Reset Required",
+          required: required.concat("new_password"),
           retry: userInput => {
             return new Promise((resolve, reject) => {
               const {new_password} = userInput;

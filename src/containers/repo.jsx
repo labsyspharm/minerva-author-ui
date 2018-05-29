@@ -46,6 +46,7 @@ class Repo extends Component {
 			},
       'modal': {
         onClose: this.toggleModal.bind(this, false),
+        action: 'Close',
         title: 'Message',
         fields: [],
         show: false
@@ -143,28 +144,40 @@ class Repo extends Component {
         session
       }))
       .catch(error => {
-        try {
-          const {modal} = this.state;
-          const {name, required, retry} = error;
-          
-          this.setState({
-            modal: {
-              show: true,
-              title: name,
-              fields: required,
-              onClose: (userInput) => {
-                this.toggleModal(false);
-                retry(userInput).then(session => this.setState({
-                  modal: {...modal},
-                  session,
-                }))
-              }
+        const {modal} = this.state;
+        const {name, message, retry} = error;
+        var onClose = this.toggleModal.bind(this, false);
+        var action = "Close";
+        var fields = [];
+
+        // Close the modal then retry
+        if (retry) {
+            onClose = (userInput) => {
+              this.toggleModal(false);
+              retry(userInput).then(session => this.setState({
+                modal: {...modal},
+                session,
+              }))
             }
-          });
         }
-        catch(e) {
-          console.log(e);
+
+        switch(name) {
+          case "PasswordResetException":
+            fields = error.required || [];
+            action = "Reset";
+            break;
+          default:
         }
+      
+        this.setState({
+          modal: {
+            show: true,
+            title: message,
+            fields: fields,
+            onClose: onClose,
+            action: action
+          }
+        });
       });
   }
 
@@ -177,7 +190,8 @@ class Repo extends Component {
 
     return (
       <React.Fragment>
-        <Modal show={modal.show} title={modal.title} fields={modal.fields}
+        <Modal show={modal.show} title={modal.title}
+          action={modal.action} fields={modal.fields}
           onClose={modal.onClose.bind(this)}>
         </Modal>
         <ImageView className="ImageView"
