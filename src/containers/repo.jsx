@@ -198,20 +198,11 @@ class Repo extends Component {
         const {repository} = this.state;
         const {token} = session;
         // Load the imports
-        api.getRepository(repository, token)
-          .then(data => {
-            const {imports} = data;
-
-            // Assume imports is list of uuids
-            return Promise.all(imports.map(uuid => {
-              return api.getImport(uuid, token);
-            }))
-          })
+        api.getImports(repository, token)
           .then(imports => {
             this.setState({
               imps: new Map(imports.map(i => {
 
-                // All images for this import
                 api.getImages(i.uuid, token).then(images => {
                   this.setState({
                     imgs: new Map([

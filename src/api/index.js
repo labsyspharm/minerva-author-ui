@@ -66,16 +66,29 @@ const confirmImport = (uuid, token) => {
   return doFetch('PUT', endpoint, token);
 }
 
-const getImages = (uuid, token) => {
+const getImports = (repo, token) => {
 
-  const endpointBFU = '/import/' + uuid + '/bfus';
+  return getRepository(repo, token)
+    .then(data => {
+      const {imports} = data;
+
+      // Assume imports is list of uuids
+      return Promise.all(imports.map(imp => {
+        return api.getImport(imp, token);
+      }))
+    })
+}
+
+const getImages = (imp, token) => {
+
+  const endpointBFU = '/import/' + imp + '/bfus';
 
   return doFetch('GET', endpointBFU, token)
     .then(data => data.bfus)
     .then(bfus => {
         // Assume BFU is list of uuids
-        return Promise.all(bfus.map(uuid => {
-          let endpoint = '/bfu/' + uuid + '/images';
+        return Promise.all(bfus.map(bfu => {
+          let endpoint = '/bfu/' + bfu + '/images';
           return doFetch('GET', endpoint, token) 
             .then(data => data.images)
         }));
@@ -284,5 +297,6 @@ export default {
   confirmImport,
   getRepository,
   getImport,
+  getImports,
   getImages,
 };
