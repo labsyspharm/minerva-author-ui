@@ -66,9 +66,32 @@ const confirmImport = (uuid, token) => {
   return doFetch('PUT', endpoint, token);
 }
 
-const getImports = (repository, token) => {
+const getImages = (uuid, token) => {
 
-  const endpoint = '/repository/' + repository;
+  const endpointBFU = '/import/' + uuid + '/bfus';
+
+  return doFetch('GET', endpointBFU, token)
+    .then(data => data.bfus)
+    .then(bfus => {
+        // Assume BFU is list of uuids
+        return Promise.all(bfus.map(uuid => {
+          let endpoint = '/bfu/' + uuid + '/images';
+          return doFetch('GET', endpoint, token) 
+            .then(data => data.images)
+        }));
+    })
+    .then(images => [].concat.apply([], images));
+}
+
+const getImport = (uuid, token) => {
+
+  const endpoint = '/import/' + uuid;
+  return doFetch('GET', endpoint, token);
+}
+
+const getRepository = (uuid, token) => {
+
+  const endpoint = '/repository/' + uuid;
   return doFetch('GET', endpoint, token);
 }
 
@@ -259,5 +282,7 @@ export default {
   fetchTile,
   addImport,
   confirmImport,
-  getImports,
+  getRepository,
+  getImport,
+  getImages,
 };
