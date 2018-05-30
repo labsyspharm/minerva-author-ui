@@ -12,8 +12,7 @@ class ModalText extends Component {
     const name = toCapital(field).replace("_", " ");
     const type = (() => {
       if (field.indexOf('password') >= 0) {
-        //TODO: not editable if "password"
-        return "text";
+        return "password";
       }
       return "text";
     })();

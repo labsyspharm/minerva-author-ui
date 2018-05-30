@@ -118,7 +118,7 @@ const getImages = (imp, token) => {
             const {SizeX, SizeY} = pixels;
             return {
               ...img,
-              channelCount: SizeC,
+              channelCount: parseInt(SizeC, 10),
               fullHeight: parseInt(SizeY, 10),
               fullWidth: parseInt(SizeX, 10)
             };

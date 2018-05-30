@@ -16,15 +16,15 @@ class Repo extends Component {
     super();
     this.state = {
       session: null,
-			imps: new Map(),
-			imgs: new Map(),
-			'active': {
-				uuid: undefined,
-				channels: new Map(),
+      imps: new Map(),
+      imgs: new Map(),
+      'active': {
+        uuid: undefined,
+        channels: new Map(),
         credentialsHolder: {
           credentials: null
         }
-			},
+      },
       'modal': {
         onClose: this.toggleModal.bind(this, false),
         action: 'Close',
@@ -41,19 +41,21 @@ class Repo extends Component {
     this.handleLogin = this.handleLogin.bind(this);
   }
 
-	getActive(img, session) {
+  getActive(img, session) {
 
-		const channels = new Map();
+    const channels = new Map();
     const {channelCount} = img;
     const {token} = session;
 
-		const getColor = i => {
-			return [
-			[0,0,255],[0,127,255],[0,255,0],[0,255,127],[0,255,255],
-			[127,0,255],[127,127,127],[127,127,255],[127,255,0],[127,255,127],
-			[255,0,0],[255,0,127],[255,0,255],[255,127,0],[255,127,127],[255,255,0]
-			][i % 16]
-		}
+    const getColor = i => {
+      // https://sashat.me/2017/01/11/list-of-20-simple-distinct-colors/
+      return [
+        [0, 130, 200], [230, 25, 75], [60, 180, 75], [255, 225, 25],
+        [245, 130, 48], [145, 30, 180], [70, 240, 240], [240, 50, 230],
+        [210, 245, 60], [0, 128, 128], [230, 190, 255], [255, 250, 200],
+        [128, 0, 0], [170, 255, 195], [128, 128, 0], [0, 0, 128],
+      ][i % 16]
+    }
 
     const maxRange = 65535;
     const minRange = 0;
@@ -62,19 +64,19 @@ class Repo extends Component {
       max: maxRange
     }
 
-		for (let id of Array(channelCount).keys()) {
+    for (let id of Array(channelCount).keys()) {
 
       const color = getColor(id);
 
       // Add to channel map
-  		channels.set(id, {
-				id,
+      channels.set(id, {
+        id,
         color,
         range,
         minRange,
         maxRange
-			});
-		}
+      });
+    }
 
     // Return active image withcredentials
     return api.getImageCredentials(img.uuid, token)
@@ -85,7 +87,7 @@ class Repo extends Component {
           credentialsHolder: {credentials}
         }
       });
-	}
+  }
 
   handleChange(id, color, range) {
     const { active } = this.state;
@@ -281,7 +283,7 @@ class Repo extends Component {
     const { modal } = this.state;
 
     const img = imgs.get(active.uuid);
-		const { channels, credentialsHolder } = active;
+    const { channels, credentialsHolder } = active;
 
     return (
       <React.Fragment>
