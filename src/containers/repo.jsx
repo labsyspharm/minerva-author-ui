@@ -221,6 +221,9 @@ class Repo extends Component {
           credentialsHolder={ credentialsHolder }
         />
         <Banner session={ session }
+                addImages={ ()=> {
+                  alert('hi');
+                }}
                 handleLogin={ ()=> {
                   this.setState({
                     modal: {

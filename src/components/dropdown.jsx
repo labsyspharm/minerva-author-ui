@@ -26,12 +26,10 @@ class Dropdown extends Component {
           aria-haspopup="true" 
           className="btn btn-secondary dropdown-toggle" 
           onClick={this.toggleDropdown}>
-          Dropdown button
+          Options
         </button>
         <div className={"dropdown-menu " + menuDisplay}>
-          <a className="dropdown-item" href="#nogo">Action</a>
-          <a className="dropdown-item" href="#nogo">Another action</a>
-          <a className="dropdown-item" href="#nogo">Something else here</a>
+          {this.props.children}
         </div>
       </div>
     );
