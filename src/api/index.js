@@ -110,6 +110,13 @@ const getImages = (imp, token) => {
     .then(images => [].concat.apply([], images));
 }
 
+const getImageCredentials = (img, token) => {
+
+  const endpoint = '/image/' + img + '/credentials';
+  return doFetch('GET', endpoint, token);
+
+}
+
 const getRepository = (uuid, token) => {
 
   const endpoint = '/repository/' + uuid;
@@ -268,16 +275,24 @@ export const login = (email, password) => {
 
 export const fetchTile = credentialsHolder => options => {
 
-    // // Wait for credentials
-    // const getCredentials = () => {
-    //   return new Promise((resolve, reject) => {
-    //     AWS.config.credentials.get(err => err ? reject(err) : resolve());
-    //   });
-    // };
+    const {credentials} = credentialsHolder;
+
+    const credentialsAWS = new AWS.Credentials({
+      accessKeyId: credentials.AccessKeyId,
+      sessionToken: credentials.SessionToken,
+      secretAccessKey: credentials.SecretAccessKey
+    });
+
+    var config = new AWS.Config({
+      credentials: credentialsAWS,
+      region: 'us-east-1'
+    });
+
+    AWS.config.credentials = credentialsAWS;
 
     const getObject = (bucket, key) => {
       return new Promise((resolve, reject) => {
-        const s3 = new AWS.S3({ credentials: credentialsHolder.credentials });
+        const s3 = new AWS.S3({ credentialsAWS });
         const params = { Bucket: bucket, Key: key };
         s3.getObject(params, (err, data) => err ? reject(err) : resolve(data));
       });
@@ -304,6 +319,7 @@ export default {
   addImport,
   confirmImport,
   getRepository,
+  getImageCredentials,
   getImports,
   getImages,
 };

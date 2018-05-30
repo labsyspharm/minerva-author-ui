@@ -19,11 +19,8 @@ class Repo extends Component {
 			imps: new Map(),
 			imgs: new Map(),
 			'active': {
-				uuid: 'uuid4',
-				channels: new Map([
-					[0, { id: 0, color: [255, 0, 0], range: { min: 0, max: 10000 }, minRange: 0, maxRange: 65535 }],
-					[1, { id: 1, color: [0, 0, 255], range: { min: 10000, max: 65535 }, minRange: 0, maxRange:65535 }]
-				]),
+				uuid: undefined,
+				channels: new Map(),
         credentialsHolder: {
           // TODO TODO TODO
           credentials: null
@@ -45,54 +42,50 @@ class Repo extends Component {
     this.handleLogin = this.handleLogin.bind(this);
   }
 
-	/**
-	 * This function is for testing without a real backend
-	 */
-	dummyAjax(img) {
+	getActive(img, session) {
 
 		const channels = new Map();
+    const {token} = session;
 
-		// Get a random integer, color, range
-		const randInt = n => Math.floor(Math.random() * n);
-		const randColor = () => {
+		const getColor = i => {
 			return [
 			[0,0,255],[0,127,255],[0,255,0],[0,255,127],[0,255,255],
 			[127,0,255],[127,127,127],[127,127,255],[127,255,0],[127,255,127],
 			[255,0,0],[255,0,127],[255,0,255],[255,127,0],[255,127,127],[255,255,0]
-			][randInt(16)]
-		}
-		const randRange = () => {
-			return [
-        { min: 0, max: 0.1}, { min: 0, max: 0.3 }, { min: 0, max: 0.5 },
-        { min: 0.1, max: 0.3 }, { min: 0.1, max: 0.5 }
-			][randInt(5)]
+			][i % 16]
 		}
 
+    const maxRange = 65535;
+    const minRange = 0;
+    const range = {
+      min: minRange,
+      max: maxRange
+    }
+
+		const randInt = n => Math.floor(Math.random() * n);
 		for (let id of Array(randInt(4)+1).keys()) {
-      const rawRange = randRange();
-      const range = {
-        min: Math.floor(rawRange['min'] * 65535),
-        max: Math.floor(rawRange['max'] * 65535)
-      };
-      const minRange = 0;
-      const maxRange = 65535;
-      const color = randColor();
-      const channel = {
+
+      const color = getColor(id);
+
+      // Add to channel map
+  		channels.set(id, {
 				id,
         color,
         range,
         minRange,
         maxRange
-			};
-  		channels.set(id, channel);
+			});
 		}
 
-		this.setState({
-			'active': {
-				uuid: img.uuid,
-				channels: channels
-			}
-		});
+    // Return active image withcredentials
+    return api.getImageCredentials(img.uuid, token)
+      .then(credentials => {
+        return {
+          uuid: img.uuid,
+          channels: channels,
+          credentialsHolder: {credentials}
+        }
+      });
 	}
 
   handleChange(id, color, range) {
@@ -183,34 +176,45 @@ class Repo extends Component {
 
     api.login(email, password)
       .then(session => {
-        const {repository} = this.state;
+        const {repository, active} = this.state;
         const {token} = session;
+        this.setState({session});
         // Load the imports
         api.getImports(repository, token)
-          .then(imports => {
-            imports.map(imp => {
-              api.getImages(imp.uuid, token).then(images => {
-                // Add image references to import
-                const impState = {...imp,
-                  imgs: images.map(img => img.uuid)
-                };
-                // Add an import and all its images
-                this.setState({
-                  imgs: new Map([
-                    ...this.state.imgs,
-                    ...images.map(img => [img.uuid, img])
-                  ]),
-                  imps: new Map([
-                    ...this.state.imps,
-                    [imp.uuid, impState]
-                  ])
+        .then(imports => {
+          imports.map(imp => {
+            api.getImages(imp.uuid, token).then(images => {
+
+              (a => {
+                const newImgs = new Map([
+                  ...this.state.imgs,
+                  ...images.map(img => [img.uuid, img])
+                ]);
+                const newImps = new Map([
+                  ...this.state.imps,
+                  [imp.uuid, {...imp,
+                    imgs: images.map(img => img.uuid)
+                  }]
+                ]);
+
+                // Set active if first image
+                if (a.id === undefined && images.length > 0) {
+                  return this.getActive(images[0], session)
+                    .then(active => {
+                      return {
+                        active,
+                        imgs: newImgs,
+                        imps: newImps
+                      };
+                    });
+                }
+                return Promise.resolve({
+                  imgs: newImgs,
+                  imps: newImps
                 });
-              })
+              })(active).then(this.setState.bind(this));
             });
           });
-
-        this.setState({
-          session
         });
       })
       .catch(e => {
@@ -321,7 +325,11 @@ class Repo extends Component {
                 const [uuid, imp] = entry;
                 return (
                   <Import key={uuid}
-                  click={this.dummyAjax.bind(this)}
+                  click={img => {
+                    this.getActive(img, session).then(active => {
+                      this.setState({active});
+                    });
+                  }}
                   imgs={imgs} imp={imp}/>
                 );
               })}
