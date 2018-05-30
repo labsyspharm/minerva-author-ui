@@ -16,7 +16,8 @@ class ImageView extends Component {
   }
 
   makeTileSource(id) {
-    const { img, channels, credentialsHolder } = this.props;
+    const { img, channels } = this.props;
+    const { onError, credentialsHolder } = this.props;
 
     if (img === undefined) {
       return undefined
@@ -45,7 +46,7 @@ class ImageView extends Component {
 
     return {
 			// Custom functions
-    	makeAjaxRequest: api.fetchTile(credentialsHolder),
+    	makeAjaxRequest: api.fetchTile(credentialsHolder, onError),
 			getTileUrl: getTileUrl,
 			// CUstom parameters
       many_channel_id: id,

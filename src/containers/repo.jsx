@@ -264,6 +264,19 @@ class Repo extends Component {
       });
   }
 
+  onError (e) {
+    this.setState({
+      modal: {
+        fields: [],
+        show: true,
+        title: "Error",
+        body: e.message,
+        onClose: this.toggleModal.bind(this, false),
+        action: "Close"
+      }
+    });
+  }
+
   render() {
     const { session, imps, imgs, active } = this.state;
     const { modal } = this.state;
@@ -281,6 +294,7 @@ class Repo extends Component {
         <ImageView className="ImageView"
           img={ img }
           channels={ channels }
+          onError={this.onError.bind(this)}
           credentialsHolder={ credentialsHolder }
         />
         <Banner session={ session }

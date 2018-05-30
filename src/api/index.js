@@ -272,9 +272,10 @@ export const login = (email, password) => {
     }));
 }
 
-export const fetchTile = credentialsHolder => options => {
+export const fetchTile = (credentialsHolder, onError) => options => {
 
     const {credentials} = credentialsHolder;
+    const logError = onError || console.error;
 
     const credentialsAWS = new AWS.Credentials({
       accessKeyId: credentials.AccessKeyId,
@@ -307,8 +308,10 @@ export const fetchTile = credentialsHolder => options => {
     }
 
     getObject(bucket, key)
-      .then(obj => options.success({response: obj.Body}))
-      .catch(err => console.error(err));
+      .then(obj => {
+        options.success({response: obj.Body})
+       }, logError)
+      .catch(logError);
 };
 
 export default {
