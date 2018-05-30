@@ -5,6 +5,7 @@ import api from '../api';
 
 import '../style/imageview';
 
+const TILE = 1024;
 
 const differSet = (a, b) => [...a].filter(i => !b.has(i));
 const intersectSet = (a, b) => [...a].filter(b.has.bind(b));
@@ -54,7 +55,7 @@ class ImageView extends Component {
       many_channel_range: [range['min'] / maxRange, range['max'] / maxRange],
       many_channel_color: color.map(c => c / 255.),
 			// Standard parameters
-			tileSize: 1024,
+			tileSize: TILE,
 			width: fullWidth,
 			height: fullHeight,
 			maxLevel: levelCount - 1,
@@ -137,32 +138,7 @@ class ImageView extends Component {
     }
   }
 
-  componentDidMount() {
-    const {channels, img} = this.props;
-    const ids = [...channels.keys()];
-
-    // Set up openseadragon viewer
-    this.viewer = viaWebGL.OpenSeadragon({
-      debugMode: false,
-      collectionMode: true,
-      showZoomControl: false,
-      showHomeControl: false,
-      loadTilesWithAjax: true,
-      showFullPageControl: false,
-      // Specific to this project
-      id: "ImageView",
-      collectionRows: 1,
-      collectionTileSize: 1,
-      collectionTileMargin: -1,
-      compositeOperation: "lighter",
-      prefixUrl: "images/openseadragon/",
-      tileSources: this.makeTileSources(ids)
-    });
-
-    if (img !== undefined) {
-      this.viewer.uuid = img.uuid;
-    }
-
+  startWebGl() {
     // Define interface to shaders
     const seaGL = new viaWebGL.openSeadragonGL(this.viewer);
     seaGL.vShader = 'vert.glsl';
@@ -207,7 +183,38 @@ class ImageView extends Component {
 		seaGL.addHandler('tile-loaded', (callback, e) => callback(e));
 
     seaGL.init();
+    seaGL.width = TILE;
+    seaGL.height = TILE;
+    seaGL.merger();
+  }
 
+  componentDidMount() {
+    const {channels, img} = this.props;
+    const ids = [...channels.keys()];
+
+    // Set up openseadragon viewer
+    this.viewer = viaWebGL.OpenSeadragon({
+      debugMode: false,
+      collectionMode: true,
+      showZoomControl: false,
+      showHomeControl: false,
+      loadTilesWithAjax: true,
+      showFullPageControl: false,
+      // Specific to this project
+      id: "ImageView",
+      collectionRows: 1,
+      collectionTileSize: 1,
+      collectionTileMargin: -1,
+      compositeOperation: "lighter",
+      prefixUrl: "images/openseadragon/",
+      tileSources: this.makeTileSources(ids)
+    });
+
+    this.viewer.addHandler('open', ()=> alert('hi'));
+
+    if (img !== undefined) {
+      this.viewer.uuid = img.uuid;
+    }
   }
 
   render() {
@@ -226,6 +233,7 @@ class ImageView extends Component {
         world.removeAll();
         viewer.uuid = uuid;
         this.addChannels([...ids]);
+        this.startWebGl();
       }
       else {
         // Compare the channel ids
