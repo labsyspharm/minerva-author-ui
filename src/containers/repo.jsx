@@ -22,7 +22,6 @@ class Repo extends Component {
 				uuid: undefined,
 				channels: new Map(),
         credentialsHolder: {
-          // TODO TODO TODO
           credentials: null
         }
 			},
