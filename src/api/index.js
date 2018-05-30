@@ -264,7 +264,6 @@ export const login = (email, password) => {
 
   return Promise.all([token, credentialsSet, gotAttrs])
     .then(values => {
-      console.log(gotAttrs);
       return values;
     })
     .then(values => ({
