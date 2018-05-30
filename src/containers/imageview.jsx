@@ -57,7 +57,7 @@ class ImageView extends Component {
 			tileSize: 1024,
 			width: fullWidth,
 			height: fullHeight,
-			maxLevel: levelCount,
+			maxLevel: levelCount - 1,
 			minLevel: 0,
     }
   }
