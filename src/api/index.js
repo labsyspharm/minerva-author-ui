@@ -68,8 +68,18 @@ const confirmImport = (uuid, token) => {
 
 const getImports = (repo, token) => {
 
-  return getRepository(repo, token)
+  const hack = {
+    '43465e43-a8be-4aa3-88af-0db3d9aad6f2': [
+       'cc20f3ab-0104-4b1b-b553-0052c0eda9fb'
+    ]
+  }
+  // TODO fix the hack
+  return Promise.resolve(hack[repo]);
+
+  const endpoint = '/list_imports_in_repository/' + repo;
+  return doFetch('GET', endpoint, token)
     .then(data => {
+
       const {imports} = data;
 
       // Assume imports is list of uuids

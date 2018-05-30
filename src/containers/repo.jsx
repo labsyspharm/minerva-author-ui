@@ -52,7 +52,7 @@ class Repo extends Component {
         show: false,
         body: ''
       },
-      'repository': '6fde2a25-12c8-4635-aa9e-4fbe3a636501'
+      'repository': '43465e43-a8be-4aa3-88af-0db3d9aad6f2'
     };
 
     // Bind
@@ -192,7 +192,10 @@ class Repo extends Component {
   }
 
   handleLogin(userInput) {
-    const {email, password} = userInput;
+    // Take from env file if possible
+    const email = userInput.email || process.env.EMAIL;
+    const password = userInput.password || process.env.PASSWORD;
+
     api.login(email, password)
       .then(session => {
         const {repository} = this.state;
@@ -258,6 +261,7 @@ class Repo extends Component {
             onClose: () => {
               this.toggleModal(false);
               api.confirmImport(uuid, token)
+                .then(r => console.log(r))
                 .catch(e => console.error(e));
             }
           }
