@@ -68,25 +68,15 @@ const confirmImport = (uuid, token) => {
 
 const getImports = (repo, token) => {
 
-  const hack = {
-    '43465e43-a8be-4aa3-88af-0db3d9aad6f2': [
-       'e6c8cccd-b0cc-4174-aa31-36c6a03a15eb'
-    ]
-  }
-  // TODO fix the hack
-  return Promise.all(hack[repo].map(imp => {
-    return getImport(imp, token);
-  }))
-
-  const endpoint = '/list_imports_in_repository/' + repo;
+  const endpoint = '/repository/' + repo + '/imports';
   return doFetch('GET', endpoint, token)
-    .then(data => {
+    .then(imports => {
 
-      const {imports} = data;
-
-      // Assume imports is list of uuids
       return Promise.all(imports.map(imp => {
-        return api.getImport(imp, token);
+        return {
+          uuid: imp.uuid,
+          name: imp.name
+        }
       }))
     })
 }
@@ -118,18 +108,6 @@ const getImages = (imp, token) => {
         }));
     })
     .then(images => [].concat.apply([], images));
-}
-
-const getImport = (uuid, token) => {
-
-  const endpoint = '/import/' + uuid;
-  return doFetch('GET', endpoint, token)
-    .then(data => {
-      return {
-        uuid: uuid,
-        name: data.name
-      }
-    });
 }
 
 const getRepository = (uuid, token) => {
@@ -326,7 +304,6 @@ export default {
   addImport,
   confirmImport,
   getRepository,
-  getImport,
   getImports,
   getImages,
 };
