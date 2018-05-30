@@ -44,6 +44,7 @@ class Repo extends Component {
 	getActive(img, session) {
 
 		const channels = new Map();
+    const {channelCount} = img;
     const {token} = session;
 
 		const getColor = i => {
@@ -61,8 +62,7 @@ class Repo extends Component {
       max: maxRange
     }
 
-		const randInt = n => Math.floor(Math.random() * n);
-		for (let id of Array(randInt(4)+1).keys()) {
+		for (let id of Array(channelCount).keys()) {
 
       const color = getColor(id);
 

@@ -101,20 +101,44 @@ const getImages = (imp, token) => {
                 return {
                   uuid: img.uuid,
                   url: keyToUrl(img.key),
+                  levelCount: parseInt(img.pyramidLevels, 10),
                   name: img.uuid.split('-')[0]
                 };
               });
             });
         }));
     })
-    .then(images => [].concat.apply([], images));
+    .then(images => [].concat.apply([], images))
+    .then(images => {
+      const promises = images.map(img => {
+        return getImageMetadata(img.uuid, token)
+          .then(meta => {
+            const {pixels} = meta;
+            const {SizeC} = pixels;
+            const {SizeX, SizeY} = pixels;
+            return {
+              ...img,
+              channelCount: SizeC,
+              fullHeight: parseInt(SizeY, 10),
+              fullWidth: parseInt(SizeX, 10)
+            };
+          });
+      });
+      return Promise.all(promises);
+    });
+}
+
+const getImageMetadata = (img, token) => {
+
+  const endpoint = '/image/' + img + '/metadata';
+  return doFetch('GET', endpoint, token);
+
 }
 
 const getImageCredentials = (img, token) => {
 
   const endpoint = '/image/' + img + '/credentials';
   return doFetch('GET', endpoint, token);
-
 }
 
 const getRepository = (uuid, token) => {
@@ -321,6 +345,7 @@ export default {
   addImport,
   confirmImport,
   getRepository,
+  getImageMetadata,
   getImageCredentials,
   getImports,
   getImages,

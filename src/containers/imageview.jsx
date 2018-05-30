@@ -29,7 +29,7 @@ class ImageView extends Component {
     }
 
     const { color, range, maxRange } = channel;
-    const { url } = img;
+    const { url, fullHeight, fullWidth, levelCount } = img;
 
 		const getTileName = (x, y, level, channel) => {
 			return "C" + channel + "-T0-Z0-L" + level + "-Y" + y + "-X" + x + ".png";
@@ -55,10 +55,10 @@ class ImageView extends Component {
       many_channel_color: color.map(c => c / 255.),
 			// Standard parameters
 			tileSize: 1024,
-			height: 4080,
-			width: 7220,
+			width: fullWidth,
+			height: fullHeight,
+			maxLevel: levelCount,
 			minLevel: 0,
-			maxLevel: 3
     }
   }
 
