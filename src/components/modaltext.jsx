@@ -10,9 +10,16 @@ class ModalText extends Component {
 
     const {field, value, onChange} = this.props;
     const name = toCapital(field).replace("_", " ");
+    const type = (() => {
+      if (field.indexOf('password') >= 0) {
+        //TODO: not editable if "password"
+        return "text";
+      }
+      return "text";
+    })();
 
     return (
-      <input className="form-control" type="text"
+      <input className="form-control" type={type}
         value={value} placeholder={name}
         onChange={onChange} />
     );

@@ -51,7 +51,8 @@ class Repo extends Component {
         fields: [],
         show: false,
         body: ''
-      }
+      },
+      'repository': '6fde2a25-12c8-4635-aa9e-4fbe3a636501'
     };
 
     // Bind
@@ -193,11 +194,62 @@ class Repo extends Component {
   handleLogin(userInput) {
     const {email, password} = userInput;
     api.login(email, password)
-      .then(session => this.setState({
-        session
-      }))
+      .then(session => {
+        const {repository} = this.state;
+        const {token} = session;
+        // Load the imports
+        api.getImports(repository, token)
+          .then((data) => {
+            console.log(data);
+          })
+
+        this.setState({
+          session
+        });
+      })
       .catch(e => {
         this.handleLoginError(e);
+      });
+  }
+
+  addImages(userInput) {
+    this.toggleModal(false);
+
+    if (this.state.session === null) {
+      this.setState({
+        modal: {
+          fields: [],
+          show: true,
+          title: "Error",
+          body: "You must login.",
+          onClose: this.toggleModal.bind(this, false),
+          action: "Close"
+        }
+      }); 
+      return;
+    }
+
+    const {token} = this.state.session;
+
+    api.addImport(userInput, token)
+      .then(uuid => {
+        this.setState({
+          modal: {
+            fields: [],
+            show: true,
+            action: "Confirm",
+            title: "Confirm Images Exist",
+            body: `In the S3 bucket, images must exist
+              in this folder for the import: ` + uuid,
+            onClose: () => {
+              this.toggleModal(false);
+              api.confirmImport(uuid, token)
+                .catch(e => console.error(e));
+            }
+          }
+        }); 
+      }).catch(e => {
+        console.error(e);
       });
   }
 
@@ -222,7 +274,19 @@ class Repo extends Component {
         />
         <Banner session={ session }
                 addImages={ ()=> {
-                  alert('hi');
+                  this.setState({
+                    modal: {
+                      show: true,
+                      title: "Add Images",
+                      body: "Name a repository and import.",
+                      fields: [
+                        "repository_name",
+                        "import_name",
+                      ],
+                      onClose: this.addImages.bind(this),
+                      action: "Add"
+                    }
+                  }) 
                 }}
                 handleLogin={ ()=> {
                   this.setState({

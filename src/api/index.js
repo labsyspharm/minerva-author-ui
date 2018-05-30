@@ -16,7 +16,8 @@ const loginBase = 'cognito-idp.us-east-1.amazonaws.com/us-east-1_d9h9zgWpx';
 const userPool = new CognitoUserPool(poolData);
 
 const base = 'https://qq3kn9y5te.execute-api.us-east-1.amazonaws.com/dev';
-const doFetch = (method, route, params = {}) => token => {
+
+const doFetch = (method, route, token, params = {}) => {
   const headers = new Headers({
     'content-type': 'application/json',
     Authorization: token
@@ -28,8 +29,6 @@ const doFetch = (method, route, params = {}) => token => {
 
   const url = base + route + (queryParams.length > 0 ? '?' + queryParams : '');
 
-  console.log(url);
-
   const request = new Request(
     url,
     {
@@ -40,11 +39,38 @@ const doFetch = (method, route, params = {}) => token => {
     }
   );
 
-  return fetch(request)
-    .then(response => response.json())
-    .then(data => console.log(data))
-    .then(() => token);
+  return fetch(request).then(r => r.json());
 };
+
+const addImport = (userInput, token) => {
+  // Parse user input
+  const {repository_name, import_name} = userInput;
+
+  return doFetch('POST', '/repository', token, {
+    name: repository_name
+  })
+  .then(data => data.uuid)
+  .then(rep_uuid => {
+    console.log('repo uuid ' + rep_uuid);
+    return doFetch('POST', '/import', token, {
+      repository: rep_uuid,
+      name: import_name
+    })
+  })
+  .then(data => data.uuid);
+}
+
+const confirmImport = (uuid, token) => {
+
+  const endpoint = '/import/' + uuid + '/complete';
+  return doFetch('PUT', endpoint, token);
+}
+
+const getImports = (repository, token) => {
+
+  const endpoint = '/repository/' + repository;
+  return doFetch('GET', endpoint, token);
+}
 
 const authenticateUser = (cognitoUser, authenticationDetails) => {
 
@@ -173,8 +199,7 @@ export const login = (email, password) => {
   const token = authenticateUser(cognitoUser, authenticationDetails)
     .then(response => response.getIdToken().getJwtToken());
 
-  const credentialsSet = token;
-    // .then(setCredentials);
+  const credentialsSet = token.then(setCredentials);
 
   const gotAttrs = token
     .then(() => getAttributes(cognitoUser))
@@ -230,5 +255,9 @@ export const fetchTile = credentialsHolder => options => {
 
 export default {
   login,
-  fetchTile
+  doFetch,
+  fetchTile,
+  addImport,
+  confirmImport,
+  getImports,
 };
