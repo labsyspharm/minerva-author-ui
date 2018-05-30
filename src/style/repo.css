@@ -6,6 +6,6 @@ nav.navbar {
   display: block;
 }
 
-.modal button {
+.modal * {
   pointer-events: all;
 }
