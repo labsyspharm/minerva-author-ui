@@ -18,6 +18,10 @@ class ImageView extends Component {
   makeTileSource(id) {
     const { img, channels, credentialsHolder } = this.props;
 
+    if (img === undefined) {
+      return undefined
+    }
+
     const channel = channels.get(id);
     if (channel === undefined) {
       return undefined;
@@ -136,7 +140,6 @@ class ImageView extends Component {
     const {channels, img} = this.props;
     const ids = [...channels.keys()];
 
-
     // Set up openseadragon viewer
     this.viewer = viaWebGL.OpenSeadragon({
       debugMode: false,
@@ -155,7 +158,9 @@ class ImageView extends Component {
       tileSources: this.makeTileSources(ids)
     });
 
-    this.viewer.uuid = img.uuid;
+    if (img !== undefined) {
+      this.viewer.uuid = img.uuid;
+    }
 
     // Define interface to shaders
     const seaGL = new viaWebGL.openSeadragonGL(this.viewer);
@@ -206,11 +211,12 @@ class ImageView extends Component {
 
   render() {
     const { viewer } = this;
+    const {img} = this.props;
 
     // After first render
-    if (viewer !== undefined) {
+    if (viewer !== undefined && img !== undefined) {
+      const { uuid } = img;
       const { world } = viewer;
-      const { uuid } = this.props.img;
       const { channels } = this.props;
       const ids = new Set(channels.keys());
 

@@ -16,24 +16,8 @@ class Repo extends Component {
     super();
     this.state = {
       session: null,
-			imps: new Map([
-				['uuid1', { uuid: 'uuid1', name: 'import1', imgs: ['uuid3', 'uuid4'] }],
-				['uuid2', { uuid: 'uuid2', name: 'import2', imgs: ['uuid5'] }]
-			]),
-			imgs: new Map([
-				['uuid3', {
-					uuid: 'uuid3', name: 'image1',
-					url: 'https://minerva-test-images.s3.amazonaws.com/png_tiles'
-				}],
-				['uuid4', {
-					uuid: 'uuid4', name: 'image2',
-					url: 'https://minerva-test-images.s3.amazonaws.com/png_tiles'
-				}],
-				['uuid5', {
-					uuid: 'uuid5', name: 'image3',
-					url: 'https://minerva-test-images.s3.amazonaws.com/png_tiles'
-				}]
-			]),
+			imps: new Map(),
+			imgs: new Map(),
 			'active': {
 				uuid: 'uuid4',
 				channels: new Map([
@@ -41,6 +25,7 @@ class Repo extends Component {
 					[1, { id: 1, color: [0, 0, 255], range: { min: 10000, max: 65535 }, minRange: 0, maxRange:65535 }]
 				]),
         credentialsHolder: {
+          // TODO TODO TODO
           credentials: null
         }
 			},
@@ -203,22 +188,26 @@ class Repo extends Component {
         // Load the imports
         api.getImports(repository, token)
           .then(imports => {
-            this.setState({
-              imps: new Map(imports.map(i => {
-
-                api.getImages(i.uuid, token).then(images => {
-                  this.setState({
-                    imgs: new Map([
-                      ...this.state.imgs,
-                      ...images.map(j => [j.uuid, j])
-                    ])
-                  });
-                })
-
-                return [i.uuid, i];
-              }))
+            imports.map(imp => {
+              api.getImages(imp.uuid, token).then(images => {
+                // Add image references to import
+                const impState = {...imp,
+                  imgs: images.map(img => img.uuid)
+                };
+                // Add an import and all its images
+                this.setState({
+                  imgs: new Map([
+                    ...this.state.imgs,
+                    ...images.map(img => [img.uuid, img])
+                  ]),
+                  imps: new Map([
+                    ...this.state.imps,
+                    [imp.uuid, impState]
+                  ])
+                });
+              })
             });
-          })
+          });
 
         this.setState({
           session

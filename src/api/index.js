@@ -70,11 +70,13 @@ const getImports = (repo, token) => {
 
   const hack = {
     '43465e43-a8be-4aa3-88af-0db3d9aad6f2': [
-       'cc20f3ab-0104-4b1b-b553-0052c0eda9fb'
+       'e6c8cccd-b0cc-4174-aa31-36c6a03a15eb'
     ]
   }
   // TODO fix the hack
-  return Promise.resolve(hack[repo]);
+  return Promise.all(hack[repo].map(imp => {
+    return getImport(imp, token);
+  }))
 
   const endpoint = '/list_imports_in_repository/' + repo;
   return doFetch('GET', endpoint, token)
@@ -93,14 +95,26 @@ const getImages = (imp, token) => {
 
   const endpointBFU = '/import/' + imp + '/bfus';
 
+  const keyToUrl = key => {
+    const parts = key.split('/');
+    const path = parts.slice(3).join('/');
+    return parts[2] + '.s3.amazonaws.com/' + path;
+  }
+
   return doFetch('GET', endpointBFU, token)
-    .then(data => data.bfus)
     .then(bfus => {
-        // Assume BFU is list of uuids
         return Promise.all(bfus.map(bfu => {
-          let endpoint = '/bfu/' + bfu + '/images';
-          return doFetch('GET', endpoint, token) 
-            .then(data => data.images)
+          let endpoint = '/bfu/' + bfu.uuid + '/images';
+          return doFetch('GET', endpoint, token)
+            .then(images => {
+              return images.map(img => {
+                return {
+                  uuid: img.uuid,
+                  url: keyToUrl(img.key),
+                  name: img.uuid.split('-')[0]
+                };
+              });
+            });
         }));
     })
     .then(images => [].concat.apply([], images));
@@ -109,7 +123,13 @@ const getImages = (imp, token) => {
 const getImport = (uuid, token) => {
 
   const endpoint = '/import/' + uuid;
-  return doFetch('GET', endpoint, token);
+  return doFetch('GET', endpoint, token)
+    .then(data => {
+      return {
+        uuid: uuid,
+        name: data.name
+      }
+    });
 }
 
 const getRepository = (uuid, token) => {
