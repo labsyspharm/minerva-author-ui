@@ -1,57 +1,8 @@
-div ul {
-  padding-left: 1em;
-  list-style-type: none;
-}
-
 .Demo {
   background-color: black;
   color: white;
 }
 
-.ImportList > ul {
-  padding-left: 0;
-}
-
-.ImportList svg {
-  transition: .3s all;
-}
-
-.ImportList .Tick:focus {
-  background-color:rgba(255,255,255,0.3);
-}
-
-.ImportList .Tick:hover {
-  background-color:rgba(255,255,255,0.3);
-}
-
-.ImportList .TickOpen svg {
-  transform: rotate(-90deg);
-}
-
-/*
- * Animations
- */
-
-.items-enter {
-  filter: blur(0.5em);
-  transform: scaleY(0);
-  transform-origin: top left;
-}
-
-.items-enter.items-enter-active {
-  filter: blur(0);
-  transform: scaleY(1);
-  transition: all 300ms ease-in;
-}
-
-.items-leave {
-  filter: blur(0);
-  transform: scaleY(1);
-  transform-origin: top left;
-}
-
-.items-leave.items-leave-active {
-  filter: blur(0.5em);
-  transform: scaleY(0);
-  transition: all 300ms ease-in;
+.Tick {
+  cursor: pointer;
 }
