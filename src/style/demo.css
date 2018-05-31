@@ -1,19 +1,8 @@
-div ul {
-  padding-left: 1em;
-  list-style-type: none;
-}
-
-div > ul {
-  padding-left: 0;
-}
-
-div > ul > li > ul {
-  padding-left: 0;
-}
-
 .Demo {
-  /* display: grid; */
-  /* grid-template-rows: 4em 1fr; */
   background-color: black;
   color: white;
+}
+
+.Tick {
+  cursor: pointer;
 }

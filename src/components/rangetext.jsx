@@ -28,7 +28,7 @@ class RangeText extends Component {
     // Input Validation
     if (!isNaN(int_value)) {
       new_value = Math.min(Math.max(int_value, min), max); 
-      new_shown_value = '' + Math.min(Math.max(int_value, 0), 100); 
+      new_shown_value = '' + new_value; 
       // Show the real value if within range
       if (new_value == int_value) {
         new_shown_value = undefined;
