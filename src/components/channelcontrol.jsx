@@ -12,7 +12,8 @@ const ChannelControl = ({ id, color, range, minRange, maxRange,
                           handleChange }) => {
 
   // Large steps for text boxes
-  const step = Math.ceil((maxRange - minRange) / 255);
+  var step = Math.ceil((maxRange - minRange) / 255);
+  step = (range.max - range.min > step)? step : 1;
 
   return (
     <div className="row">
@@ -28,7 +29,7 @@ const ChannelControl = ({ id, color, range, minRange, maxRange,
             min: val,
             max: range.max
           })}
-          value={range.min} min={minRange} max={range.max - step}
+          value={range.min} min={minRange} max={range.max - 1}
           step={step} full={[minRange, maxRange]} />
         <InputRange
           allowSameValues={ false }
@@ -42,7 +43,7 @@ const ChannelControl = ({ id, color, range, minRange, maxRange,
             min: range.min,
             max: val
           })}
-          value={range.max} min={range.min + step} max={maxRange}
+          value={range.max} min={range.min + 1} max={maxRange}
           step={step} full={[minRange, maxRange]} />
       </div>
     </div>
