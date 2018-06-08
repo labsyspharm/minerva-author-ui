@@ -64,7 +64,8 @@ class Import extends Component {
           </svg>
           {imp.name}
         </Tick>
-        <CSSTransitionGroup transitionName="items">
+        <CSSTransitionGroup transitionName="items"
+        transitionEnterTimeout={300} transitionLeaveTimeout={300}>
           {items}
         </CSSTransitionGroup>
       </div>
