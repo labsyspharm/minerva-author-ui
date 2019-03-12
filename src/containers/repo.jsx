@@ -33,7 +33,7 @@ class Repo extends Component {
         show: false,
         body: ''
       },
-      'repository': '43465e43-a8be-4aa3-88af-0db3d9aad6f2'
+      'repository': '0e724822-06fe-4c37-9900-0bcbee7d2852'
     };
 
     // Bind

@@ -6,16 +6,13 @@ import AWS from 'aws-sdk';
 
 const region  = 'us-east-1';
 const poolData = {
-    UserPoolId : 'us-east-1_d9h9zgWpx',
-    ClientId : '5m75aiie05v28astdpu2noap6m'
+    UserPoolId : 'us-east-1_YuTF9ST4J',
+    ClientId : '6ctsnjjglmtna2q5fgtrjug47k'
 };
-
-const identityPoolId = 'us-east-1:615f48bb-613f-46de-98b0-6e0b84f707f6';
-const loginBase = 'cognito-idp.us-east-1.amazonaws.com/us-east-1_d9h9zgWpx';
 
 const userPool = new CognitoUserPool(poolData);
 
-const base = 'https://qq3kn9y5te.execute-api.us-east-1.amazonaws.com/dev';
+const base = 'https://yfo3vr9rw4.execute-api.us-east-1.amazonaws.com/dev';
 
 const doFetch = (method, route, token, params = {}) => {
   const headers = new Headers({
@@ -72,7 +69,7 @@ const getImports = (repo, token) => {
   return doFetch('GET', endpoint, token)
     .then(imports => {
 
-      return Promise.all(imports.map(imp => {
+      return Promise.all(imports.data.map(imp => {
         return {
           uuid: imp.uuid,
           name: imp.name
@@ -83,21 +80,22 @@ const getImports = (repo, token) => {
 
 const getImages = (imp, token) => {
 
-  const endpointBFU = '/import/' + imp + '/bfus';
+  const endpointFileset = '/import/' + imp + '/filesets';
 
   const keyToUrl = key => {
+    return 'hello'; // DERP
     const parts = key.split('/');
     const path = parts.slice(3).join('/');
     return parts[2] + '.s3.amazonaws.com/' + path;
   }
 
-  return doFetch('GET', endpointBFU, token)
-    .then(bfus => {
-        return Promise.all(bfus.map(bfu => {
-          let endpoint = '/bfu/' + bfu.uuid + '/images';
+  return doFetch('GET', endpointFileset, token)
+    .then(filesets => {
+        return Promise.all(filesets.data.map(fileset => {
+          let endpoint = '/fileset/' + fileset.uuid + '/images';
           return doFetch('GET', endpoint, token)
             .then(images => {
-              return images.map(img => {
+              return images.data.map(img => {
                 return {
                   uuid: img.uuid,
                   url: keyToUrl(img.key),
@@ -113,7 +111,7 @@ const getImages = (imp, token) => {
       const promises = images.map(img => {
         return getImageMetadata(img.uuid, token)
           .then(meta => {
-            const {pixels} = meta;
+            const {pixels} = meta.data;
             const {SizeC} = pixels;
             const {SizeX, SizeY} = pixels;
             return {
@@ -130,7 +128,7 @@ const getImages = (imp, token) => {
 
 const getImageMetadata = (img, token) => {
 
-  const endpoint = '/image/' + img + '/metadata';
+  const endpoint = '/image/' + img + '/dimensions';
   return doFetch('GET', endpoint, token);
 
 }
@@ -241,21 +239,6 @@ const authenticateUser = (cognitoUser, authenticationDetails) => {
   });
 };
 
-const setCredentials = token => {
-  return new Promise((resolve, reject) => {
-    const logins = {};
-    logins[loginBase] = token;
-    AWS.config.region = region;
-    AWS.config.credentials = new AWS.CognitoIdentityCredentials({
-      IdentityPoolId: identityPoolId,
-      Logins: logins
-    });
-
-    // Wait for credentials to be configured
-    AWS.config.credentials.get(err => err ? reject(err) : resolve());
-  });
-};
-
 const getAttributes = cognitoUser => {
   return new Promise((resolve, reject) => {
     cognitoUser.getUserAttributes((err, result) => {
@@ -274,8 +257,6 @@ export const login = (email, password) => {
   const token = authenticateUser(cognitoUser, authenticationDetails)
     .then(response => response.getIdToken().getJwtToken());
 
-  const credentialsSet = token.then(setCredentials);
-
   const gotAttrs = token
     .then(() => getAttributes(cognitoUser))
     .then(attrs => {
@@ -286,13 +267,13 @@ export const login = (email, password) => {
       return obj;
     });
 
-  return Promise.all([token, credentialsSet, gotAttrs])
+  return Promise.all([token, gotAttrs])
     .then(values => {
       return values;
     })
     .then(values => ({
       token: values[0],
-      attrs: values[2]
+      attrs: values[1]
     }));
 }
 
