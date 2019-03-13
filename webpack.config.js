@@ -37,7 +37,7 @@ module.exports = {
     }
   },
   output: {
-    path: path.join(__dirname, "/build"),
+    path: path.join(__dirname, "/docs"),
     publicPath: "/",
     filename: "bundle.js"
   },
@@ -50,7 +50,7 @@ module.exports = {
   	new Dotenv()
   ],
   devServer: {
-    contentBase: "./build",
+    contentBase: "./docs",
     hot: true
   }
 };
