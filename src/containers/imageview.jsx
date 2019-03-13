@@ -1,7 +1,6 @@
 import React, { Component } from "react";
 
 import viaWebGL from 'viawebgl';
-import AmazonWebSource from '../amazonwebsource';
 
 import '../style/imageview';
 
@@ -13,18 +12,9 @@ class ImageView extends Component {
 
   constructor() {
     super();
-
-    this.state = {
-  		auth: {
-				AccessKeyId: process.env.ACCESSKEYID,
-				SessionToken: process.env.SESSIONTOKEN,
-			  SecretAccessKey: process.env.SECRETACCESSKEY
-			}
-    }
   }
 
   makeTileSource(id) {
-    const {auth} = this.state;
     const {img, channels} = this.props;
 
     const channel = channels.get(id);
@@ -50,7 +40,6 @@ class ImageView extends Component {
 
     return {
 			// Custom functions
-    	makeAjaxRequest: new AmazonWebSource(auth).makeAjaxRequest,
 			getTileUrl: getTileUrl,
 			// CUstom parameters
       many_channel_id: id,

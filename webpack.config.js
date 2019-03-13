@@ -1,6 +1,5 @@
 const path = require("path");
 const webpack = require("webpack");
-const Dotenv = require('dotenv-webpack');
 const CopyWebpackPlugin = require("copy-webpack-plugin");
 
 module.exports = {
@@ -46,8 +45,7 @@ module.exports = {
     new CopyWebpackPlugin([{
         from: "static",
         to: "."
-    }]),
-  	new Dotenv()
+    }])
   ],
   devServer: {
     contentBase: "./docs",
