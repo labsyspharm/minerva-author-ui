@@ -12,6 +12,8 @@ import '../style/channelcontrol'
 const ChannelControl = ({ id, color, range, minRange, maxRange,
                           handleChange }) => {
 
+  let stepSize = Math.ceil((maxRange - minRange) / 100)
+
   return (
     <div className="ChannelControl row">
       <div className="col-1">
@@ -27,6 +29,7 @@ const ChannelControl = ({ id, color, range, minRange, maxRange,
           maxValue={ maxRange }
           minValue={ minRange }
           value={ range }
+          step={ stepSize }
           onChange={ range => handleChange(id, null, range) } />
       </div>
     </div>
