@@ -10,24 +10,27 @@ import '../style/channelcontrol'
  * @param {function} onRangeChange - update range state
  */
 const ChannelControl = ({ id, color, range, minRange, maxRange,
-                          handleChange }) => {
+                          label, handleChange }) => {
+
+  let stepSize = Math.ceil((maxRange - minRange) / 100)
 
   return (
     <div className="ChannelControl row">
       <div className="col-1">
         <HuePicker
           color={ color }
-          handleChange={ color => handleChange(id, color, null) }
+          handleChange={ color => handleChange(id, color, null, null) }
         />
       </div>
       <div className="col">
         <InputRange
-          allowSameValues={ true }
+          allowSameValues={ false }
           draggableTrack={ true }
           maxValue={ maxRange }
           minValue={ minRange }
           value={ range }
-          onChange={ range => handleChange(id, null, range) } />
+          step={ stepSize }
+          onChange={ range => handleChange(id, null, range, null) } />
       </div>
     </div>
   );

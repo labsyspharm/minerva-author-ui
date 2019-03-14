@@ -26,7 +26,7 @@ class ImageView extends Component {
     const { url } = img;
 
 		const getTileName = (x, y, level, channel) => {
-			return "C" + channel + "-T0-Z0-L" + level + "-Y" + y + "-X" + x + ".png";
+			return channel + "/" + level + "_" + x + "_" + y + ".png";
 		}
 
 		const getTileUrl = function(l, x, y) {
@@ -218,9 +218,17 @@ class ImageView extends Component {
       }
       else {
         // Compare the channel ids
-        const idsNow = new Set(this.getTiledImageIds());
-        const redrawn = intersectSet(ids, idsNow);
+        const old_ids = new Set(this.getTiledImageIds());
+        const redrawn = intersectSet(ids, old_ids);
+        const removed = differSet(old_ids, ids);
+        const added = differSet(ids, old_ids);
 
+        removed.forEach(id => {
+          world.removeItem(this.getTiledImageById(id))
+        })
+
+        this.addChannels([...added])
+        
         // Redraw channels that differ
         this.redrawChannels(redrawn.filter(id => {
           const channel = this.getChannel(id);

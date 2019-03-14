@@ -1,9 +1,8 @@
 import React, { Component } from "react";
+import Select from 'react-select';
 
 import ImageView from "./imageview";
 import ChannelControls from "./channelcontrols";
-import ImportList from "../components/importlist";
-import Import from "../components/import";
 
 import '../style/repo'
 
@@ -12,90 +11,32 @@ class Repo extends Component {
   constructor() {
     super();
     this.state = {
-			imps: new Map([
-				['uuid1', { uuid: 'uuid1', name: 'import1', imgs: ['uuid3', 'uuid4'] }],
-				['uuid2', { uuid: 'uuid2', name: 'import2', imgs: ['uuid5'] }]
-			]),
-			imgs: new Map([
-				['uuid3', {
-					uuid: 'uuid3', name: 'image1',
-					url: 'https://minerva-test-images.s3.amazonaws.com/png_tiles'
-				}],
-				['uuid4', {
+			img: {
 					uuid: 'uuid4', name: 'image2',
-					url: 'https://minerva-test-images.s3.amazonaws.com/png_tiles'
-				}],
-				['uuid5', {
-					uuid: 'uuid5', name: 'image3',
-					url: 'https://minerva-test-images.s3.amazonaws.com/png_tiles'
-				}]
-			]),
-			'active': {
-				uuid: 'uuid4',
-				channels: new Map([
-					[0, { id: 0, color: [255, 0, 0], range: { min: 0, max: 10000 }, minRange: 0, maxRange: 65535 }],
-					[1, { id: 1, color: [0, 0, 255], range: { min: 10000, max: 65535 }, minRange: 0, maxRange:65535 }]
-				])
-			}
+					url: '/rendered/BP40'
+			},
+      activeIds: [0, 1],
+			channels: new Map([
+        [0, { label: '0', value: 0, id: 0, color: [255, 0, 0], range: { min: 0, max: 10000 }, maxRange: 65535}],
+        [1, { label: '1', value: 1, id: 1, color: [0, 0, 255], range: { min: 10000, max: 65535 }, maxRange: 65535}]
+      ])
     };
 
     // Bind
     this.handleChange = this.handleChange.bind(this);
+    this.handleSelect = this.handleSelect.bind(this);
   }
 
-	/**
-	 * This function is for testing without a real backend
-	 */
-	dummyAjax(img) {
+  handleSelect(channels) {
+    const channelArray = channels? channels : [];
+    const activeIds = channelArray.map(c => c.id);
+    this.setState({
+      activeIds
+    })
+  }
 
-		const channels = new Map();
-
-		// Get a random integer, color, range
-		const randInt = n => Math.floor(Math.random() * n);
-		const randColor = () => {
-			return [
-			[0,0,255],[0,127,255],[0,255,0],[0,255,127],[0,255,255],
-			[127,0,255],[127,127,127],[127,127,255],[127,255,0],[127,255,127],
-			[255,0,0],[255,0,127],[255,0,255],[255,127,0],[255,127,127],[255,255,0]
-			][randInt(16)]
-		}
-		const randRange = () => {
-			return [
-        { min: 0, max: 0.1}, { min: 0, max: 0.3 }, { min: 0, max: 0.5 },
-        { min: 0.1, max: 0.3 }, { min: 0.1, max: 0.5 }
-			][randInt(5)]
-		}
-
-		for (let id of Array(randInt(4)+1).keys()) {
-      const rawRange = randRange();
-      const range = {
-        min: Math.floor(rawRange['min'] * 65535),
-        max: Math.floor(rawRange['max'] * 65535)
-      };
-      const minRange = 0;
-      const maxRange = 65535;
-      const color = randColor();
-      const channel = {
-				id,
-        color,
-        range,
-        minRange,
-        maxRange
-			};
-  		channels.set(id, channel);
-		}
-
-		this.setState({
-			'active': {
-				uuid: img.uuid,
-				channels: channels
-			}
-		});
-	}
-
-  handleChange(id, color, range) {
-    const { active } = this.state;
-    const { channels } = active;
+  handleChange(id, color, range, label) {
+    const { channels } = this.state;
     const channel = channels.get(id);
 
     const newChannel = { ...channel };
@@ -105,49 +46,47 @@ class Repo extends Component {
     if (range) {
       newChannel['range'] = range;
     }
+    if (label) {
+      newChannel['label'] = label;
+    }
     const newChannels = new Map([...channels,
                                  ...(new Map([[id, newChannel]]))]);
-    const newActive = { ...this.state['active'], channels: newChannels };
 
     this.setState({
-      active: newActive
+      channels: newChannels
     });
   }
 
   // <nav className="navbar navbar-default navbar-fixed-side">
 
   render() {
-    const { imps, imgs, active } = this.state;
-
-		const entries = imps.entries();
-    const img = imgs.get(active.uuid);
-		const { channels } = active;
+    const { img, channels, activeIds } = this.state;
+    const activeChannels = new Map(activeIds.map(a => [a, channels.get(a)]))
 
     return (
 
       <div className="container-fluid Repo">
-      <ImageView className="ImageView"
-        img={ img }
-        channels={ channels }
-      />
+        <ImageView className="ImageView"
+          img={ img }
+          channels={ activeChannels }
+        />
         <div className="row justify-content-between">
-          <ImportList className="ImportList col-md-2">
-            {Array.from(entries).map(entry => {
-              const [uuid, imp] = entry;
-              return (
-                <Import key={uuid}
-                click={this.dummyAjax.bind(this)}
-                imgs={imgs} imp={imp}/>
-              );
-            })}
-          </ImportList>
-
-          <ChannelControls className="ChannelControls col-md-3"
-            channels={ channels }
-            handleChange={ this.handleChange }
-          />
+          <div className="col-md-5">
+            <input type="text" value={'' + channels.get(0).label} 
+              onChange={ e => this.handleChange(0, null, null, e.target.value) }
+            />
+            <Select
+              isMulti={true}
+              onChange={this.handleSelect}
+              value={Array.from(activeChannels.values())}
+              options={Array.from(channels.values())}
+            />
+            <ChannelControls className="ChannelControls"
+              channels={ activeChannels }
+              handleChange={ this.handleChange }
+            />
+          </div>
         </div>
-
       </div>
     );
   }
