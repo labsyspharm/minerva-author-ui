@@ -9,22 +9,23 @@ class App extends Component {
     super();
 
     this.state = {
-      image: null
+      loaded: false,
+      channels: 0
     }
 
   }
 
   async componentDidMount() {
-    const {image} = this.state;
-
     try {
       setInterval(async () => {
-        if (image === null) {
+        const {loaded} = this.state;
+        if (loaded === false) {
           const res = await fetch('/api/import');
           const import_result = await res.json();
 
           this.setState({
-            image: import_result.image,
+            loaded: import_result.loaded,
+            channels: import_result.channels,
           })
         }
       }, 3000);
@@ -34,10 +35,10 @@ class App extends Component {
   }
 
   render() {
-    const {image} = this.state;
+    const {loaded, channels} = this.state;
 
     return (
-      image === null? <Import/> : <Repo/>
+      loaded? <Repo channels={channels}/> : <Import/>
     );
   }
 }

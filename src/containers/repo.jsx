@@ -1,4 +1,5 @@
 import React, { Component } from "react";
+import CreatableSelect from 'react-select/creatable';
 import Select from 'react-select';
 
 import ImageView from "./imageview";
@@ -6,62 +7,181 @@ import ChannelControls from "./channelcontrols";
 
 import '../style/repo'
 
+const randInt = n => Math.floor(Math.random() * n);
+const randColor = () => {
+  return [
+    [0,0,255],[0,127,255],[0,255,0],[0,255,127],[0,255,255],
+    [127,0,255],[127,127,127],[127,127,255],[127,255,0],[127,255,127],
+    [255,0,0],[255,0,127],[255,0,255],[255,127,0],[255,127,127],[255,255,0]
+  ][randInt(16)]
+}
+
 class Repo extends Component {
 
-  constructor() {
+  constructor(props) {
     super();
+
+    const { channels } = props;
+
     this.state = {
 			img: {
-					uuid: 'uuid4', name: 'image2',
-					url: '/rendered/BP40'
+          uuid: 'uuid0',
+					url: '/api/u16'
 			},
+      activeGroup: null,
+      groups: new Map([]),
       activeIds: [0, 1],
-			channels: new Map([
-        [0, { label: '0', value: 0, id: 0, color: [255, 0, 0], range: { min: 0, max: 10000 }, maxRange: 65535}],
-        [1, { label: '1', value: 1, id: 1, color: [0, 0, 255], range: { min: 10000, max: 65535 }, maxRange: 65535}]
-      ])
+      chanLabel: new Map([...Array(channels).keys()].map(i => {
+        return [i, {
+          value: i, id: i,
+          label: '' + i,
+        }];
+      })),
+      chanRender: new Map([...Array(channels).keys()].map(i => {
+        return [i, {
+          maxRange: 65535,
+          value: i, id: i,
+          color: randColor(),
+          range: {min: 0, max: 32768}
+        }];
+      }))
     };
 
     // Bind
     this.handleChange = this.handleChange.bind(this);
     this.handleSelect = this.handleSelect.bind(this);
+    this.handleSelectGroup = this.handleSelectGroup.bind(this);
+    this.renderGroups = this.renderGroups.bind(this);
+  }
+
+  handleSelectGroup(g) {
+    const { groups, activeIds, chanRender } = this.state;
+
+    if (g.__isNew__) {
+      const id = groups.size;
+      const newGroup = {
+        chanRender: chanRender,
+        activeIds: activeIds,
+        label: g.label,
+        value: id
+      }
+    
+      const newGroups = new Map([...groups,
+                                ...(new Map([[id, newGroup]]))]);
+
+      this.setState({
+        groups: newGroups,
+        activeGroup: id
+      });
+    }
+    else {
+      this.setState({
+        activeGroup: g.value,
+        activeIds: g.activeIds
+      });
+    }
   }
 
   handleSelect(channels) {
+    const {groups, activeGroup} = this.state;
     const channelArray = channels? channels : [];
     const activeIds = channelArray.map(c => c.id);
+
+    const group = groups.get(activeGroup);
+
     this.setState({
       activeIds
     })
+
+    if (group) {
+      const newGroup = {
+        chanRender: group.chanRender, 
+        activeIds: activeIds,
+        label: group.label,
+        value: group.value
+      }
+    
+      const newGroups = new Map([...groups,
+                                ...(new Map([[activeGroup, newGroup]]))]);
+
+      this.setState({
+        groups: newGroups
+      })
+    }
   }
 
   handleChange(id, color, range, label) {
-    const { channels } = this.state;
-    const channel = channels.get(id);
+    const { chanRender, chanLabel, groups, activeGroup } = this.state;
+    const group = groups.get(activeGroup);
+    let newRender = { ...chanRender.get(id) };
+    if (group) {
+      newRender = { ...group.chanRender.get(id) };
+    }
+    const newLabel = { ...chanLabel.get(id) };
 
-    const newChannel = { ...channel };
     if (color) {
-      newChannel['color'] = color;
+      newRender['color'] = color;
     }
     if (range) {
-      newChannel['range'] = range;
+      newRender['range'] = range;
     }
-    if (label) {
-      newChannel['label'] = label;
+    if (label !== null) {
+      newLabel['label'] = label;
     }
-    const newChannels = new Map([...channels,
-                                 ...(new Map([[id, newChannel]]))]);
+    const newChanLabel = new Map([...chanLabel,
+                                 ...(new Map([[id, newLabel]]))]);
 
     this.setState({
-      channels: newChannels
+      chanLabel: newChanLabel
+    });
+    if (group) {
+      const newGroup = {...group}
+      const newChanRender = new Map([...group.chanRender,
+                                 ...(new Map([[id, newRender]]))]);
+      newGroup['chanRender'] = newChanRender
+      const newGroups = new Map([...groups,
+                                ...(new Map([[activeGroup, newGroup]]))]);
+      this.setState({
+        groups: newGroups,
+      });
+    }
+    else {
+      const newChanRender = new Map([...chanRender,
+                                 ...(new Map([[id, newRender]]))]);
+      this.setState({
+        chanRender: newChanRender,
+      });
+    }
+  }
+
+  renderGroups() {
+
+    const {groups} = this.state;
+    const data = {
+      'groups': Object.fromEntries(groups)
+    }
+  
+    fetch('/api/render', {
+      method: 'POST',
+      body: JSON.stringify(data),
+      headers: {
+        "Content-Type": "application/json"
+      }
     });
   }
 
-  // <nav className="navbar navbar-default navbar-fixed-side">
-
   render() {
-    const { img, channels, activeIds } = this.state;
-    const activeChannels = new Map(activeIds.map(a => [a, channels.get(a)]))
+    const { img, groups, chanLabel, chanRender, activeIds, activeGroup } = this.state;
+    const group = groups.get(activeGroup);
+    let activeChanRender = new Map(activeIds.map(a => [a, chanRender.get(a)]))
+    if (group) {
+      activeChanRender = new Map(activeIds.map(a => [a, group.chanRender.get(a)]))
+    }
+    console.log('activeChanRender', activeChanRender)
+    const activeChanLabel = new Map(activeIds.map(a => [a, chanLabel.get(a)]))
+    const activeChannels = new Map(activeIds.map(a => [a, {
+      ...activeChanLabel.get(a), ...activeChanRender.get(a)
+    } ])) 
 
     return (
 
@@ -72,14 +192,19 @@ class Repo extends Component {
         />
         <div className="row justify-content-between">
           <div className="col-md-5">
-            <input type="text" value={'' + channels.get(0).label} 
-              onChange={ e => this.handleChange(0, null, null, e.target.value) }
+            <button onClick={this.renderGroups}>
+              Render Groups
+            </button>
+            <CreatableSelect
+              isClearable
+              onChange={this.handleSelectGroup}
+              options={Array.from(groups.values())}
             />
             <Select
               isMulti={true}
               onChange={this.handleSelect}
-              value={Array.from(activeChannels.values())}
-              options={Array.from(channels.values())}
+              value={Array.from(activeChanLabel.values())}
+              options={Array.from(chanLabel.values())}
             />
             <ChannelControls className="ChannelControls"
               channels={ activeChannels }

@@ -23,9 +23,12 @@ const ChannelControl = ({ id, color, range, minRange, maxRange,
         />
       </div>
       <div className="col">
+        <input type="text" value={label} 
+          onChange={ e => handleChange(id, null, null, e.target.value) }
+        />
         <InputRange
           allowSameValues={ false }
-          draggableTrack={ true }
+          draggableTrack={ false }
           maxValue={ maxRange }
           minValue={ minRange }
           value={ range }
