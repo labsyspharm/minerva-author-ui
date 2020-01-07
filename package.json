@@ -28,16 +28,20 @@
     "style-loader": "^0.21.0",
     "webpack": "^4.0.1",
     "webpack-cli": "^3.3.10",
-    "webpack-dev-server": "^3.1.0"
+    "webpack-dev-server": "^3.10.1"
   },
   "dependencies": {
-    "bootstrap": "^3.3.7",
+    "@fortawesome/fontawesome-svg-core": "^1.2.26",
+    "@fortawesome/free-regular-svg-icons": "^5.12.0",
+    "@fortawesome/free-solid-svg-icons": "^5.12.0",
+    "@fortawesome/react-fontawesome": "^0.1.8",
     "prop-types": "^15.6.1",
-    "react": "^16.3.2",
+    "react": "^16.12.0",
     "react-color": "^2.14.1",
-    "react-dom": "^16.3.2",
+    "react-dom": "^16.12.0",
     "react-input-range": "^1.3.0",
     "react-select": "^3.0.8",
+    "react-spinners": "^0.7.2",
     "reactcss": "^1.2.3",
     "viawebgl": "git://github.com/thejohnhoffer/viaWebGL.git#webgl2"
   }

@@ -1,9 +1,9 @@
 import React, { Component } from "react";
 import CreatableSelect from 'react-select/creatable';
-import Select from 'react-select';
 
 import ImageView from "./imageview";
-import ChannelControls from "./channelcontrols";
+import CopyYaml from "./copyyaml";
+import Controls from "./controls";
 
 import '../style/repo'
 
@@ -14,6 +14,16 @@ const randColor = () => {
     [127,0,255],[127,127,127],[127,127,255],[127,255,0],[127,255,127],
     [255,0,0],[255,0,127],[255,0,255],[255,127,0],[255,127,127],[255,255,0]
   ][randInt(16)]
+}
+
+const IntToHex = c => {
+  var hex = c.toString(16);
+  return hex.length == 1 ? "0" + hex : hex;
+}
+
+const rgbToHex = rgb => {
+  const [r, g, b] = rgb;
+  return IntToHex(r) + IntToHex(g) + IntToHex(b);
 }
 
 class Repo extends Component {
@@ -28,6 +38,10 @@ class Repo extends Component {
           uuid: 'uuid0',
 					url: '/api/u16'
 			},
+      yaml: '',
+      textEdit: false,
+      activeStory: 0,
+      stories: new Map([]),
       activeGroup: null,
       groups: new Map([]),
       activeIds: [0, 1],
@@ -50,12 +64,70 @@ class Repo extends Component {
     // Bind
     this.handleChange = this.handleChange.bind(this);
     this.handleSelect = this.handleSelect.bind(this);
+    this.handleStoryName = this.handleStoryName.bind(this);
+    this.handleStoryText = this.handleStoryText.bind(this);
+    this.handleStoryChange = this.handleStoryChange.bind(this);
     this.handleSelectGroup = this.handleSelectGroup.bind(this);
+    this.toggleTextEdit = this.toggleTextEdit.bind(this);
     this.renderGroups = this.renderGroups.bind(this);
+  }
+
+  handleStoryChange(newActiveStory) {
+    const {stories, activeGroup} = this.state;
+    const story = stories.get(newActiveStory);
+    this.setState({
+      activeStory: newActiveStory
+    })
+    if (story) {
+      this.setState({
+        activeGroup: story.group
+      })
+    }
+  }
+
+  handleStoryName(event) {
+    const {stories, activeStory, activeGroup} = this.state;
+    const story = stories.get(activeStory);
+    const group = story ? story.group : activeGroup;
+    const text = story ? story.text : '';
+    const name = event.target.value;
+
+    const newStory = {text: text, name: name, group: group};
+
+    const newStories = new Map([...stories,
+                              ...(new Map([[activeStory, newStory]]))]);
+
+    this.setState({stories: newStories});
+  }
+
+  handleStoryText(event) {
+    const {stories, activeStory, activeGroup} = this.state;
+    const story = stories.get(activeStory);
+    const group = story ? story.group : activeGroup;
+    const name = story ? story.name : '';
+    const text = event.target.value;
+
+    const newStory = {text: text, name: name, group: group};
+
+    const newStories = new Map([...stories,
+                              ...(new Map([[activeStory, newStory]]))]);
+
+    this.setState({stories: newStories});
+  }
+
+  toggleTextEdit() {
+    const {textEdit} = this.state;
+    this.setState({
+      textEdit: !textEdit
+    })
   }
 
   handleSelectGroup(g) {
     const { groups, activeIds, chanRender } = this.state;
+    const { stories, activeStory } = this.state;
+    const story = stories.get(activeStory);
+    const storyName = story ? story.name : '';
+    const storyText = story ? story.text : '';
 
     if (g.__isNew__) {
       const id = groups.size;
@@ -69,13 +141,25 @@ class Repo extends Component {
       const newGroups = new Map([...groups,
                                 ...(new Map([[id, newGroup]]))]);
 
+      const newStory = {text: storyText, name: storyName, group: id};
+
+      const newStories = new Map([...stories,
+                                ...(new Map([[activeStory, newStory]]))]);
+
       this.setState({
+        stories: newStories,
         groups: newGroups,
         activeGroup: id
       });
     }
     else {
+      const newStory = {text: storyText, name: storyName, group: g.value};
+
+      const newStories = new Map([...stories,
+                                ...(new Map([[activeStory, newStory]]))]);
+
       this.setState({
+        stories: newStories,
         activeGroup: g.value,
         activeIds: g.activeIds
       });
@@ -156,9 +240,26 @@ class Repo extends Component {
 
   renderGroups() {
 
-    const {groups} = this.state;
+    const {groups, chanLabel} = this.state;
+
+    const combo = Array.from(groups.entries()).map(kv => {
+      const [k, v] = kv;
+      const channels = v.activeIds.map(id => {
+        return {
+          'color': rgbToHex(v.chanRender.get(id).color),
+          'range': v.chanRender.get(id).range,
+          'label': chanLabel.get(id).label,
+          'id': id
+        } 
+      });
+      return {
+        'label': v.label,
+        'channels': channels
+      };
+    });
+
     const data = {
-      'groups': Object.fromEntries(groups)
+      'groups': combo
     }
   
     fetch('/api/render', {
@@ -167,21 +268,35 @@ class Repo extends Component {
       headers: {
         "Content-Type": "application/json"
       }
-    });
+    }).then(ok => {
+      fetch('/api/yaml')
+      .then(response => response.text())
+      .then(data => {
+        this.setState({
+          yaml: data
+        })
+      })
+    })
   }
 
   render() {
-    const { img, groups, chanLabel, chanRender, activeIds, activeGroup } = this.state;
+    const { img, groups, chanLabel, textEdit } = this.state;
+    const { chanRender, activeIds, activeGroup } = this.state;
     const group = groups.get(activeGroup);
     let activeChanRender = new Map(activeIds.map(a => [a, chanRender.get(a)]))
     if (group) {
       activeChanRender = new Map(activeIds.map(a => [a, group.chanRender.get(a)]))
     }
-    console.log('activeChanRender', activeChanRender)
     const activeChanLabel = new Map(activeIds.map(a => [a, chanLabel.get(a)]))
     const activeChannels = new Map(activeIds.map(a => [a, {
       ...activeChanLabel.get(a), ...activeChanRender.get(a)
     } ])) 
+    const editLabel = textEdit ? 'Edit Groups' : 'Edit Story';
+
+    const {stories, activeStory} = this.state;
+    const story = stories.get(activeStory);
+    const storyName = story ? story.name : '';
+    const storyText = story ? story.text : '';
 
     return (
 
@@ -192,23 +307,34 @@ class Repo extends Component {
         />
         <div className="row justify-content-between">
           <div className="col-md-5">
+            <button onClick={this.toggleTextEdit}>
+              {editLabel}
+            </button>
             <button onClick={this.renderGroups}>
               Render Groups
             </button>
+            <CopyYaml
+              text={this.state.yaml}
+            />
             <CreatableSelect
               isClearable
+              value={group}
               onChange={this.handleSelectGroup}
               options={Array.from(groups.values())}
             />
-            <Select
-              isMulti={true}
-              onChange={this.handleSelect}
-              value={Array.from(activeChanLabel.values())}
-              options={Array.from(chanLabel.values())}
-            />
-            <ChannelControls className="ChannelControls"
-              channels={ activeChannels }
-              handleChange={ this.handleChange }
+            <Controls 
+              handleChange={this.handleChange}
+              handleSelect={this.handleSelect}
+              chanLabel={chanLabel}
+              activeChanLabel={activeChanLabel}
+              activeChannels={activeChannels}
+              textEdit={textEdit}
+              handleStoryName={this.handleStoryName}
+              handleStoryText={this.handleStoryText}
+              handleStoryChange={this.handleStoryChange}
+              storyName={storyName}
+              storyText={storyText}
+              activeStory={activeStory}
             />
           </div>
         </div>
