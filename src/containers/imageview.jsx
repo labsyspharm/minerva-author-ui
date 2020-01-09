@@ -48,8 +48,8 @@ class ImageView extends Component {
       many_channel_color: color.map(c => c / 255.),
 			// Standard parameters
 			tileSize: 1024,
-			height: 4080,
-			width: 7220,
+			height: img.height,
+			width: img.width,
 			minLevel: 0,
 			maxLevel: 3
     }
@@ -95,10 +95,12 @@ class ImageView extends Component {
 
   addChannels(ids) {
     const {viewer} = this;
+    const {img} = this.props;
     const tileSources = this.makeTileSources(ids);
     tileSources.map(tileSource => {
       viewer.addTiledImage({
-        tileSource: tileSource
+        tileSource: tileSource,
+        width: img.width / img.height
       });
     });
   }
@@ -131,26 +133,32 @@ class ImageView extends Component {
   }
 
   componentDidMount() {
-    const {channels, img} = this.props;
+    const {channels, img, handleViewport} = this.props;
     const ids = [...channels.keys()];
 
     // Set up openseadragon viewer
     this.viewer = viaWebGL.OpenSeadragon({
-      debugMode: false,
-      collectionMode: true,
+      collectionMode: false,
       showZoomControl: false,
       showHomeControl: false,
       loadTilesWithAjax: true,
       showFullPageControl: false,
       // Specific to this project
       id: "ImageView",
-      collectionRows: 1,
-      collectionTileSize: 1,
-      collectionTileMargin: -1,
       compositeOperation: "lighter",
       prefixUrl: "images/openseadragon/",
       tileSources: this.makeTileSources(ids)
     });
+    const world = this.viewer.world;
+    world.addHandler('add-item', function(e) {
+      e.item.setWidth(img.width / img.height);
+    });
+
+    this.viewer.addHandler('animation-finish', function(e) {
+      const THIS = e.userData;
+      const viewport = THIS.viewer.viewport;
+      handleViewport(viewport);
+    }, this);
 
     this.viewer.uuid = img.uuid;
 

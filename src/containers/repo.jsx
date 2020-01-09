@@ -2,7 +2,6 @@ import React, { Component } from "react";
 import CreatableSelect from 'react-select/creatable';
 
 import ImageView from "./imageview";
-import CopyYaml from "./copyyaml";
 import Controls from "./controls";
 
 import '../style/repo'
@@ -31,15 +30,17 @@ class Repo extends Component {
   constructor(props) {
     super();
 
-    const { channels } = props;
+    const { width, height, channels } = props;
 
     this.state = {
 			img: {
           uuid: 'uuid0',
-					url: '/api/u16'
+          width: width,
+          height: height,
+					url: 'http://localhost:2020/api/u16'
 			},
-      yaml: '',
       textEdit: false,
+      viewport: null,
       activeStory: 0,
       stories: new Map([]),
       activeGroup: null,
@@ -68,13 +69,46 @@ class Repo extends Component {
     this.handleStoryText = this.handleStoryText.bind(this);
     this.handleStoryChange = this.handleStoryChange.bind(this);
     this.handleSelectGroup = this.handleSelectGroup.bind(this);
+    this.handleViewport = this.handleViewport.bind(this);
     this.toggleTextEdit = this.toggleTextEdit.bind(this);
-    this.renderGroups = this.renderGroups.bind(this);
+    this.save = this.save.bind(this);
+  }
+  
+  handleViewport(viewport) {
+    const {stories, activeStory, activeGroup} = this.state;
+    const story = stories.get(activeStory);
+    const storyName = story ? story.name : '';
+    const storyText = story ? story.text : '';
+    const storyGroup = story ? story.group : activeGroup;
+
+    const newStory = {
+      'text': storyText,
+      'name': storyName,
+      'group': storyGroup,
+      'zoom': viewport.getZoom(),
+      'pan': [
+        viewport.getCenter().x,
+        viewport.getCenter().y
+      ]
+    }
+
+    const newStories = new Map([...stories,
+                              ...(new Map([[activeStory, newStory]]))]);
+    
+    this.setState({viewport: viewport});
+    if (this.state.textEdit) {
+      this.setState({stories: newStories});
+    }
   }
 
   handleStoryChange(newActiveStory) {
-    const {stories, activeGroup} = this.state;
+    const {stories, viewport, activeGroup} = this.state;
     const story = stories.get(newActiveStory);
+    if (story && viewport) {
+        const pan = new OpenSeadragon.Point(...story.pan);
+        viewport.zoomTo(story.zoom); 
+        viewport.panTo(pan); 
+    }
     this.setState({
       activeStory: newActiveStory
     })
@@ -90,9 +124,17 @@ class Repo extends Component {
     const story = stories.get(activeStory);
     const group = story ? story.group : activeGroup;
     const text = story ? story.text : '';
+    const pan = story ? story.pan : [0.5, 0.5];
+    const zoom = story ? story.zoom : 0.5;
     const name = event.target.value;
 
-    const newStory = {text: text, name: name, group: group};
+    const newStory = {
+      text: text,
+      name: name,
+      group: group,
+      pan: pan,
+      zoom: zoom
+    };
 
     const newStories = new Map([...stories,
                               ...(new Map([[activeStory, newStory]]))]);
@@ -104,10 +146,18 @@ class Repo extends Component {
     const {stories, activeStory, activeGroup} = this.state;
     const story = stories.get(activeStory);
     const group = story ? story.group : activeGroup;
+    const pan = story ? story.pan : [0.5, 0.5];
+    const zoom = story ? story.zoom : 0.5;
     const name = story ? story.name : '';
     const text = event.target.value;
 
-    const newStory = {text: text, name: name, group: group};
+    const newStory = {
+      text: text,
+      name: name,
+      group: group,
+      pan: pan,
+      zoom: zoom
+    };
 
     const newStories = new Map([...stories,
                               ...(new Map([[activeStory, newStory]]))]);
@@ -120,6 +170,9 @@ class Repo extends Component {
     this.setState({
       textEdit: !textEdit
     })
+    if (textEdit) {
+      this.handleStoryChange(activeStory);
+    }
   }
 
   handleSelectGroup(g) {
@@ -128,6 +181,8 @@ class Repo extends Component {
     const story = stories.get(activeStory);
     const storyName = story ? story.name : '';
     const storyText = story ? story.text : '';
+    const pan = story ? story.pan : [0.5, 0.5];
+    const zoom = story ? story.zoom : 0.5;
 
     if (g.__isNew__) {
       const id = groups.size;
@@ -141,7 +196,13 @@ class Repo extends Component {
       const newGroups = new Map([...groups,
                                 ...(new Map([[id, newGroup]]))]);
 
-      const newStory = {text: storyText, name: storyName, group: id};
+      const newStory = {
+        text: storyText,
+        name: storyName,
+        pan: pan,
+        zoom: zoom,
+        group: id
+      };
 
       const newStories = new Map([...stories,
                                 ...(new Map([[activeStory, newStory]]))]);
@@ -153,8 +214,15 @@ class Repo extends Component {
       });
     }
     else {
-      const newStory = {text: storyText, name: storyName, group: g.value};
 
+      const newStory = {
+        text: storyText,
+        name: storyName,
+        pan: pan,
+        zoom: zoom,
+        group: g.value
+      };
+      
       const newStories = new Map([...stories,
                                 ...(new Map([[activeStory, newStory]]))]);
 
@@ -238,16 +306,17 @@ class Repo extends Component {
     }
   }
 
-  renderGroups() {
+  save() {
 
-    const {groups, chanLabel} = this.state;
+    const {stories, groups, chanLabel} = this.state;
 
-    const combo = Array.from(groups.entries()).map(kv => {
-      const [k, v] = kv;
+    const group_output = Array.from(groups.values()).map(v => {
       const channels = v.activeIds.map(id => {
+        const chan = v.chanRender.get(id);
         return {
           'color': rgbToHex(v.chanRender.get(id).color),
-          'range': v.chanRender.get(id).range,
+          'min': chan.range.min / chan.maxRange,
+          'max': chan.range.max / chan.maxRange,
           'label': chanLabel.get(id).label,
           'id': id
         } 
@@ -258,24 +327,38 @@ class Repo extends Component {
       };
     });
 
-    const data = {
-      'groups': combo
-    }
-  
-    fetch('/api/render', {
+    const story_output = Array.from(stories.values()).map(v => {
+      return {
+        'name': v.name,
+        'text': v.text,
+        'pan': v.pan,
+        'zoom': v.zoom,
+        'group': groups.get(v.group).label
+      }
+    });
+
+    fetch('http://localhost:2020/api/stories', {
       method: 'POST',
-      body: JSON.stringify(data),
+      body: JSON.stringify({
+        'stories': [{
+          'name': '',
+          'text': '',
+          'waypoints': story_output
+        }]
+      }),
       headers: {
         "Content-Type": "application/json"
       }
-    }).then(ok => {
-      fetch('/api/yaml')
-      .then(response => response.text())
-      .then(data => {
-        this.setState({
-          yaml: data
-        })
-      })
+    })
+
+    fetch('http://localhost:2020/api/render', {
+      method: 'POST',
+      body: JSON.stringify({
+        'groups': group_output
+      }),
+      headers: {
+        "Content-Type": "application/json"
+      }
     })
   }
 
@@ -304,18 +387,16 @@ class Repo extends Component {
         <ImageView className="ImageView"
           img={ img }
           channels={ activeChannels }
+          handleViewport={ this.handleViewport }
         />
         <div className="row justify-content-between">
           <div className="col-md-5">
             <button onClick={this.toggleTextEdit}>
               {editLabel}
             </button>
-            <button onClick={this.renderGroups}>
-              Render Groups
+            <button onClick={this.save}>
+              Save
             </button>
-            <CopyYaml
-              text={this.state.yaml}
-            />
             <CreatableSelect
               isClearable
               value={group}

@@ -1,5 +1,9 @@
 .bg-black {
+  display: inline-block;
   background: black;
   padding: 0.5em;
   color: white;
+}
+.width-100 {
+  width: 100%;
 }

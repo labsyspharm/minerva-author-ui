@@ -10,7 +10,9 @@ class App extends Component {
 
     this.state = {
       loaded: false,
-      channels: 0
+      channels: 0,
+      width: 1024,
+      height: 1024
     }
 
   }
@@ -20,12 +22,14 @@ class App extends Component {
       setInterval(async () => {
         const {loaded} = this.state;
         if (loaded === false) {
-          const res = await fetch('/api/import');
+          const res = await fetch('http://localhost:2020/api/import');
           const import_result = await res.json();
 
           this.setState({
             loaded: import_result.loaded,
             channels: import_result.channels,
+            width: import_result.width,
+            height: import_result.height,
           })
         }
       }, 3000);
@@ -35,10 +39,10 @@ class App extends Component {
   }
 
   render() {
-    const {loaded, channels} = this.state;
+    const {loaded, channels, width, height} = this.state;
 
     return (
-      loaded? <Repo channels={channels}/> : <Import/>
+      loaded? <Repo channels={channels} width={width} height={height}/> : <Import/>
     );
   }
 }

@@ -21,7 +21,7 @@ class ImportForm extends Component {
       loading: true
     })
     
-    fetch('/api/import', {
+    fetch('http://localhost:2020/api/import', {
       method: 'POST',
       body: data,
     });

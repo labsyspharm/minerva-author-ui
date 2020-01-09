@@ -24,22 +24,23 @@ class Controls extends Component {
 
     if (textEdit) {
       return (<div>
-        <div className="bg-black">
-          Story step {activeStory}: 
+        <div>
+          <div className="bg-black">
+            Waypoint #{activeStory}: 
+          </div>
+          <input type="text" value={storyName} onChange={handleStoryName}></input>
+          <button onClick={()=>{
+            handleStoryChange(Math.max(0, activeStory - 1))
+          }}>
+            <FontAwesomeIcon icon={faArrowLeft} />
+          </button>
+          <button onClick={()=>{
+            handleStoryChange(activeStory + 1)
+          }}>
+            <FontAwesomeIcon icon={faArrowRight} />
+          </button>
         </div>
-        <input type="text" value={storyName} onChange={handleStoryName}></input>
-        <button onClick={()=>{
-          handleStoryChange(Math.max(0, activeStory - 1))
-        }}>
-          <FontAwesomeIcon icon={faArrowLeft} />
-        </button>
-        <button onClick={()=>{
-          handleStoryChange(activeStory + 1)
-        }}>
-          <FontAwesomeIcon icon={faArrowRight} />
-        </button>
-        <br/>
-        <textarea value={storyText} onChange={handleStoryText}></textarea>
+        <textarea className="width-100" value={storyText} onChange={handleStoryText}></textarea>
         </div>)
     }
 
