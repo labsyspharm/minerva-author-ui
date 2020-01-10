@@ -1,6 +1,7 @@
 import React, { Component } from "react";
 import CreatableSelect from 'react-select/creatable';
 
+import MinervaImageView from "./minervaimageview";
 import ImageView from "./imageview";
 import Controls from "./controls";
 
@@ -30,15 +31,19 @@ class Repo extends Component {
   constructor(props) {
     super();
 
-    const { width, height, channels } = props;
+    const { width, height, channels, minerva, uuid, url } = props;
+
+    const maxLevel = Math.ceil(Math.log2(Math.max(width, height) / 1024))
 
     this.state = {
 			img: {
-          uuid: 'uuid0',
+          uuid: uuid,
           width: width,
           height: height,
-					url: 'http://localhost:2020/api/u16'
+          maxLevel: maxLevel,
+					url: url 
 			},
+      minerva: minerva,
       textEdit: false,
       viewport: null,
       activeStory: 0,
@@ -363,6 +368,7 @@ class Repo extends Component {
   }
 
   render() {
+    const { minerva } = this.state;
     const { img, groups, chanLabel, textEdit } = this.state;
     const { chanRender, activeIds, activeGroup } = this.state;
     const group = groups.get(activeGroup);
@@ -381,14 +387,26 @@ class Repo extends Component {
     const storyName = story ? story.name : '';
     const storyText = story ? story.text : '';
 
+    let viewer;
+    if (minerva) {
+      viewer = <MinervaImageView className="ImageView"
+        img={ img }
+        channels={ activeChannels }
+        handleViewport={ this.handleViewport }
+      />
+    }
+    else {
+      viewer = <ImageView className="ImageView"
+        img={ img }
+        channels={ activeChannels }
+        handleViewport={ this.handleViewport }
+      />
+    }
+
     return (
 
       <div className="container-fluid Repo">
-        <ImageView className="ImageView"
-          img={ img }
-          channels={ activeChannels }
-          handleViewport={ this.handleViewport }
-        />
+        {viewer}
         <div className="row justify-content-between">
           <div className="col-md-5">
             <button onClick={this.toggleTextEdit}>

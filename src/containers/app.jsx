@@ -3,6 +3,20 @@ import React, { Component } from "react";
 import Repo from "./repo";
 import Import from "./import";
 
+import authenticate from '../login';
+
+const getAjaxHeaders = function(){
+  const user = 'john_hoffer@hms.harvard.edu';
+  const pass = Promise.resolve('MEETING@lsp2');
+  return authenticate(user, pass).then(function(token){
+    return {
+      'Content-Type': 'application/json',
+      'Authorization': token,
+      'Accept': 'application/json'
+    };
+  });  
+};
+
 class App extends Component {
 
   constructor() {
@@ -10,6 +24,11 @@ class App extends Component {
 
     this.state = {
       loaded: false,
+      //minerva: false,
+      //url: 'http://localhost:2020/api/u16',
+      minerva: true,
+      url: 'https://3v21j4dh1d.execute-api.us-east-1.amazonaws.com/dev/image/',
+      uuid: '0c18ba28-872c-4d83-9904-ecb8b12b514d',
       channels: 0,
       width: 1024,
       height: 1024
@@ -18,6 +37,29 @@ class App extends Component {
   }
 
   async componentDidMount() {
+    const {minerva, url, uuid} = this.state;
+
+    if (minerva) {
+      const fetch_dimensions = async () => {
+          
+        const ajaxHeaders = await getAjaxHeaders();
+        const res = await fetch(url + uuid + '/dimensions', {
+          headers: ajaxHeaders
+        });
+        const result = await res.json();
+        const pixels = result.data.pixels;
+
+        this.setState({
+          loaded: true,
+          channels: pixels.SizeC,
+          width: pixels.SizeX,
+          height: pixels.SizeY,
+        })
+      }
+      fetch_dimensions();
+      return;
+    }
+
     try {
       setInterval(async () => {
         const {loaded} = this.state;
@@ -39,10 +81,16 @@ class App extends Component {
   }
 
   render() {
-    const {loaded, channels, width, height} = this.state;
+    const {loaded, channels, width, height, minerva, url, uuid} = this.state;
 
+    if (loaded) {
+      return (<Repo minerva={minerva} channels={channels} 
+                    url={url} uuid={uuid}
+                    width={width} height={height}/>
+      )
+    }
     return (
-      loaded? <Repo channels={channels} width={width} height={height}/> : <Import/>
+      <Import/>
     );
   }
 }
