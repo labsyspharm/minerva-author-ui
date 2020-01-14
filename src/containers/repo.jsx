@@ -31,7 +31,7 @@ class Repo extends Component {
   constructor(props) {
     super();
 
-    const { width, height, channels, minerva, uuid, url } = props;
+    const { width, height, channels, token, minerva, uuid, url } = props;
 
     const maxLevel = Math.ceil(Math.log2(Math.max(width, height) / 1024))
 
@@ -43,6 +43,7 @@ class Repo extends Component {
           maxLevel: maxLevel,
 					url: url 
 			},
+      token: token,
       minerva: minerva,
       textEdit: false,
       viewport: null,
@@ -313,23 +314,30 @@ class Repo extends Component {
 
   save() {
 
-    const {stories, groups, chanLabel} = this.state;
+    let {groups} = this.state;
+    const {stories, chanLabel} = this.state;
+    const {minerva, token, img} = this.state;
 
     const group_output = Array.from(groups.values()).map(v => {
       const channels = v.activeIds.map(id => {
         const chan = v.chanRender.get(id);
         return {
-          'color': rgbToHex(v.chanRender.get(id).color),
+          'color': rgbToHex(chan.color),
           'min': chan.range.min / chan.maxRange,
           'max': chan.range.max / chan.maxRange,
           'label': chanLabel.get(id).label,
           'id': id
         } 
       });
-      return {
+      let group_out = {
         'label': v.label,
         'channels': channels
       };
+      if (v.id) {
+        group_out.id = v.id;
+      }
+      console.log(group_out);
+      return group_out
     });
 
     const story_output = Array.from(stories.values()).map(v => {
@@ -356,19 +364,42 @@ class Repo extends Component {
       }
     })
 
-    fetch('http://localhost:2020/api/render', {
-      method: 'POST',
-      body: JSON.stringify({
-        'groups': group_output
-      }),
-      headers: {
-        "Content-Type": "application/json"
-      }
-    })
+    if (minerva) {
+       fetch(img.url + img.uuid + '/rendering_settings', {
+        method: 'POST',
+        body: JSON.stringify({
+          'groups': group_output
+        }),
+        headers: {
+          "Content-Type": "application/json",
+          "Authorization": token
+        }
+      }).then(response => {
+        return response.json();
+      }).then(json => {
+        json.groups.forEach((g,i) => {
+          groups.get(i).id = g.id
+        })
+        this.setState({
+          groups: groups
+        })
+      });
+    }
+    else {
+      fetch('http://localhost:2020/api/render', {
+        method: 'POST',
+        body: JSON.stringify({
+          'groups': group_output
+        }),
+        headers: {
+          "Content-Type": "application/json"
+        }
+      })
+    }
   }
 
   render() {
-    const { minerva } = this.state;
+    const { minerva, token } = this.state;
     const { img, groups, chanLabel, textEdit } = this.state;
     const { chanRender, activeIds, activeGroup } = this.state;
     const group = groups.get(activeGroup);
@@ -390,7 +421,7 @@ class Repo extends Component {
     let viewer;
     if (minerva) {
       viewer = <MinervaImageView className="ImageView"
-        img={ img }
+        img={ img } token={ token }
         channels={ activeChannels }
         handleViewport={ this.handleViewport }
       />

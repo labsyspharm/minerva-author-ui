@@ -23,6 +23,7 @@ class App extends Component {
     super();
 
     this.state = {
+      token: '',
       loaded: false,
       //minerva: false,
       //url: 'http://localhost:2020/api/u16',
@@ -51,6 +52,7 @@ class App extends Component {
 
         this.setState({
           loaded: true,
+          token: ajaxHeaders.Authorization,
           channels: pixels.SizeC,
           width: pixels.SizeX,
           height: pixels.SizeY,
@@ -81,11 +83,11 @@ class App extends Component {
   }
 
   render() {
-    const {loaded, channels, width, height, minerva, url, uuid} = this.state;
+    const {token, loaded, channels, width, height, minerva, url, uuid} = this.state;
 
     if (loaded) {
-      return (<Repo minerva={minerva} channels={channels} 
-                    url={url} uuid={uuid}
+      return (<Repo token={token} minerva={minerva}
+                    channels={channels} url={url} uuid={uuid}
                     width={width} height={height}/>
       )
     }
