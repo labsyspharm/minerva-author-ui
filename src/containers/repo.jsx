@@ -383,6 +383,22 @@ class Repo extends Component {
         this.setState({
           groups: groups
         })
+        fetch('http://localhost:2020/api/minerva/yaml', {
+          method: 'POST',
+          body: JSON.stringify({
+            'groups': json.groups,
+            'image': {
+              'url': img.url,
+              'id': img.uuid,
+              'width': img.width,
+              'height': img.height,
+              'maxLevel': img.maxLevel
+            }
+          }),
+          headers: {
+            "Content-Type": "application/json"
+          }
+        })
       });
     }
     else {
