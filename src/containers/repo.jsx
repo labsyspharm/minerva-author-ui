@@ -52,16 +52,16 @@ class Repo extends Component {
       activeGroup: null,
       groups: new Map([]),
       activeIds: [0, 1],
-      chanLabel: new Map([...Array(channels).keys()].map(i => {
-        return [i, {
-          value: i, id: i,
-          label: '' + i,
+      chanLabel: new Map(channels.map((v,k) => {
+        return [k, {
+          value: k, id: k,
+          label: v,
         }];
       })),
-      chanRender: new Map([...Array(channels).keys()].map(i => {
-        return [i, {
+      chanRender: new Map(channels.map((v,k) => {
+        return [k, {
           maxRange: 65535,
-          value: i, id: i,
+          value: k, id: k,
           color: randColor(),
           range: {min: 0, max: 32768}
         }];
@@ -108,7 +108,7 @@ class Repo extends Component {
   }
 
   handleStoryChange(newActiveStory) {
-    const {stories, viewport, activeGroup} = this.state;
+    const {groups, stories, viewport} = this.state;
     const story = stories.get(newActiveStory);
     if (story && viewport) {
         const pan = new OpenSeadragon.Point(...story.pan);
@@ -119,9 +119,13 @@ class Repo extends Component {
       activeStory: newActiveStory
     })
     if (story) {
-      this.setState({
-        activeGroup: story.group
-      })
+      const group = groups.get(story.group)
+      if (group) {
+        this.setState({
+          activeGroup: story.group,
+          activeIds: group.activeIds
+        })
+      }
     }
   }
 
@@ -172,7 +176,7 @@ class Repo extends Component {
   }
 
   toggleTextEdit() {
-    const {textEdit} = this.state;
+    const {textEdit, activeStory} = this.state;
     this.setState({
       textEdit: !textEdit
     })
