@@ -1,6 +1,7 @@
 import React, { Component } from "react";
 
 import viaWebGL from 'viawebgl';
+import SvgArrow from '../components/svgarrow.jsx'
 
 import '../style/imageview';
 
@@ -213,7 +214,36 @@ class ImageView extends Component {
 
   componentDidUpdate() {
     const {viewer} = this;
-    const {overlays} = this.props;
+    const {overlays, arrows} = this.props;
+    arrows.forEach((o,i) => {
+      const el = "arrow-" + i;
+      const current = viewer.getOverlayById(el);
+      const xy = new OpenSeadragon.Point(o[0], o[1]);
+      if (current) {
+        current.update({
+          location: xy
+        });
+      }
+      else {
+        viewer.addOverlay({
+          x: o[0],
+          y: o[1],
+          element: el,
+          placement: OpenSeadragon.Placement.CENTER
+        });
+      }
+    })
+    // Hide extra arrows
+    for (var i = arrows.length; i < 100; i ++) {
+      const el = "arrow-" + i;
+      const current = viewer.getOverlayById(el);
+      const xy = new OpenSeadragon.Point(-1, -1)
+      if (current) {
+        current.update({
+          location: xy
+        });
+      }
+    }
     overlays.forEach((o,i) => {
       const el = "overlay-" + i;
       const current = viewer.getOverlayById(el);
@@ -302,11 +332,23 @@ class ImageView extends Component {
         </div>
       )
     })
+    const arrow_divs = [...Array(100).keys()].map((o,i) => {
+      const el = "arrow-" + i;
+      return (
+        <div className="arrow-overlay"
+             key={el} id={el}>
+          <SvgArrow></SvgArrow>
+        </div>
+      )
+    })
     return (
       <div>
         <div id="ImageView">
         </div>
-        {overlay_divs}
+        <div className="d-none">
+          {overlay_divs}
+          {arrow_divs}
+        </div>
       </div>
     );
   }

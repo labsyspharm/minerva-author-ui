@@ -99,11 +99,13 @@ class Repo extends Component {
     const storyText = story ? story.text : '';
     const storyGroup = story ? story.group : activeGroup;
     const overlays = story ? story.overlays : [];
+    const arrows = story ? story.arrows : [];
 
     const newStory = {
       'text': storyText,
       'name': storyName,
       'group': storyGroup,
+      'arrows': arrows,
       'overlays': overlays,
       'zoom': viewport.getZoom(),
       'pan': [
@@ -147,6 +149,7 @@ class Repo extends Component {
     const {stories, activeStory, activeGroup} = this.state;
     const story = stories.get(activeStory);
     const overlays = story ? story.overlays : [];
+    const arrows = story ? story.arrows : [];
     const group = story ? story.group : activeGroup;
     const text = story ? story.text : '';
     const pan = story ? story.pan : [0.5, 0.5];
@@ -156,6 +159,7 @@ class Repo extends Component {
     const newStory = {
       text: text,
       name: name,
+      arrows: arrows,
       overlays: overlays,
       group: group,
       pan: pan,
@@ -172,6 +176,7 @@ class Repo extends Component {
     const {stories, activeStory, activeGroup} = this.state;
     const story = stories.get(activeStory);
     const overlays = story ? story.overlays : [];
+    const arrows = story ? story.arrows : [];
     const group = story ? story.group : activeGroup;
     const pan = story ? story.pan : [0.5, 0.5];
     const zoom = story ? story.zoom : 0.5;
@@ -181,6 +186,7 @@ class Repo extends Component {
     const newStory = {
       text: text,
       name: name,
+      arrows: arrows,
       overlays: overlays,
       group: group,
       pan: pan,
@@ -210,6 +216,7 @@ class Repo extends Component {
     const storyName = story ? story.name : '';
     const storyText = story ? story.text : '';
     const overlays = story ? story.overlays : [];
+    const arrows = story ? story.arrows : [];
     const pan = story ? story.pan : [0.5, 0.5];
     const zoom = story ? story.zoom : 0.5;
 
@@ -228,6 +235,7 @@ class Repo extends Component {
       const newStory = {
         text: storyText,
         name: storyName,
+        arrows: arrows,
         overlays: overlays,
         pan: pan,
         zoom: zoom,
@@ -248,6 +256,7 @@ class Repo extends Component {
       const newStory = {
         text: storyText,
         name: storyName,
+        arrows: arrows,
         overlays: overlays,
         pan: pan,
         zoom: zoom,
@@ -310,6 +319,39 @@ class Repo extends Component {
     };
   }
 
+  drawArrow(position) {
+    const new_xy = [
+      position.x, position.y
+    ];
+
+    const {stories, activeStory, activeGroup} = this.state;
+    const story = stories.get(activeStory);
+    const group = story ? story.group : activeGroup;
+    const overlays = story ? story.overlays : [];
+    const text = story ? story.text : '';
+    const name = story ? story.name : '';
+    const pan = story ? story.pan : [0.5, 0.5];
+    const zoom = story ? story.zoom : 0.5;
+
+    const newStory = {
+      text: text,
+      name: name,
+      overlays: overlays,
+      arrows: [new_xy],
+      group: group,
+      pan: pan,
+      zoom: zoom
+    };
+
+    const newStories = new Map([...stories,
+                              ...(new Map([[activeStory, newStory]]))]);
+
+    this.setState({
+      stories: newStories
+    })
+  }
+
+
   drawLowerBounds(position) {
     const wh = [0, 0];
     const new_xy = [
@@ -324,10 +366,12 @@ class Repo extends Component {
     const name = story ? story.name : '';
     const pan = story ? story.pan : [0.5, 0.5];
     const zoom = story ? story.zoom : 0.5;
+    const arrows = story ? story.arrows : [];
 
     const newStory = {
       text: text,
       name: name,
+      arrows: arrows,
       overlays: [newOverlay],
       group: group,
       pan: pan,
@@ -363,10 +407,12 @@ class Repo extends Component {
     const name = story ? story.name : '';
     const pan = story ? story.pan : [0.5, 0.5];
     const zoom = story ? story.zoom : 0.5;
+    const arrows = story ? story.arrows : [];
 
     const newStory = {
       text: text,
       name: name,
+      arrows: arrows,
       overlays: [newOverlay],
       group: group,
       pan: pan,
@@ -382,6 +428,22 @@ class Repo extends Component {
   }
 
   interactor(viewer) {
+    viewer.addHandler('canvas-click', function(e) {
+      const THIS = e.userData;
+      const {drawing, drawType} = THIS.state;
+
+      if (drawType == "arrow") {
+        if (drawing == 1) {
+          const position = normalize(viewer, e.position);
+          THIS.drawArrow(position);
+          e.preventDefaultAction = true;
+          viewer.setMouseNavEnabled(true);
+          THIS.setState({drawing: 0, drawType: ''})
+        }
+        return;
+      }
+    }, this);
+
     viewer.addHandler('canvas-drag', function(e) {
       const THIS = e.userData;
       const {drawing, drawType} = THIS.state;
@@ -609,13 +671,14 @@ class Repo extends Component {
     const storyName = story ? story.name : '';
     const storyText = story ? story.text : '';
     const overlays = story ? story.overlays : [];
+    const arrows = story ? story.arrows : [];
 
     let viewer;
     if (minerva) {
       viewer = <MinervaImageView className="ImageView"
         img={ img } token={ token }
         channels={ activeChannels }
-        overlays={ overlays }
+        overlays={ overlays } arrows={ arrows }
         handleViewport={ this.handleViewport }
         interactor={ this.interactor }
       />
@@ -624,7 +687,7 @@ class Repo extends Component {
       viewer = <ImageView className="ImageView"
         img={ img }
         channels={ activeChannels }
-        overlays={ overlays }
+        overlays={ overlays } arrows={ arrows }
         handleViewport={ this.handleViewport }
         interactor={ this.interactor }
       />
