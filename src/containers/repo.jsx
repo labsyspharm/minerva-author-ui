@@ -16,11 +16,6 @@ const randColor = () => {
   ][randInt(16)]
 }
 
-const round4 = n => {
-  const N = Math.pow(10, 4);
-  return Math.round(n * N) / N;
-}
-
 const normalize = (viewer, pixels) => {
   const vp = viewer.viewport;
   const norm = vp.viewerElementToViewportCoordinates;
@@ -361,7 +356,7 @@ class Repo extends Component {
     const x = this.computeBounds(position.x, xy[0], wh[0]);
     const y = this.computeBounds(position.y, xy[1], wh[1]);
 
-    const newOverlay = [x.start, y.start, x.range, y.range].map(round4);
+    const newOverlay = [x.start, y.start, x.range, y.range];
 
     const group = story ? story.group : activeGroup;
     const text = story ? story.text : '';

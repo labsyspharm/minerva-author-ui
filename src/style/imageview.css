@@ -13,4 +13,5 @@
 .white-overlay {
   border: 2px solid white;
   background: none;
+  position: absolute;
 }

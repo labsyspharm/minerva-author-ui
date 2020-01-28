@@ -139,14 +139,27 @@ class MinervaImageView extends Component {
           element: el
         });
       }
-      const {viewport} = viewer;
-      viewport.zoomTo(viewport.getZoom()*1.00001);
     })
+    // Hide extra overlays
+    for (var i = overlays.length; i < 100; i ++) {
+      const el = "overlay-" + i;
+      const current = viewer.getOverlayById(el);
+      const xy = new OpenSeadragon.Point(-1, -1)
+      if (current) {
+        current.update({
+          location: xy,
+          width: 0.001,
+          height: 0.001
+        });
+      }
+    }
+    const {viewport} = viewer;
+    const tinyzoom = 1.00000001;
+    viewport.zoomTo(viewport.getZoom()*tinyzoom);
   }
 
   render() {
     const {viewer} = this;
-    const {overlays} = this.props;
 
     // After first render
     if (viewer !== undefined) {
@@ -182,7 +195,7 @@ class MinervaImageView extends Component {
       }
     }
 
-    const overlay_divs = overlays.map((o,i) => {
+    const overlay_divs = [...Array(100).keys()].map((o,i) => {
       const el = "overlay-" + i;
       return (
         <div className="white-overlay"

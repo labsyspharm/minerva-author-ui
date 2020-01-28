@@ -25,8 +25,8 @@ class App extends Component {
     this.state = {
       token: '',
       loaded: false,
-      //minerva: false,
-      //url: 'http://localhost:2020/api/u16',
+      // minerva: false,
+      // url: 'http://localhost:2020/api/u16',
       minerva: true,
       url: 'https://3v21j4dh1d.execute-api.us-east-1.amazonaws.com/dev/image/',
       uuid: '0c18ba28-872c-4d83-9904-ecb8b12b514d',

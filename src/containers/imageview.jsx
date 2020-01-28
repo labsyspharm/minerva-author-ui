@@ -235,11 +235,23 @@ class ImageView extends Component {
         });
       }
     })
+    // Hide extra overlays
+    for (var i = overlays.length; i < 100; i ++) {
+      const el = "overlay-" + i;
+      const current = viewer.getOverlayById(el);
+      const xy = new OpenSeadragon.Point(-1, -1)
+      if (current) {
+        current.update({
+          location: xy,
+          width: 0.001,
+          height: 0.001
+        });
+      }
+    }
   }
 
   render() {
     const {viewer} = this;
-    const {overlays} = this.props;
 
     // After first render
     if (viewer !== undefined) {
@@ -282,7 +294,7 @@ class ImageView extends Component {
         }));
       }
     }
-    const overlay_divs = overlays.map((o,i) => {
+    const overlay_divs = [...Array(100).keys()].map((o,i) => {
       const el = "overlay-" + i;
       return (
         <div className="white-overlay"
@@ -292,9 +304,9 @@ class ImageView extends Component {
     })
     return (
       <div>
-        {overlay_divs}
         <div id="ImageView">
         </div>
+        {overlay_divs}
       </div>
     );
   }
