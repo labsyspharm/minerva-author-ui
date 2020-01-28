@@ -82,6 +82,7 @@ class MinervaImageView extends Component {
 
   componentDidMount() {
     const {channels, img, handleViewport} = this.props;
+    const {interactor} = this.props;
     const ids = [...channels.keys()];
 
     // Set up openseadragon viewer
@@ -96,6 +97,7 @@ class MinervaImageView extends Component {
       compositeOperation: "lighter",
       prefixUrl: "images/openseadragon/"
     });
+    interactor(this.viewer);
 
     const pan = this.viewer.viewport.getCenter();
     const zoom = this.viewer.viewport.getZoom();
@@ -114,8 +116,37 @@ class MinervaImageView extends Component {
     this.viewer.uuid = img.uuid;
   }
 
+  componentDidUpdate() {
+    const {viewer} = this;
+    const {overlays} = this.props;
+    overlays.forEach((o,i) => {
+      const el = "overlay-" + i;
+      const current = viewer.getOverlayById(el);
+      const xy = new OpenSeadragon.Point(o[0], o[1]);
+      if (current) {
+        current.update({
+          location: xy,
+          width: o[2],
+          height: o[3]
+        });
+      }
+      else {
+        viewer.addOverlay({
+          x: o[0],
+          y: o[1],
+          width: o[2],
+          height: o[3],
+          element: el
+        });
+      }
+      const {viewport} = viewer;
+      viewport.zoomTo(viewport.getZoom()*1.00001);
+    })
+  }
+
   render() {
     const {viewer} = this;
+    const {overlays} = this.props;
 
     // After first render
     if (viewer !== undefined) {
@@ -151,7 +182,21 @@ class MinervaImageView extends Component {
       }
     }
 
-    return (<div id="ImageView"></div>);
+    const overlay_divs = overlays.map((o,i) => {
+      const el = "overlay-" + i;
+      return (
+        <div className="white-overlay"
+             key={el} id={el}>
+        </div>
+      )
+    })
+    return (
+      <div>
+        {overlay_divs}
+        <div id="ImageView">
+        </div>
+      </div>
+    );
   }
 }
 

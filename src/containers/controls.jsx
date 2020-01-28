@@ -3,9 +3,12 @@ import React, { Component } from "react";
 import Select from 'react-select';
 
 import ChannelControls from "./channelcontrols";
+import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
 import { faArrowLeft } from "@fortawesome/free-solid-svg-icons";
 import { faArrowRight } from "@fortawesome/free-solid-svg-icons";
-import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
+import {faLocationArrow} from "@fortawesome/free-solid-svg-icons";
+import {faBullseye} from "@fortawesome/free-solid-svg-icons";
+import {faCrosshairs} from "@fortawesome/free-solid-svg-icons";
 
 import '../style/controls'
 
@@ -44,6 +47,7 @@ class Controls extends Component {
         </div>)
     }
 
+    const {arrowClick, lassoClick, boxClick, drawType} = this.props;
     const {handleSelect, handleChange} = this.props;
     const {activeChanLabel, chanLabel} = this.props;
     const {activeChannels} = this.props;
@@ -56,10 +60,39 @@ class Controls extends Component {
           value={Array.from(activeChanLabel.values())}
           options={Array.from(chanLabel.values())}
         />
-        <ChannelControls className="ChannelControls"
-          channels={ activeChannels }
-          handleChange={ handleChange }
-        />
+        <div className="row">
+          <div className="col">
+            <ChannelControls className="ChannelControls"
+              channels={ activeChannels }
+              handleChange={ handleChange }
+            />
+          </div>
+          <div className="col-1 p-0">
+            <div className="btn-group-vertical bg-trans">
+              <span id="arrow-switch" className="nav-item arrow-switch">
+              <a className="btn" onClick={arrowClick}>
+                  <FontAwesomeIcon icon={faLocationArrow}
+                    color={(drawType == 'arrow')? 'blue': 'white'}
+                  />
+              </a>
+              </span>
+              <span id="lasso-switch" className="nav-item lasso-switch">
+              <a className="btn" onClick={lassoClick}>
+                  <FontAwesomeIcon icon={faBullseye} 
+                    color={(drawType == 'lasso')? 'blue': 'white'}
+                  />
+              </a>
+              </span>
+              <span id="draw-switch" className="nav-item draw-switch">
+              <a className="btn" onClick={boxClick}>
+                  <FontAwesomeIcon icon={faCrosshairs}
+                    color={(drawType == 'box')? 'blue': 'white'}
+                  />
+              </a>
+              </span>
+            </div>
+          </div>
+        </div>
       </div>
     );
   }

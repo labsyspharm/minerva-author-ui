@@ -134,6 +134,7 @@ class ImageView extends Component {
 
   componentDidMount() {
     const {channels, img, handleViewport} = this.props;
+    const {interactor} = this.props;
     const ids = [...channels.keys()];
 
     // Set up openseadragon viewer
@@ -149,6 +150,8 @@ class ImageView extends Component {
       prefixUrl: "images/openseadragon/",
       tileSources: this.makeTileSources(ids)
     });
+    interactor(this.viewer);
+
     const world = this.viewer.world;
     world.addHandler('add-item', function(e) {
       e.item.setWidth(img.width / img.height);
@@ -208,8 +211,35 @@ class ImageView extends Component {
     seaGL.init();
   }
 
+  componentDidUpdate() {
+    const {viewer} = this;
+    const {overlays} = this.props;
+    overlays.forEach((o,i) => {
+      const el = "overlay-" + i;
+      const current = viewer.getOverlayById(el);
+      const xy = new OpenSeadragon.Point(o[0], o[1]);
+      if (current) {
+        current.update({
+          location: xy,
+          width: o[2],
+          height: o[3]
+        });
+      }
+      else {
+        viewer.addOverlay({
+          x: o[0],
+          y: o[1],
+          width: o[2],
+          height: o[3],
+          element: el
+        });
+      }
+    })
+  }
+
   render() {
     const {viewer} = this;
+    const {overlays} = this.props;
 
     // After first render
     if (viewer !== undefined) {
@@ -252,8 +282,21 @@ class ImageView extends Component {
         }));
       }
     }
-
-    return (<div id="ImageView"></div>);
+    const overlay_divs = overlays.map((o,i) => {
+      const el = "overlay-" + i;
+      return (
+        <div className="white-overlay"
+             key={el} id={el}>
+        </div>
+      )
+    })
+    return (
+      <div>
+        {overlay_divs}
+        <div id="ImageView">
+        </div>
+      </div>
+    );
   }
 }
 

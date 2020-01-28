@@ -16,6 +16,17 @@ const randColor = () => {
   ][randInt(16)]
 }
 
+const round4 = n => {
+  const N = Math.pow(10, 4);
+  return Math.round(n * N) / N;
+}
+
+const normalize = (viewer, pixels) => {
+  const vp = viewer.viewport;
+  const norm = vp.viewerElementToViewportCoordinates;
+  return norm.call(vp, pixels);
+}
+
 const IntToHex = c => {
   var hex = c.toString(16);
   return hex.length == 1 ? "0" + hex : hex;
@@ -36,6 +47,8 @@ class Repo extends Component {
     const maxLevel = Math.ceil(Math.log2(Math.max(width, height) / 1024))
 
     this.state = {
+      drawType: '',
+      drawing: 0,
 			img: {
           uuid: uuid,
           width: width,
@@ -69,6 +82,10 @@ class Repo extends Component {
     };
 
     // Bind
+    this.interactor = this.interactor.bind(this);
+    this.arrowClick = this.arrowClick.bind(this);
+    this.lassoClick = this.lassoClick.bind(this);
+    this.boxClick = this.boxClick.bind(this);
     this.handleChange = this.handleChange.bind(this);
     this.handleSelect = this.handleSelect.bind(this);
     this.handleStoryName = this.handleStoryName.bind(this);
@@ -86,11 +103,13 @@ class Repo extends Component {
     const storyName = story ? story.name : '';
     const storyText = story ? story.text : '';
     const storyGroup = story ? story.group : activeGroup;
+    const overlays = story ? story.overlays : [];
 
     const newStory = {
       'text': storyText,
       'name': storyName,
       'group': storyGroup,
+      'overlays': overlays,
       'zoom': viewport.getZoom(),
       'pan': [
         viewport.getCenter().x,
@@ -132,6 +151,7 @@ class Repo extends Component {
   handleStoryName(event) {
     const {stories, activeStory, activeGroup} = this.state;
     const story = stories.get(activeStory);
+    const overlays = story ? story.overlays : [];
     const group = story ? story.group : activeGroup;
     const text = story ? story.text : '';
     const pan = story ? story.pan : [0.5, 0.5];
@@ -141,6 +161,7 @@ class Repo extends Component {
     const newStory = {
       text: text,
       name: name,
+      overlays: overlays,
       group: group,
       pan: pan,
       zoom: zoom
@@ -155,6 +176,7 @@ class Repo extends Component {
   handleStoryText(event) {
     const {stories, activeStory, activeGroup} = this.state;
     const story = stories.get(activeStory);
+    const overlays = story ? story.overlays : [];
     const group = story ? story.group : activeGroup;
     const pan = story ? story.pan : [0.5, 0.5];
     const zoom = story ? story.zoom : 0.5;
@@ -164,6 +186,7 @@ class Repo extends Component {
     const newStory = {
       text: text,
       name: name,
+      overlays: overlays,
       group: group,
       pan: pan,
       zoom: zoom
@@ -191,6 +214,7 @@ class Repo extends Component {
     const story = stories.get(activeStory);
     const storyName = story ? story.name : '';
     const storyText = story ? story.text : '';
+    const overlays = story ? story.overlays : [];
     const pan = story ? story.pan : [0.5, 0.5];
     const zoom = story ? story.zoom : 0.5;
 
@@ -209,6 +233,7 @@ class Repo extends Component {
       const newStory = {
         text: storyText,
         name: storyName,
+        overlays: overlays,
         pan: pan,
         zoom: zoom,
         group: id
@@ -228,6 +253,7 @@ class Repo extends Component {
       const newStory = {
         text: storyText,
         name: storyName,
+        overlays: overlays,
         pan: pan,
         zoom: zoom,
         group: g.value
@@ -272,6 +298,156 @@ class Repo extends Component {
     }
   }
 
+  computeBounds(value, start, len) {
+    const center = start + (len / 2);
+    const end = start + len;
+    // Below center
+    if (value < center) {
+      return {
+        start: value,
+        range: end - value,
+      };
+    }
+    // Above center
+    return {
+      start: start,
+      range: value - start,
+    };
+  }
+
+  drawLowerBounds(position) {
+    const wh = [0, 0];
+    const new_xy = [
+      position.x, position.y
+    ];
+    const newOverlay = new_xy.concat(wh);
+
+    const {stories, activeStory, activeGroup} = this.state;
+    const story = stories.get(activeStory);
+    const group = story ? story.group : activeGroup;
+    const text = story ? story.text : '';
+    const name = story ? story.name : '';
+    const pan = story ? story.pan : [0.5, 0.5];
+    const zoom = story ? story.zoom : 0.5;
+
+    const newStory = {
+      text: text,
+      name: name,
+      overlays: [newOverlay],
+      group: group,
+      pan: pan,
+      zoom: zoom
+    };
+
+    const newStories = new Map([...stories,
+                              ...(new Map([[activeStory, newStory]]))]);
+
+    this.setState({
+      stories: newStories
+    })
+  }
+
+  drawUpperBounds(position) {
+    const {stories, activeStory, activeGroup} = this.state;
+    const story = stories.get(activeStory);
+    const overlays = story ? story.overlays: [];
+
+    const overlay = overlays[0] ? overlays[0]: [0, 0, 1, 1];
+
+    const xy = overlay.slice(0, 2);
+    const wh = overlay.slice(2);
+
+    // Set actual bounds
+    const x = this.computeBounds(position.x, xy[0], wh[0]);
+    const y = this.computeBounds(position.y, xy[1], wh[1]);
+
+    const newOverlay = [x.start, y.start, x.range, y.range].map(round4);
+
+    const group = story ? story.group : activeGroup;
+    const text = story ? story.text : '';
+    const name = story ? story.name : '';
+    const pan = story ? story.pan : [0.5, 0.5];
+    const zoom = story ? story.zoom : 0.5;
+
+    const newStory = {
+      text: text,
+      name: name,
+      overlays: [newOverlay],
+      group: group,
+      pan: pan,
+      zoom: zoom
+    };
+
+    const newStories = new Map([...stories,
+                              ...(new Map([[activeStory, newStory]]))]);
+
+    this.setState({
+      stories: newStories
+    });
+  }
+
+  interactor(viewer) {
+    viewer.addHandler('canvas-drag', function(e) {
+      const THIS = e.userData;
+      const {drawing, drawType} = THIS.state;
+
+      if (drawType != "box") {
+        return;
+      }
+
+      const position = normalize(viewer, e.position);
+
+      if (drawing == 1) {
+        THIS.setState({drawing: 2})
+        e.preventDefaultAction = true;
+        THIS.drawLowerBounds(position);
+      }
+      else if (drawing == 2) {
+        e.preventDefaultAction = true;
+        THIS.drawUpperBounds(position);
+      }
+    }, this);
+
+    viewer.addHandler('canvas-drag-end', function(e) {
+      const THIS = e.userData;
+      const {drawing, drawType} = THIS.state;
+
+      if (drawType != "box") {
+        return;
+      }
+
+      const position = normalize(viewer, e.position);
+
+      if (drawing == 2) {
+        e.preventDefaultAction = true;
+        THIS.drawUpperBounds(position);
+        THIS.setState({drawing: 0, drawType: ''})
+      }
+    }, this);
+
+
+  }
+  arrowClick() {
+    const {drawType} = this.state;
+    const _drawType = (drawType == 'arrow')? '' : 'arrow';
+    this.setState({drawType: _drawType});
+    const _drawing = (_drawType == '')? 0 : 1;
+    this.setState({drawing: _drawing});
+  }
+  lassoClick() {
+    const {drawType} = this.state;
+    const _drawType = (drawType == 'lasso')? '' : 'lasso';
+    this.setState({drawType: _drawType});
+    const _drawing = (_drawType == '')? 0 : 1;
+    this.setState({drawing: _drawing});
+  }
+  boxClick() {
+    const {drawType} = this.state;
+    const _drawType = (drawType == 'box')? '' : 'box';
+    this.setState({drawType: _drawType});
+    const _drawing = (_drawType == '')? 0 : 1;
+    this.setState({drawing: _drawing});
+  }
   handleChange(id, color, range, label) {
     const { chanRender, chanLabel, groups, activeGroup } = this.state;
     const group = groups.get(activeGroup);
@@ -437,20 +613,25 @@ class Repo extends Component {
     const story = stories.get(activeStory);
     const storyName = story ? story.name : '';
     const storyText = story ? story.text : '';
+    const overlays = story ? story.overlays : [];
 
     let viewer;
     if (minerva) {
       viewer = <MinervaImageView className="ImageView"
         img={ img } token={ token }
         channels={ activeChannels }
+        overlays={ overlays }
         handleViewport={ this.handleViewport }
+        interactor={ this.interactor }
       />
     }
     else {
       viewer = <ImageView className="ImageView"
         img={ img }
         channels={ activeChannels }
+        overlays={ overlays }
         handleViewport={ this.handleViewport }
+        interactor={ this.interactor }
       />
     }
 
@@ -473,6 +654,10 @@ class Repo extends Component {
               options={Array.from(groups.values())}
             />
             <Controls 
+              drawType = {this.state.drawType}
+              arrowClick = {this.arrowClick}
+              lassoClick = {this.lassoClick}
+              boxClick = {this.boxClick}
               handleChange={this.handleChange}
               handleSelect={this.handleSelect}
               chanLabel={chanLabel}

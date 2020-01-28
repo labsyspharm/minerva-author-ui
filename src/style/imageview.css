@@ -10,3 +10,7 @@
   height: 100%;
   background-color: black;
 }
+.white-overlay {
+  border: 2px solid white;
+  background: none;
+}
