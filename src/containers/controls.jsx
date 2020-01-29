@@ -7,7 +7,6 @@ import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
 import { faArrowLeft } from "@fortawesome/free-solid-svg-icons";
 import { faArrowRight } from "@fortawesome/free-solid-svg-icons";
 import {faLocationArrow} from "@fortawesome/free-solid-svg-icons";
-import {faBullseye} from "@fortawesome/free-solid-svg-icons";
 import {faCrosshairs} from "@fortawesome/free-solid-svg-icons";
 
 import '../style/controls'
@@ -54,13 +53,6 @@ class Controls extends Component {
             <a className="btn" onClick={arrowClick}>
                 <FontAwesomeIcon icon={faLocationArrow}
                   color={(drawType == 'arrow')? 'blue': 'white'}
-                />
-            </a>
-            </span>
-            <span id="lasso-switch" className="nav-item lasso-switch">
-            <a className="btn" onClick={lassoClick}>
-                <FontAwesomeIcon icon={faBullseye} 
-                  color={(drawType == 'lasso')? 'blue': 'white'}
                 />
             </a>
             </span>

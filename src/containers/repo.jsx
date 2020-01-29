@@ -573,7 +573,6 @@ class Repo extends Component {
       if (v.id) {
         group_out.id = v.id;
       }
-      console.log(group_out);
       return group_out
     });
 
@@ -583,6 +582,8 @@ class Repo extends Component {
         'text': v.text,
         'pan': v.pan,
         'zoom': v.zoom,
+        'arrows': v.arrows,
+        'overlays': v.overlays,
         'group': groups.get(v.group).label
       }
     });
