@@ -694,6 +694,14 @@ class Repo extends Component {
       />
     }
 
+    let saveButton = ''
+    if (group != undefined) {
+      saveButton = (
+        <button onClick={this.save}>
+          Save
+        </button>
+      )
+    }
     return (
 
       <div className="container-fluid Repo">
@@ -703,9 +711,7 @@ class Repo extends Component {
             <button onClick={this.toggleTextEdit}>
               {editLabel}
             </button>
-            <button onClick={this.save}>
-              Save
-            </button>
+              {saveButton}
             <CreatableSelect
               isClearable
               value={group}
