@@ -1,6 +1,7 @@
 import React, { Component } from "react";
 
 import viaWebGL from 'viawebgl';
+import SvgArrow from '../components/svgarrow.jsx'
 
 import '../style/imageview';
 
@@ -26,7 +27,7 @@ class ImageView extends Component {
     const { url } = img;
 
 		const getTileName = (x, y, level, channel) => {
-			return "C" + channel + "-T0-Z0-L" + level + "-Y" + y + "-X" + x + ".png";
+			return channel + "/" + level + "_" + x + "_" + y + ".png";
 		}
 
 		const getTileUrl = function(l, x, y) {
@@ -48,8 +49,8 @@ class ImageView extends Component {
       many_channel_color: color.map(c => c / 255.),
 			// Standard parameters
 			tileSize: 1024,
-			height: 4080,
-			width: 7220,
+			height: img.height,
+			width: img.width,
 			minLevel: 0,
 			maxLevel: 3
     }
@@ -95,10 +96,12 @@ class ImageView extends Component {
 
   addChannels(ids) {
     const {viewer} = this;
+    const {img} = this.props;
     const tileSources = this.makeTileSources(ids);
     tileSources.map(tileSource => {
       viewer.addTiledImage({
-        tileSource: tileSource
+        tileSource: tileSource,
+        width: img.width / img.height
       });
     });
   }
@@ -131,26 +134,35 @@ class ImageView extends Component {
   }
 
   componentDidMount() {
-    const {channels, img} = this.props;
+    const {channels, img, handleViewport} = this.props;
+    const {interactor} = this.props;
     const ids = [...channels.keys()];
 
     // Set up openseadragon viewer
     this.viewer = viaWebGL.OpenSeadragon({
-      debugMode: false,
-      collectionMode: true,
+      collectionMode: false,
       showZoomControl: false,
       showHomeControl: false,
       loadTilesWithAjax: true,
       showFullPageControl: false,
       // Specific to this project
       id: "ImageView",
-      collectionRows: 1,
-      collectionTileSize: 1,
-      collectionTileMargin: -1,
       compositeOperation: "lighter",
       prefixUrl: "images/openseadragon/",
       tileSources: this.makeTileSources(ids)
     });
+    interactor(this.viewer);
+
+    const world = this.viewer.world;
+    world.addHandler('add-item', function(e) {
+      e.item.setWidth(img.width / img.height);
+    });
+
+    this.viewer.addHandler('animation-finish', function(e) {
+      const THIS = e.userData;
+      const viewport = THIS.viewer.viewport;
+      handleViewport(viewport);
+    }, this);
 
     this.viewer.uuid = img.uuid;
 
@@ -200,6 +212,74 @@ class ImageView extends Component {
     seaGL.init();
   }
 
+  componentDidUpdate() {
+    const {viewer} = this;
+    const {overlays, arrows} = this.props;
+    arrows.forEach((o,i) => {
+      const el = "arrow-" + i;
+      const current = viewer.getOverlayById(el);
+      const xy = new OpenSeadragon.Point(o[0], o[1]);
+      if (current) {
+        current.update({
+          location: xy
+        });
+      }
+      else {
+        viewer.addOverlay({
+          x: o[0],
+          y: o[1],
+          element: el,
+          placement: OpenSeadragon.Placement.CENTER
+        });
+      }
+    })
+    // Hide extra arrows
+    for (var i = arrows.length; i < 100; i ++) {
+      const el = "arrow-" + i;
+      const current = viewer.getOverlayById(el);
+      const xy = new OpenSeadragon.Point(-1, -1)
+      if (current) {
+        current.update({
+          location: xy
+        });
+      }
+    }
+    overlays.forEach((o,i) => {
+      const el = "overlay-" + i;
+      const current = viewer.getOverlayById(el);
+      const xy = new OpenSeadragon.Point(o[0], o[1]);
+      if (current) {
+        current.update({
+          location: xy,
+          width: o[2],
+          height: o[3]
+        });
+      }
+      else {
+        viewer.addOverlay({
+          x: o[0],
+          y: o[1],
+          width: o[2],
+          height: o[3],
+          element: el
+        });
+      }
+    })
+    // Hide extra overlays
+    for (var i = overlays.length; i < 100; i ++) {
+      const el = "overlay-" + i;
+      const current = viewer.getOverlayById(el);
+      const xy = new OpenSeadragon.Point(-1, -1)
+      if (current) {
+        current.update({
+          location: xy,
+          width: 0.001,
+          height: 0.001
+        });
+      }
+    }
+  }
+
   render() {
     const {viewer} = this;
 
@@ -218,9 +298,17 @@ class ImageView extends Component {
       }
       else {
         // Compare the channel ids
-        const idsNow = new Set(this.getTiledImageIds());
-        const redrawn = intersectSet(ids, idsNow);
+        const old_ids = new Set(this.getTiledImageIds());
+        const redrawn = intersectSet(ids, old_ids);
+        const removed = differSet(old_ids, ids);
+        const added = differSet(ids, old_ids);
 
+        removed.forEach(id => {
+          world.removeItem(this.getTiledImageById(id))
+        })
+
+        this.addChannels([...added])
+        
         // Redraw channels that differ
         this.redrawChannels(redrawn.filter(id => {
           const channel = this.getChannel(id);
@@ -236,8 +324,33 @@ class ImageView extends Component {
         }));
       }
     }
-
-    return (<div id="ImageView"></div>);
+    const overlay_divs = [...Array(100).keys()].map((o,i) => {
+      const el = "overlay-" + i;
+      return (
+        <div className="white-overlay"
+             key={el} id={el}>
+        </div>
+      )
+    })
+    const arrow_divs = [...Array(100).keys()].map((o,i) => {
+      const el = "arrow-" + i;
+      return (
+        <div className="arrow-overlay"
+             key={el} id={el}>
+          <SvgArrow></SvgArrow>
+        </div>
+      )
+    })
+    return (
+      <div>
+        <div id="ImageView">
+        </div>
+        <div className="d-none">
+          {overlay_divs}
+          {arrow_divs}
+        </div>
+      </div>
+    );
   }
 }
 

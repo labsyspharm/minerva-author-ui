@@ -9,10 +9,10 @@ class ChannelControls extends Component {
     const { channels, handleChange, className } = this.props;
 
     const channelControls = Array.from(channels.values()).map(channel => {
-      const { id, color, range, minRange, maxRange } = channel;
+      const { id, color, label, range, maxRange } = channel;
       return (
         <ChannelControl key={ id } id={ id } color={ color } range={ range }
-                        minRange={ minRange } maxRange= { maxRange }
+                        minRange={0} maxRange={maxRange} label={label}
                         handleChange={ handleChange } />
       );
 

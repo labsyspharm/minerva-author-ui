@@ -1,0 +1,12 @@
+.bg-black {
+  display: inline-block;
+  background: black;
+  padding: 0.5em;
+  color: white;
+}
+.bg-trans {
+  background: rgba(0, 0, 0, .8);
+}
+.width-100 {
+  width: 100%;
+}

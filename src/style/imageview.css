@@ -10,3 +10,11 @@
   height: 100%;
   background-color: black;
 }
+.white-overlay {
+  border: 2px solid white;
+  background: none;
+  position: absolute;
+}
+.arrow-overlay {
+  transform: translate(30.700px,53.174px)rotate(60deg);
+}
