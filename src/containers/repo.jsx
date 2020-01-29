@@ -219,6 +219,10 @@ class Repo extends Component {
     const arrows = story ? story.arrows : [];
     const pan = story ? story.pan : [0.5, 0.5];
     const zoom = story ? story.zoom : 0.5;
+    
+    if (g === null) {
+      return;
+    }
 
     if (g.__isNew__) {
       const id = groups.size;
