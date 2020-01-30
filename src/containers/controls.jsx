@@ -3,6 +3,7 @@ import React, { Component } from "react";
 import Select from 'react-select';
 
 import ChannelControls from "./channelcontrols";
+import Overlays from "./overlays";
 import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
 import { faArrowLeft } from "@fortawesome/free-solid-svg-icons";
 import { faArrowRight } from "@fortawesome/free-solid-svg-icons";
@@ -20,52 +21,58 @@ class Controls extends Component {
   render() {
 
     const {activeStory} = this.props;
-    const {handleStoryChange} = this.props;
+    const {deleteOverlay, deleteArrow} = this.props;
     const {storyName, storyText, textEdit} = this.props;
     const {handleStoryName, handleStoryText} = this.props;
+    const {handleStoryChange, overlays, arrows} = this.props;
     const {arrowClick, lassoClick, boxClick, drawType} = this.props;
 
     if (textEdit) {
       return (
-      <div className="row">
-        <div className="col">
-          <div>
-            <div className="bg-black">
-              Waypoint #{activeStory + 1}: 
-            </div>
-            <button onClick={()=>{
-              handleStoryChange(Math.max(0, activeStory - 1))
-            }}>
-              <FontAwesomeIcon icon={faArrowLeft} />
-            </button>
-            <button onClick={()=>{
-              handleStoryChange(activeStory + 1)
-            }}>
-              <FontAwesomeIcon icon={faArrowRight} />
-            </button>
-          </div>
-          <input className="width-100" type="text" value={storyName} onChange={handleStoryName}></input>
-          <textarea className="width-100" value={storyText} onChange={handleStoryText}></textarea>
-        </div>
-        <div className="col-1 p-0">
-          <div className="btn-group-vertical bg-trans">
-            <span id="arrow-switch" className="nav-item arrow-switch">
-            <a className="btn" onClick={arrowClick}>
-                <FontAwesomeIcon icon={faLocationArrow}
-                  color={(drawType == 'arrow')? 'blue': 'white'}
-                />
-            </a>
-            </span>
-            <span id="draw-switch" className="nav-item draw-switch">
-            <a className="btn" onClick={boxClick}>
-                <FontAwesomeIcon icon={faCrosshairs}
-                  color={(drawType == 'box')? 'blue': 'white'}
-                />
-            </a>
-            </span>
-          </div>
-        </div>
-     </div>
+			<div>
+				<div className="row">
+					<div className="col">
+						<div>
+							<div className="bg-black">
+								Waypoint #{activeStory + 1}: 
+							</div>
+							<button onClick={()=>{
+								handleStoryChange(Math.max(0, activeStory - 1))
+							}}>
+								<FontAwesomeIcon icon={faArrowLeft} />
+							</button>
+							<button onClick={()=>{
+								handleStoryChange(activeStory + 1)
+							}}>
+								<FontAwesomeIcon icon={faArrowRight} />
+							</button>
+						</div>
+						<input className="width-100" type="text" value={storyName} onChange={handleStoryName}></input>
+						<textarea className="width-100" value={storyText} onChange={handleStoryText}></textarea>
+					</div>
+					<div className="col-1 p-0">
+						<div className="btn-group-vertical bg-trans">
+							<span id="arrow-switch" className="nav-item arrow-switch">
+							<a className="btn" onClick={arrowClick}>
+									<FontAwesomeIcon icon={faLocationArrow}
+										color={(drawType == 'arrow')? 'blue': 'white'}
+									/>
+							</a>
+							</span>
+							<span id="draw-switch" className="nav-item draw-switch">
+							<a className="btn" onClick={boxClick}>
+									<FontAwesomeIcon icon={faCrosshairs}
+										color={(drawType == 'box')? 'blue': 'white'}
+									/>
+							</a>
+							</span>
+						</div>
+					</div>
+				</div>
+				<Overlays deleteOverlay={deleteOverlay}
+				deleteArrow={deleteArrow}
+				overlays={overlays} arrows={arrows}></Overlays>
+			</div>
       )
     }
 

@@ -80,6 +80,8 @@ class Repo extends Component {
     this.interactor = this.interactor.bind(this);
     this.arrowClick = this.arrowClick.bind(this);
     this.lassoClick = this.lassoClick.bind(this);
+    this.deleteArrow = this.deleteArrow.bind(this);
+    this.deleteOverlay = this.deleteOverlay.bind(this);
     this.boxClick = this.boxClick.bind(this);
     this.handleChange = this.handleChange.bind(this);
     this.handleSelect = this.handleSelect.bind(this);
@@ -146,14 +148,14 @@ class Repo extends Component {
   }
 
   handleStoryName(event) {
-    const {stories, activeStory, activeGroup} = this.state;
+    const {stories, activeStory, activeGroup, viewport} = this.state;
     const story = stories.get(activeStory);
     const overlays = story ? story.overlays : [];
     const arrows = story ? story.arrows : [];
     const group = story ? story.group : activeGroup;
     const text = story ? story.text : '';
-    const pan = story ? story.pan : [0.5, 0.5];
-    const zoom = story ? story.zoom : 0.5;
+    const pan = story ? story.pan : [viewport.getCenter().x, viewport.getCenter().y]
+    const zoom = story ? story.zoom : viewport.getZoom();
     const name = event.target.value;
 
     const newStory = {
@@ -173,13 +175,13 @@ class Repo extends Component {
   }
 
   handleStoryText(event) {
-    const {stories, activeStory, activeGroup} = this.state;
+    const {stories, activeStory, activeGroup, viewport} = this.state;
     const story = stories.get(activeStory);
     const overlays = story ? story.overlays : [];
     const arrows = story ? story.arrows : [];
     const group = story ? story.group : activeGroup;
-    const pan = story ? story.pan : [0.5, 0.5];
-    const zoom = story ? story.zoom : 0.5;
+    const pan = story ? story.pan : [viewport.getCenter().x, viewport.getCenter().y]
+    const zoom = story ? story.zoom : viewport.getZoom();
     const name = story ? story.name : '';
     const text = event.target.value;
 
@@ -211,14 +213,14 @@ class Repo extends Component {
 
   handleSelectGroup(g) {
     const { groups, activeIds, chanRender } = this.state;
-    const { stories, activeStory } = this.state;
+    const { stories, activeStory, viewport } = this.state;
     const story = stories.get(activeStory);
     const storyName = story ? story.name : '';
     const storyText = story ? story.text : '';
     const overlays = story ? story.overlays : [];
     const arrows = story ? story.arrows : [];
-    const pan = story ? story.pan : [0.5, 0.5];
-    const zoom = story ? story.zoom : 0.5;
+    const pan = story ? story.pan : [viewport.getCenter().x, viewport.getCenter().y]
+    const zoom = story ? story.zoom : viewport.getZoom();
     
     if (g === null) {
       return;
@@ -328,20 +330,21 @@ class Repo extends Component {
       position.x, position.y
     ];
 
-    const {stories, activeStory, activeGroup} = this.state;
+    const {stories, activeStory, activeGroup, viewport} = this.state;
     const story = stories.get(activeStory);
     const group = story ? story.group : activeGroup;
     const overlays = story ? story.overlays : [];
+    const arrows = story ? story.arrows : [];
     const text = story ? story.text : '';
     const name = story ? story.name : '';
-    const pan = story ? story.pan : [0.5, 0.5];
-    const zoom = story ? story.zoom : 0.5;
+    const pan = story ? story.pan : [viewport.getCenter().x, viewport.getCenter().y]
+    const zoom = story ? story.zoom : viewport.getZoom();
 
     const newStory = {
       text: text,
       name: name,
       overlays: overlays,
-      arrows: [new_xy],
+      arrows: arrows.concat([new_xy]),
       group: group,
       pan: pan,
       zoom: zoom
@@ -363,20 +366,21 @@ class Repo extends Component {
     ];
     const newOverlay = new_xy.concat(wh);
 
-    const {stories, activeStory, activeGroup} = this.state;
+    const {stories, activeStory, activeGroup, viewport} = this.state;
     const story = stories.get(activeStory);
     const group = story ? story.group : activeGroup;
     const text = story ? story.text : '';
     const name = story ? story.name : '';
-    const pan = story ? story.pan : [0.5, 0.5];
-    const zoom = story ? story.zoom : 0.5;
+    const pan = story ? story.pan : [viewport.getCenter().x, viewport.getCenter().y]
+    const zoom = story ? story.zoom : viewport.getZoom();
     const arrows = story ? story.arrows : [];
+    const overlays = story ? story.overlays : [];
 
     const newStory = {
       text: text,
       name: name,
       arrows: arrows,
-      overlays: [newOverlay],
+      overlays: overlays.concat([newOverlay]),
       group: group,
       pan: pan,
       zoom: zoom
@@ -391,11 +395,10 @@ class Repo extends Component {
   }
 
   drawUpperBounds(position) {
-    const {stories, activeStory, activeGroup} = this.state;
+    const {stories, activeStory, activeGroup, viewport} = this.state;
     const story = stories.get(activeStory);
     const overlays = story ? story.overlays: [];
-
-    const overlay = overlays[0] ? overlays[0]: [0, 0, 1, 1];
+		const overlay = overlays.pop();
 
     const xy = overlay.slice(0, 2);
     const wh = overlay.slice(2);
@@ -409,15 +412,15 @@ class Repo extends Component {
     const group = story ? story.group : activeGroup;
     const text = story ? story.text : '';
     const name = story ? story.name : '';
-    const pan = story ? story.pan : [0.5, 0.5];
-    const zoom = story ? story.zoom : 0.5;
+    const pan = story ? story.pan : [viewport.getCenter().x, viewport.getCenter().y]
+    const zoom = story ? story.zoom : viewport.getZoom();
     const arrows = story ? story.arrows : [];
 
     const newStory = {
       text: text,
       name: name,
       arrows: arrows,
-      overlays: [newOverlay],
+      overlays: overlays.concat([newOverlay]),
       group: group,
       pan: pan,
       zoom: zoom
@@ -430,6 +433,34 @@ class Repo extends Component {
       stories: newStories
     });
   }
+
+	deleteArrow(i) {
+    const {stories, activeStory} = this.state;
+    let newStory = stories.get(activeStory);
+
+		newStory.arrows.splice(i, 1);
+
+    const newStories = new Map([...stories,
+                              ...(new Map([[activeStory, newStory]]))]);
+
+    this.setState({
+      stories: newStories
+    });
+	}
+
+	deleteOverlay(i) {
+    const {stories, activeStory} = this.state;
+    let newStory = stories.get(activeStory);
+
+		newStory.overlays.splice(i, 1);
+
+	  const newStories = new Map([...stories,
+                              ...(new Map([[activeStory, newStory]]))]);
+
+    this.setState({
+      stories: newStories
+    });
+	}
 
   interactor(viewer) {
     viewer.addHandler('canvas-click', function(e) {
@@ -723,6 +754,8 @@ class Repo extends Component {
               options={Array.from(groups.values())}
             />
             <Controls 
+							deleteArrow={this.deleteArrow}
+							deleteOverlay={this.deleteOverlay}
               drawType = {this.state.drawType}
               arrowClick = {this.arrowClick}
               lassoClick = {this.lassoClick}
@@ -736,6 +769,8 @@ class Repo extends Component {
               handleStoryName={this.handleStoryName}
               handleStoryText={this.handleStoryText}
               handleStoryChange={this.handleStoryChange}
+							overlays={overlays}
+							arrows={arrows}
               storyName={storyName}
               storyText={storyText}
               activeStory={activeStory}
