@@ -29,7 +29,7 @@ class App extends Component {
       url: 'http://localhost:2020/api/u16',
       //minerva: true,
       //url: 'https://3v21j4dh1d.execute-api.us-east-1.amazonaws.com/dev/image/',
-			uuid: '4927068a-e0fa-44fa-8fe4-cdbdd3e1c3e1',
+			uuid: '4b7274d1-44de-4bda-989d-9ed48d24c1ac',
       //uuid: '0c18ba28-872c-4d83-9904-ecb8b12b514d',
       channels: [],
       width: 1024,
