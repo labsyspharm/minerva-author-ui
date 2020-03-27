@@ -1,6 +1,5 @@
 import React, { Component } from "react";
 
-import authenticate from '../login';
 import SvgArrow from '../components/svgarrow.jsx'
 
 import '../style/imageview';

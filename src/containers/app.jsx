@@ -5,7 +5,14 @@ import Import from "./import";
 
 import authenticate from '../login';
 
-const getAjaxHeaders = function(){
+const getAjaxHeaders = function(anonymous){
+  if (anonymous) {
+    return {
+      'Content-Type': 'application/json',
+      'Authorization': 'Anonymous',
+      'Accept': 'application/json'
+    };
+  }
   const user = 'john_hoffer@hms.harvard.edu';
   const pass = Promise.resolve('MEETING@lsp2');
   return authenticate(user, pass).then(function(token){
@@ -25,12 +32,13 @@ class App extends Component {
     this.state = {
       token: '',
       loaded: false,
-      minerva: false,
-      url: 'http://localhost:2020/api/u16',
-      //minerva: true,
-      //url: 'https://3v21j4dh1d.execute-api.us-east-1.amazonaws.com/dev/image/',
-			uuid: '4b7274d1-44de-4bda-989d-9ed48d24c1ac',
-      //uuid: '0c18ba28-872c-4d83-9904-ecb8b12b514d',
+      //minerva: false,
+      //url: 'http://localhost:2020/api/u16',
+      minerva: true,
+      anonymous: true,
+      url: 'https://3v21j4dh1d.execute-api.us-east-1.amazonaws.com/dev/image/',
+			uuid: '540fa7e9-2579-4496-84a7-9f525552d502',
+      uuid: '8705331b-6f7b-42a6-931b-ca3059bc624c',
       channels: [],
       width: 1024,
       height: 1024
@@ -39,12 +47,12 @@ class App extends Component {
   }
 
   async componentDidMount() {
-    const {minerva, url, uuid} = this.state;
+    const {minerva, url, uuid, anonymous} = this.state;
 
     if (minerva) {
       const fetch_dimensions = async () => {
           
-        const ajaxHeaders = await getAjaxHeaders();
+        const ajaxHeaders = await getAjaxHeaders(anonymous);
         const res = await fetch(url + uuid + '/dimensions', {
           headers: ajaxHeaders
         });
