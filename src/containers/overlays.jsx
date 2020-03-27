@@ -7,6 +7,7 @@ class Overlays extends Component {
   render() {
     const { overlays, arrows } = this.props;
     const { deleteOverlay, deleteArrow } = this.props;
+    const { addArrowText } = this.props;
 
     const arrowDivs = arrows.map((o, i) => {
       return (
@@ -16,7 +17,11 @@ class Overlays extends Component {
 					}}>
           X
         </button>
-        <span>Arrow {i}</span>
+        <button className="overlay-arrow" onClick={()=>{
+            addArrowText(i);
+        }}>
+        Arrow {i}
+        </button>
       </div>
       );
     });

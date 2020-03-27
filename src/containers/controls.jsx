@@ -21,6 +21,7 @@ class Controls extends Component {
   render() {
 
     const {activeStory} = this.props;
+    const {addArrowText} = this.props;
     const {deleteOverlay, deleteArrow} = this.props;
     const {storyName, storyText, textEdit} = this.props;
     const {handleStoryName, handleStoryText} = this.props;
@@ -70,7 +71,7 @@ class Controls extends Component {
 					</div>
 				</div>
 				<Overlays deleteOverlay={deleteOverlay}
-				deleteArrow={deleteArrow}
+				deleteArrow={deleteArrow} addArrowText={addArrowText}
 				overlays={overlays} arrows={arrows}></Overlays>
 			</div>
       )

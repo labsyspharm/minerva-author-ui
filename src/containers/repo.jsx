@@ -2,6 +2,7 @@ import React, { Component } from "react";
 import CreatableSelect from 'react-select/creatable';
 
 import MinervaImageView from "./minervaimageview";
+import Modal from "../components/modal";
 import ImageView from "./imageview";
 import Controls from "./controls";
 
@@ -54,6 +55,8 @@ class Repo extends Component {
       token: token,
       minerva: minerva,
       textEdit: false,
+      showModal: false,
+			activeArrow: 0,
       viewport: null,
       activeStory: 0,
       stories: new Map([]),
@@ -82,15 +85,18 @@ class Repo extends Component {
     this.lassoClick = this.lassoClick.bind(this);
     this.deleteArrow = this.deleteArrow.bind(this);
     this.deleteOverlay = this.deleteOverlay.bind(this);
+    this.addArrowText = this.addArrowText.bind(this);
     this.boxClick = this.boxClick.bind(this);
     this.handleChange = this.handleChange.bind(this);
     this.handleSelect = this.handleSelect.bind(this);
     this.handleStoryName = this.handleStoryName.bind(this);
     this.handleStoryText = this.handleStoryText.bind(this);
+    this.handleArrowText = this.handleArrowText.bind(this);
     this.handleStoryChange = this.handleStoryChange.bind(this);
     this.handleSelectGroup = this.handleSelectGroup.bind(this);
     this.handleViewport = this.handleViewport.bind(this);
     this.toggleTextEdit = this.toggleTextEdit.bind(this);
+    this.toggleModal = this.toggleModal.bind(this);
     this.save = this.save.bind(this);
   }
   
@@ -200,6 +206,12 @@ class Repo extends Component {
 
     this.setState({stories: newStories});
   }
+
+	toggleModal() {
+	  this.setState({
+      showModal: !this.state.showModal
+    });
+	}
 
   toggleTextEdit() {
     const {textEdit, activeStory} = this.state;
@@ -325,6 +337,47 @@ class Repo extends Component {
     };
   }
 
+	handleArrowText(event) {
+
+    const {stories, activeStory, activeGroup, viewport} = this.state;
+    const story = stories.get(activeStory);
+    const group = story ? story.group : activeGroup;
+    const overlays = story ? story.overlays : [];
+    const arrows = story ? story.arrows : [];
+    const text = story ? story.text : '';
+    const name = story ? story.name : '';
+    const pan = story ? story.pan : [viewport.getCenter().x, viewport.getCenter().y]
+    const zoom = story ? story.zoom : viewport.getZoom();
+		
+		const activeArrow = this.state.activeArrow;
+
+		if (arrows.length - 1 < activeArrow) {
+			return;
+		}
+	
+		arrows[activeArrow] = {
+			position: arrows[activeArrow].position,
+			text: event.target.value 
+		}
+
+    const newStory = {
+      text: text,
+      name: name,
+      overlays: overlays,
+      arrows: arrows,
+      group: group,
+      pan: pan,
+      zoom: zoom
+    };
+
+    const newStories = new Map([...stories,
+                              ...(new Map([[activeStory, newStory]]))]);
+
+    this.setState({
+      stories: newStories
+    })
+  }
+
   drawArrow(position) {
     const new_xy = [
       position.x, position.y
@@ -344,7 +397,10 @@ class Repo extends Component {
       text: text,
       name: name,
       overlays: overlays,
-      arrows: arrows.concat([new_xy]),
+      arrows: arrows.concat([{
+				position: new_xy,
+				text: ''
+			}]),
       group: group,
       pan: pan,
       zoom: zoom
@@ -434,11 +490,24 @@ class Repo extends Component {
     });
   }
 
+  addArrowText(i) {
+    this.setState({
+      showModal: true,
+			activeArrow: i
+    })
+  }
+
 	deleteArrow(i) {
-    const {stories, activeStory} = this.state;
+    const {stories, activeStory, activeArrow} = this.state;
     let newStory = stories.get(activeStory);
 
 		newStory.arrows.splice(i, 1);
+
+		if (i <= activeArrow) {
+			this.setState({
+				activeArrow: Math.max(0, activeArrow - 1)
+			})
+		}
 
     const newStories = new Map([...stories,
                               ...(new Map([[activeStory, newStory]]))]);
@@ -708,6 +777,11 @@ class Repo extends Component {
     const storyText = story ? story.text : '';
     const overlays = story ? story.overlays : [];
     const arrows = story ? story.arrows : [];
+		const activeArrow = this.state.activeArrow;
+		let arrowText = ''
+		if (arrows.length > 0) {
+			arrowText = arrows[activeArrow].text;
+		}
 
     let viewer;
     if (minerva) {
@@ -741,6 +815,11 @@ class Repo extends Component {
 
       <div className="container-fluid Repo">
         {viewer}
+				<Modal toggle={this.toggleModal}
+					show={this.state.showModal}>
+						<input type="textarea" value={arrowText}
+						onChange={this.handleArrowText} />
+				</Modal>
         <div className="row justify-content-between">
           <div className="col-md-5">
             <button onClick={this.toggleTextEdit}>
@@ -754,6 +833,7 @@ class Repo extends Component {
               options={Array.from(groups.values())}
             />
             <Controls 
+							addArrowText={this.addArrowText}
 							deleteArrow={this.deleteArrow}
 							deleteOverlay={this.deleteOverlay}
               drawType = {this.state.drawType}

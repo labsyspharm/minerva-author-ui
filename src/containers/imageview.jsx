@@ -215,7 +215,8 @@ class ImageView extends Component {
   componentDidUpdate() {
     const {viewer} = this;
     const {overlays, arrows} = this.props;
-    arrows.forEach((o,i) => {
+    arrows.forEach((a,i) => {
+      const o = a.position;
       const el = "arrow-" + i;
       const current = viewer.getOverlayById(el);
       const xy = new OpenSeadragon.Point(o[0], o[1]);
