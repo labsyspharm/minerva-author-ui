@@ -33,10 +33,11 @@ class ImportForm extends Component {
       <div className="center-div">
         <form onSubmit={this.handleSubmit}>
           <label htmlFor="filepath">Enter path to tiff: </label>
-          <input id="filepath" name="filepath" type="text" />
+          <input className='full-width-input' id="filepath" name="filepath" type="text" />
+          <br/>
           <br/>
           <label htmlFor="filepath">Optional marker_name csv: </label>
-          <input id="csvpath" name="csvpath" type="text" />
+          <input className='full-width-input' id="csvpath" name="csvpath" type="text" />
           <br/>
           <br/>
           <button> Import </button>
