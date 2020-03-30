@@ -32,8 +32,8 @@ class Controls extends Component {
       return (
 			<div>
 				<div className="row">
-					<div className="col">
-						<div>
+					<div className="col no-right-padding">
+						<div className="bg-trans">
 							<div className="bg-black">
 								Waypoint #{activeStory + 1}: 
 							</div>
@@ -48,8 +48,8 @@ class Controls extends Component {
 								<FontAwesomeIcon icon={faArrowRight} />
 							</button>
 						</div>
-						<input className="width-100" type="text" value={storyName} onChange={handleStoryName}></input>
-						<textarea className="width-100" value={storyText} onChange={handleStoryText}></textarea>
+						<input className="width-100" type="text" placeholder="Waypoint Name" value={storyName} onChange={handleStoryName}></input>
+            <textarea className="width-100 height-33vh" placeholder="Waypoint Description" value={storyText} onChange={handleStoryText}></textarea>
 					</div>
 					<div className="col-1 p-0">
 						<div className="btn-group-vertical bg-trans">
@@ -82,7 +82,7 @@ class Controls extends Component {
     const {activeChannels} = this.props;
 
     return (
-      <div>
+      <div className="bg-trans">
         <Select
           isMulti={true}
           onChange={handleSelect}

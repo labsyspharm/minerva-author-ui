@@ -817,7 +817,7 @@ class Repo extends Component {
         {viewer}
 				<Modal toggle={this.toggleModal}
 					show={this.state.showModal}>
-						<input type="textarea" value={arrowText}
+						<textarea placeholder='Arrow Description' value={arrowText}
 						onChange={this.handleArrowText} />
 				</Modal>
         <div className="row justify-content-between">
