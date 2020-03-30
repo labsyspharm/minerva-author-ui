@@ -38,7 +38,7 @@ class App extends Component {
       anonymous: true,
       url: 'https://3v21j4dh1d.execute-api.us-east-1.amazonaws.com/dev/image/',
 			uuid: '540fa7e9-2579-4496-84a7-9f525552d502',
-      uuid: '8705331b-6f7b-42a6-931b-ca3059bc624c',
+      //uuid: '8705331b-6f7b-42a6-931b-ca3059bc624c',
       channels: [],
       width: 1024,
       height: 1024
