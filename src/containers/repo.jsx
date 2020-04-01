@@ -268,7 +268,7 @@ class Repo extends Component {
     this.setState({
       textEdit: !textEdit
     })
-    if (textEdit) {
+    if (!textEdit) {
       this.handleStoryChange(activeStory);
     }
   }
