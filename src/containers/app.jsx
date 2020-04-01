@@ -31,6 +31,8 @@ class App extends Component {
       //url: 'https://3v21j4dh1d.execute-api.us-east-1.amazonaws.com/dev/image/',
 			uuid: '4b7274d1-44de-4bda-989d-9ed48d24c1ac',
       //uuid: '0c18ba28-872c-4d83-9904-ecb8b12b514d',
+      waypoints: [],
+      groups: [],
       channels: [],
       width: 1024,
       height: 1024
@@ -71,6 +73,8 @@ class App extends Component {
           const import_result = await res.json();
 
           this.setState({
+            waypoints: import_result.waypoints,
+            groups: import_result.groups,
             loaded: import_result.loaded,
             channels: import_result.channels,
             width: import_result.width,
@@ -84,11 +88,13 @@ class App extends Component {
   }
 
   render() {
-    const {token, loaded, channels, width, height, minerva, url, uuid} = this.state;
+    const {token, loaded, width, height, minerva, url, uuid} = this.state;
+    const {channels, waypoints, groups} = this.state;
 
     if (loaded) {
       return (<Repo token={token} minerva={minerva}
-                    channels={channels} url={url} uuid={uuid}
+                    channels={channels} waypoints={waypoints}
+                    groups={groups} url={url} uuid={uuid}
                     width={width} height={height}/>
       )
     }

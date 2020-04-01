@@ -33,16 +33,41 @@ const rgbToHex = rgb => {
   return IntToHex(r) + IntToHex(g) + IntToHex(b);
 }
 
+const hexToRgb = hex => {
+  // Expand shorthand form (e.g. "03F") to full form (e.g. "0033FF")
+  var shorthandRegex = /^#?([a-f\d])([a-f\d])([a-f\d])$/i;
+  hex = hex.replace(shorthandRegex, function(m, r, g, b) {
+    return r + r + g + g + b + b;
+  });
+
+  var result = /^#?([a-f\d]{2})([a-f\d]{2})([a-f\d]{2})$/i.exec(hex);
+  return result ? [
+    parseInt(result[1], 16),
+   	parseInt(result[2], 16),
+    parseInt(result[3], 16)
+  ] : null;
+}
+
 class Repo extends Component {
 
   constructor(props) {
     super();
 
-    const { width, height, channels, token, minerva, uuid, url } = props;
+    const { width, height, token, minerva, uuid, url } = props;
+    const { channels, waypoints, groups } = props;
 
     const maxLevel = Math.ceil(Math.log2(Math.max(width, height) / 1024))
 
-    this.state = {
+		const defaultChanRender = new Map(channels.map((v,k) => {
+			return [k, {
+				maxRange: 65535,
+				value: k, id: k,
+				color: randColor(),
+				range: {min: 0, max: 32768}
+			}];
+		}));
+
+		this.state = {
       drawType: '',
       drawing: 0,
 			img: {
@@ -59,9 +84,41 @@ class Repo extends Component {
 			activeArrow: 0,
       viewport: null,
       activeStory: 0,
-      stories: new Map([]),
+      stories: new Map(waypoints.map((v,k) => {
+				return [k, {
+					'name': v.name,
+        	'text': v.text,
+        	'pan': v.pan,
+        	'zoom': v.zoom,
+        	'arrows': v.arrows,
+        	'overlays': v.overlays,
+        	'group': groups.findIndex(g => {
+						return g.label == v.group;
+					})
+				}]
+			})),
       activeGroup: null,
-      groups: new Map([]),
+      groups: new Map(groups.map((v,k) => {
+				return [k, {
+					activeIds: v.channels.map(chan => {
+						return chan.id;
+					}),
+					chanRender: new Map([...defaultChanRender,
+					...new Map(v.channels.map(chan => {
+						return [chan.id, {
+							color: hexToRgb(chan.color),
+							range: {
+								min: chan.min * 65535, 
+								max: chan.max * 65535
+							},
+							maxRange: 65535,
+							value: chan.id, id: chan.id
+						}]
+					}))]),
+					label: v.label,
+					value: k
+				}]
+			})),
       activeIds: [0, 1],
       chanLabel: new Map(channels.map((v,k) => {
         return [k, {
@@ -69,14 +126,7 @@ class Repo extends Component {
           label: v,
         }];
       })),
-      chanRender: new Map(channels.map((v,k) => {
-        return [k, {
-          maxRange: 65535,
-          value: k, id: k,
-          color: randColor(),
-          range: {min: 0, max: 32768}
-        }];
-      }))
+      chanRender: defaultChanRender
     };
 
     // Bind
@@ -753,6 +803,17 @@ class Repo extends Component {
           "Content-Type": "application/json"
         }
       })
+
+			fetch('http://localhost:2020/api/save', {
+				method: 'POST',
+				body: JSON.stringify({
+					'waypoints': story_output,
+					'groups': group_output
+				}),
+				headers: {
+					"Content-Type": "application/json"
+				}
+			})
     }
   }
 
