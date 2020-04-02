@@ -63,7 +63,8 @@ class Repo extends Component {
 				maxRange: 65535,
 				value: k, id: k,
 				color: randColor(),
-				range: {min: 0, max: 32768}
+				range: {min: 0, max: 32768},
+        visible: true
 			}];
 		}));
 
@@ -112,7 +113,8 @@ class Repo extends Component {
 								max: chan.max * 65535
 							},
 							maxRange: 65535,
-							value: chan.id, id: chan.id
+							value: chan.id, id: chan.id,
+              visible: true
 						}]
 					}))]),
 					label: v.label,
@@ -642,7 +644,7 @@ class Repo extends Component {
     const _drawing = (_drawType == '')? 0 : 1;
     this.setState({drawing: _drawing});
   }
-  handleChange(id, color, range, label) {
+  handleChange(id, color, range, label, visible) {
     const { chanRender, chanLabel, groups, activeGroup } = this.state;
     const group = groups.get(activeGroup);
     let newRender = { ...chanRender.get(id) };
@@ -659,6 +661,9 @@ class Repo extends Component {
     }
     if (label !== null) {
       newLabel['label'] = label;
+    }
+    if (visible !== null) {
+      newRender['visible'] = visible;
     }
     const newChanLabel = new Map([...chanLabel,
                                  ...(new Map([[id, newLabel]]))]);
