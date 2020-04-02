@@ -4,7 +4,7 @@
 }
 
 .full-height .center-div {
-  height: 200px;
+  height: 300px;
   width: 80vw;
   position:absolute;
   left:0; right:0;
@@ -22,4 +22,10 @@
 
 form label {
   color: white;
+}
+
+.import-errors {
+  margin-top: 15px;
+  color: white;
+  border-radius: 5px;
 }

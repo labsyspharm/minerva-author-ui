@@ -7,7 +7,8 @@ class ImportForm extends Component {
     super();
 
     this.state = {
-      loading: false
+      loading: false,
+      error: null
     }
 
     this.handleSubmit = this.handleSubmit.bind(this);
@@ -24,6 +25,16 @@ class ImportForm extends Component {
     fetch('http://localhost:2020/api/import', {
       method: 'POST',
       body: data,
+    }).then(response => {
+      this.setState({ loading: false });
+      if (!response.ok) {
+        response.json().then(data => {
+          this.setState({ error: data.error}); 
+        });
+      }
+    }).catch(err => {
+      this.setState({ loading: false, error: err });
+      console.error(err);
     });
   }
 
@@ -45,7 +56,19 @@ class ImportForm extends Component {
           size={15} color={"#FFFFFF"}
           loading={loading}/>
         </form>
+        { this.renderErrors() }
       </div>
+    );
+  }
+
+  renderErrors() {
+    if (!this.state.error) {
+      return null;
+    }
+    return (
+      <p className="import-errors">
+        {this.state.error}
+      </p>
     );
   }
 }
