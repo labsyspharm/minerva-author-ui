@@ -44,7 +44,7 @@ const ChannelControl = ({ id, color, range, minRange, maxRange,
         />
         </div>
 			  <span className="nav-item">
-			     <a className="btn" onClick={e => {
+			     <a className="btn negative-top-margin" onClick={e => {
              handleChange(id, null, null, null, !visible);
             }}>
             { eyeIcon }

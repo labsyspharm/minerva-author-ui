@@ -37,3 +37,7 @@ div.input-range__slider {
   background-color: yellow;
   border-color: yellow;
 }
+
+.negative-top-margin {
+  margin-top: -1em;
+}
