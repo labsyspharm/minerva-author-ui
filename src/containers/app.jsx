@@ -4,6 +4,7 @@ import Repo from "./repo";
 import Import from "./import";
 
 import authenticate from '../login';
+import 'semantic-ui-css/semantic.min.css'
 
 const getAjaxHeaders = function(){
   const user = 'john_hoffer@hms.harvard.edu';

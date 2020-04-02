@@ -1,6 +1,7 @@
 import React, { Component } from "react";
 import ClipLoader from "react-spinners/ClipLoader";
 import "regenerator-runtime/runtime";
+import 'semantic-ui-css/semantic.min.css'
 
 class ImportForm extends Component {
   constructor() {
@@ -19,8 +20,9 @@ class ImportForm extends Component {
     const data = new FormData(event.target);
 
     this.setState({
-      loading: true
-    })
+      loading: true,
+      error: null
+    });
     
     fetch('http://localhost:2020/api/import', {
       method: 'POST',
@@ -42,7 +44,7 @@ class ImportForm extends Component {
     const {loading} = this.state;
     return (
       <div className="center-div">
-        <form onSubmit={this.handleSubmit}>
+        <form className="ui form" onSubmit={this.handleSubmit}>
           <label htmlFor="filepath">Enter path to tiff: </label>
           <input className='full-width-input' id="filepath" name="filepath" type="text" />
           <br/>
@@ -51,12 +53,15 @@ class ImportForm extends Component {
           <input className='full-width-input' id="csvpath" name="csvpath" type="text" />
           <br/>
           <br/>
-          <button> Import </button>
+          <button className="ui button"> Import </button>
           <ClipLoader animation="border"
           size={15} color={"#FFFFFF"}
           loading={loading}/>
+          <br/>
+          <br/>
+          { this.renderErrors() }
         </form>
-        { this.renderErrors() }
+        
       </div>
     );
   }
@@ -66,9 +71,9 @@ class ImportForm extends Component {
       return null;
     }
     return (
-      <p className="import-errors">
+      <div className="ui label red below">
         {this.state.error}
-      </p>
+      </div>
     );
   }
 }
