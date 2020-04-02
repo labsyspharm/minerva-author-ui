@@ -30,19 +30,19 @@ class Controls extends Component {
 
     if (textEdit) {
       return (
-			<div>
+			<div className="ui form">
 				<div className="row">
 					<div className="col no-right-padding">
 						<div className="bg-trans">
 							<div className="bg-black">
 								Waypoint #{activeStory + 1}: 
 							</div>
-							<button onClick={()=>{
+							<button className="ui button compact" onClick={()=>{
 								handleStoryChange(Math.max(0, activeStory - 1))
 							}}>
 								<FontAwesomeIcon icon={faArrowLeft} />
 							</button>
-							<button onClick={()=>{
+							<button className="ui button compact" onClick={()=>{
 								handleStoryChange(activeStory + 1)
 							}}>
 								<FontAwesomeIcon icon={faArrowRight} />

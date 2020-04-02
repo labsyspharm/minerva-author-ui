@@ -2,3 +2,11 @@
   background-color: inherit;
   color: white;
 } */
+
+.button-tab-active {
+  background-color: white;
+}
+
+.button-tab {
+  background-color: gray;
+}

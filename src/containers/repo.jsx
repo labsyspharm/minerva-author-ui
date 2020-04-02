@@ -263,10 +263,10 @@ class Repo extends Component {
     });
 	}
 
-  toggleTextEdit() {
+  toggleTextEdit(value) {
     const {textEdit, activeStory} = this.state;
     this.setState({
-      textEdit: !textEdit
+      textEdit: value
     })
     if (!textEdit) {
       this.handleStoryChange(activeStory);
@@ -274,25 +274,37 @@ class Repo extends Component {
   }
 
   handleSelectGroup(g) {
-    const { groups, activeIds, chanRender } = this.state;
-    const { stories, activeStory, viewport } = this.state;
-    const story = stories.get(activeStory);
-    const storyName = story ? story.name : '';
-    const storyText = story ? story.text : '';
-    const overlays = story ? story.overlays : [];
-    const arrows = story ? story.arrows : [];
-    const pan = story ? story.pan : [viewport.getCenter().x, viewport.getCenter().y]
-    const zoom = story ? story.zoom : viewport.getZoom();
-    
     if (g === null) {
       return;
     }
 
+    if (this.state.textEdit) {
+      // Waypoint mode
+      this._handleSelectGroupForWaypoint(g);
+    } else {
+      // Group editing mode
+      this._handleSelectGroupForEditing(g);
+    }
+  }
+
+  _handleSelectGroupForWaypoint(g) {
+    const activeStory = this.state.activeStory;
+    const story = this.state.stories.get(activeStory);
+    let newStory = {};
+    Object.assign(newStory, story);
+    newStory.group = g.value;
+    const newStories = new Map([...this.state.stories,
+        ...(new Map([[activeStory, newStory]]))]);
+    this.setState({ stories: newStories, activeGroup: g.value, activeIds: g.activeIds});
+  }
+
+  _handleSelectGroupForEditing(g) {
+    let groups = this.state.groups;
     if (g.__isNew__) {
       const id = groups.size;
       const newGroup = {
-        chanRender: chanRender,
-        activeIds: activeIds,
+        chanRender: this.state.chanRender,
+        activeIds: this.state.activeIds,
         label: g.label,
         value: id
       }
@@ -300,42 +312,13 @@ class Repo extends Component {
       const newGroups = new Map([...groups,
                                 ...(new Map([[id, newGroup]]))]);
 
-      const newStory = {
-        text: storyText,
-        name: storyName,
-        arrows: arrows,
-        overlays: overlays,
-        pan: pan,
-        zoom: zoom,
-        group: id
-      };
-
-      const newStories = new Map([...stories,
-                                ...(new Map([[activeStory, newStory]]))]);
-
       this.setState({
-        stories: newStories,
         groups: newGroups,
         activeGroup: id
       });
     }
     else {
-
-      const newStory = {
-        text: storyText,
-        name: storyName,
-        arrows: arrows,
-        overlays: overlays,
-        pan: pan,
-        zoom: zoom,
-        group: g.value
-      };
-      
-      const newStories = new Map([...stories,
-                                ...(new Map([[activeStory, newStory]]))]);
-
       this.setState({
-        stories: newStories,
         activeGroup: g.value,
         activeIds: g.activeIds
       });
@@ -867,26 +850,37 @@ class Repo extends Component {
     let saveButton = ''
     if (group != undefined) {
       saveButton = (
-        <button onClick={this.save}>
+        <button className="ui button primary" onClick={this.save}>
           Save
         </button>
       )
     }
+    let editGroupsButton = this.state.textEdit ? "ui button" : "ui button active";
+    let editStoryButton = this.state.textEdit ? "ui button active" : "ui button";
+
     return (
 
       <div className="container-fluid Repo">
         {viewer}
 				<Modal toggle={this.toggleModal}
 					show={this.state.showModal}>
-						<textarea placeholder='Arrow Description' value={arrowText}
-						onChange={this.handleArrowText} />
+            <form className="ui form">
+						  <textarea placeholder='Arrow Description' value={arrowText}
+						  onChange={this.handleArrowText} />
+            </form>
 				</Modal>
         <div className="row justify-content-between">
           <div className="col-md-5">
-            <button onClick={this.toggleTextEdit}>
-              {editLabel}
-            </button>
+            <span className="ui buttons">
+              <button className={editGroupsButton} onClick={() => this.toggleTextEdit(false)}>
+                Edit Groups
+              </button>
+              <button className={editStoryButton} onClick={() => this.toggleTextEdit(true)}>
+                Edit Story
+              </button>
               {saveButton}
+            </span>
+              
             <CreatableSelect
               isClearable
               value={group}

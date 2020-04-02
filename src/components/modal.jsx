@@ -11,7 +11,7 @@ export default class Modal extends React.Component {
 
 				<div className="modal-content">
 					{this.props.children}
-					<button onClick={this.props.toggle}>OK</button>
+					<button className="ui button" onClick={this.props.toggle}>OK</button>
 				</div>
 
 			</div>
