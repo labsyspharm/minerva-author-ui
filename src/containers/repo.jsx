@@ -818,6 +818,11 @@ class Repo extends Component {
     const activeChannels = new Map(activeIds.map(a => [a, {
       ...activeChanLabel.get(a), ...activeChanRender.get(a)
     } ])) 
+    const visibleChannels = new Map(
+      [...activeChannels].filter(([k, v]) => v.visible)
+    );
+    console.log(visibleChannels.size)
+
     const editLabel = textEdit ? 'Edit Groups' : 'Edit Story';
 
     const {stories, activeStory} = this.state;
@@ -836,7 +841,7 @@ class Repo extends Component {
     if (minerva) {
       viewer = <MinervaImageView className="ImageView"
         img={ img } token={ token }
-        channels={ activeChannels }
+        channels={ visibleChannels }
         overlays={ overlays } arrows={ arrows }
         handleViewport={ this.handleViewport }
         interactor={ this.interactor }
@@ -845,7 +850,7 @@ class Repo extends Component {
     else {
       viewer = <ImageView className="ImageView"
         img={ img }
-        channels={ activeChannels }
+        channels={ visibleChannels }
         overlays={ overlays } arrows={ arrows }
         handleViewport={ this.handleViewport }
         interactor={ this.interactor }
