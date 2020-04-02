@@ -29,7 +29,6 @@
 /* Color and clickthrough most aspects of the sliders */
 .list-group-slider {
   background-color: transparent;
-  pointer-events: none;
 }
 
 /* Color of slider controls  */
@@ -37,14 +36,4 @@
 div.input-range__slider {
   background-color: yellow;
   border-color: yellow;
-}
-
-/* Retain interactivity in controls while parents have clickthrough */
-input,
-div.input-range__track,
-div.input_range__slider,
-div.ColorPickerSwatch,
-div.ColorPickerDialog
-{
-  pointer-events: all;
 }
