@@ -26,7 +26,7 @@ class ImportForm extends Component {
       method: 'POST',
       body: data,
     }).then(response => {
-      this.setState({ loading: false });
+      //this.setState({ loading: false });
       if (!response.ok) {
         response.json().then(data => {
           this.setState({ error: data.error}); 
@@ -43,12 +43,16 @@ class ImportForm extends Component {
     return (
       <div className="center-div">
         <form onSubmit={this.handleSubmit}>
-          <label htmlFor="filepath">Enter path to tiff: </label>
+          <label htmlFor="filepath">Enter path to tiff or dat: </label>
           <input className='full-width-input' id="filepath" name="filepath" type="text" />
           <br/>
           <br/>
           <label htmlFor="filepath">Optional marker_name csv: </label>
           <input className='full-width-input' id="csvpath" name="csvpath" type="text" />
+          <br/>
+          <br/>
+          <label htmlFor="filepath">Optional output name: </label>
+          <input className='full-width-input' id="dataset" name="dataset" type="text" />
           <br/>
           <br/>
           <button> Import </button>
