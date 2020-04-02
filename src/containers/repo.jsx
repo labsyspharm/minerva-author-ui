@@ -821,7 +821,6 @@ class Repo extends Component {
     const visibleChannels = new Map(
       [...activeChannels].filter(([k, v]) => v.visible)
     );
-    console.log(visibleChannels.size)
 
     const editLabel = textEdit ? 'Edit Groups' : 'Edit Story';
 
