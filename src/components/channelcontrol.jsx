@@ -2,6 +2,9 @@ import React, { Component } from "react";
 import InputRange from 'react-input-range';
 
 import HuePicker from "./huepicker";
+import {faEye} from "@fortawesome/free-solid-svg-icons";
+import {faEyeSlash} from "@fortawesome/free-solid-svg-icons";
+import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
 
 import '../style/channelcontrol'
 
@@ -10,22 +13,42 @@ import '../style/channelcontrol'
  * @param {function} onRangeChange - update range state
  */
 const ChannelControl = ({ id, color, range, minRange, maxRange,
-                          label, handleChange }) => {
+                          label, visible, handleChange }) => {
 
   let stepSize = Math.ceil((maxRange - minRange) / 100)
 
+  let eyeIcon = (
+    <FontAwesomeIcon icon={faEye}
+      color='white'
+    />
+  )
+  if (visible == false) {
+    eyeIcon = (
+      <FontAwesomeIcon icon={faEyeSlash}
+        color='white'
+      />
+    )
+  }
   return (
     <div className="ChannelControl row">
       <div className="col-1">
         <HuePicker
           color={ color }
-          handleChange={ color => handleChange(id, color, null, null) }
+          handleChange={ color => handleChange(id, color, null, null, visible) }
         />
       </div>
       <div className="col">
         <input type="text" value={label} 
-          onChange={ e => handleChange(id, null, null, e.target.value) }
+          onChange={ e => handleChange(id, null, null, e.target.value, visible) }
         />
+			  <span className="nav-item">
+			     <a className="btn" onClick={e => {
+             e.preventDefault();
+             handleChange(id, null, null, null, !visible);
+            }}>
+            { eyeIcon }
+          </a>
+        </span>
         <InputRange
           allowSameValues={ false }
           draggableTrack={ false }
@@ -33,7 +56,7 @@ const ChannelControl = ({ id, color, range, minRange, maxRange,
           minValue={ minRange }
           value={ range }
           step={ stepSize }
-          onChange={ range => handleChange(id, null, range, null) } />
+          onChange={ range => handleChange(id, null, range, null, visible) } />
       </div>
     </div>
   );
