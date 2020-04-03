@@ -682,13 +682,12 @@ class Repo extends Component {
         groups: newGroups,
       });
     }
-    else {
-      const newChanRender = new Map([...chanRender,
-                                 ...(new Map([[id, newRender]]))]);
-      this.setState({
-        chanRender: newChanRender,
-      });
-    }
+
+    const newChanRender = new Map([...chanRender,
+                               ...(new Map([[id, newRender]]))]);
+    this.setState({
+      chanRender: newChanRender,
+    });
   }
 
   save() {
