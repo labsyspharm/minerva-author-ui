@@ -5,6 +5,7 @@ import MinervaImageView from "./minervaimageview";
 import Modal from "../components/modal";
 import ImageView from "./imageview";
 import Controls from "./controls";
+import { Confirm } from 'semantic-ui-react';
 
 import '../style/repo'
 
@@ -85,6 +86,7 @@ class Repo extends Component {
 			activeArrow: 0,
       viewport: null,
       activeStory: 0,
+      deleteGroupModal: false,
       stories: new Map(waypoints.map((v,k) => {
 				return [k, {
 					'name': v.name,
@@ -150,6 +152,7 @@ class Repo extends Component {
     this.toggleTextEdit = this.toggleTextEdit.bind(this);
     this.toggleModal = this.toggleModal.bind(this);
     this.save = this.save.bind(this);
+    this.deleteActiveGroup = this.deleteActiveGroup.bind(this);
   }
   
   handleViewport(viewport) {
@@ -275,8 +278,33 @@ class Repo extends Component {
     }
   }
 
+  deleteActiveGroup() {
+    this.state.groups.delete(this.state.activeGroup);
+    const newGroups = new Map();
+    // All groups that come after the deleted group, must have their
+    // indexes reduced by one, so that there are no gaps.
+    for (let [key, value] of this.state.groups.entries()) {
+      if (key > this.state.activeGroup) {
+        key--;
+        value.value--;
+      }
+      newGroups.set(key, value);
+    }
+    let newActiveGroup = this.state.activeGroup - 1;
+    if (newActiveGroup < 0) {
+      newActiveGroup = 0;
+    }
+    let selectedGroup = newGroups.get(newActiveGroup);
+    let newActiveIds = selectedGroup ? selectedGroup.activeIds : [0, 1];
+    this.setState({groups: newGroups, 
+      activeGroup: newActiveGroup,
+      deleteGroupModal: false,
+      activeIds: newActiveIds });
+  }
+
   handleSelectGroup(g) {
     if (g === null) {
+      this.setState({deleteGroupModal: true});
       return;
     }
 
@@ -918,6 +946,16 @@ class Repo extends Component {
               storyText={storyText}
               activeStory={activeStory}
             />
+            <Confirm
+              header="Delete channel group"
+              content="Are you sure?"
+              confirmButton="Delete"
+              size="small"
+              open={this.state.deleteGroupModal}
+              onCancel={() => { this.setState({deleteGroupModal: false})} }
+              onConfirm={this.deleteActiveGroup}
+            />
+
           </div>
         </div>
       </div>
