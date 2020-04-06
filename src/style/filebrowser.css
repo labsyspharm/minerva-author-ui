@@ -1,0 +1,52 @@
+.filebrowser-link {
+    cursor: pointer;
+}
+
+.filebrowser-item {
+    cursor: pointer;
+}
+
+.filebrowser-item:hover {
+    transition: all .2s ease-in-out;
+    transform: scale(1.1);
+}
+
+.filebrowser-icon-dir {
+    color: #5ac8fa;
+}
+
+.filebrowser-icon-file {
+    color: #767676;
+}
+
+.filebrowser-icon-file-selectable {
+    color: #2185d0;
+}
+
+.filebrowser-icon-dir svg {
+    margin-left: 10px;
+    margin-top: 5px;
+    margin-bottom: 5px;
+}
+
+.filebrowser-icon-file svg {
+    margin-left: 10px;
+    margin-top: 5px;
+    margin-bottom: 5px;
+}
+
+.filebrowser-icon-file-selectable svg {
+    margin-left: 10px;
+    margin-top: 5px;
+    margin-bottom: 5px;
+}
+
+.filebrowser-location-bar {
+    margin-bottom: 15px;
+}
+
+.filebrowser-modal-close {
+    position: absolute;
+    right: 10px;
+    top: 10px;
+}

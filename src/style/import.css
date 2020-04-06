@@ -17,7 +17,8 @@
 }
 
 .full-width-input {
-  width: 100%;
+  width: 50vw !important;
+  max-width: 500px;
 }
 
 form label {
