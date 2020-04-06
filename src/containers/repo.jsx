@@ -83,6 +83,7 @@ class Repo extends Component {
       minerva: minerva,
       textEdit: false,
       showModal: false,
+      showRenameModal: false,
 			activeArrow: 0,
       viewport: null,
       activeStory: 0,
@@ -153,6 +154,8 @@ class Repo extends Component {
     this.toggleModal = this.toggleModal.bind(this);
     this.save = this.save.bind(this);
     this.deleteActiveGroup = this.deleteActiveGroup.bind(this);
+    this.showRenameModal = this.showRenameModal.bind(this);
+    this.handleGroupRename = this.handleGroupRename.bind(this);
   }
   
   handleViewport(viewport) {
@@ -276,6 +279,18 @@ class Repo extends Component {
     if (!textEdit) {
       this.handleStoryChange(activeStory);
     }
+  }
+
+  showRenameModal() {
+    this.setState({ renameModal: !this.state.renameModal});
+  }
+
+  handleGroupRename(evt) {
+    let group = this.state.groups.get(this.state.activeGroup);
+    let newGroups = new Map(this.state.groups);
+    group.label = evt.target.value;
+    newGroups.set(this.state.activeGroup, group);
+    this.setState({groups: newGroups});
   }
 
   deleteActiveGroup() {
@@ -916,7 +931,6 @@ class Repo extends Component {
               </button>
               {saveButton}
             </span>
-              
             <CreatableSelect
               isClearable
               value={group}
@@ -955,9 +969,31 @@ class Repo extends Component {
               onCancel={() => { this.setState({deleteGroupModal: false})} }
               onConfirm={this.deleteActiveGroup}
             />
-
+            
+          </div>
+          <div className="col">
+            { this.renderRenameModal()}
           </div>
         </div>
+      </div>
+    );
+  }
+
+  renderRenameModal() {
+    let group = this.state.groups.get(this.state.activeGroup);
+    if (!group) {
+      return null;
+    }
+    return (
+      <div className="renameButton">
+        <button className="ui button compact" onClick={this.showRenameModal}>Rename</button>
+        <Modal show={this.state.renameModal} toggle={this.showRenameModal}>
+        <form className="ui form">
+          <label className="ui label">Rename group</label>
+          <input type="text" value={group.label}
+            onChange={this.handleGroupRename} />
+        </form>
+        </Modal>
       </div>
     );
   }
