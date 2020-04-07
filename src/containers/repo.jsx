@@ -1012,7 +1012,7 @@ class Repo extends Component {
             />
             
           </div>
-          <div className="col pl-2 pr-0 pt-1">
+          <div className="col no-pointer pl-2 pr-0 pt-1">
             { this.renderRenameModal()}
           </div>
         </div>
@@ -1041,7 +1041,7 @@ class Repo extends Component {
       return null;
     }
     return (
-      <div className="renameButton">
+      <div className="all-pointer renameButton">
         <button className="ui button compact" onClick={this.showRenameModal}>Rename</button>
         <Modal show={this.state.renameModal} toggle={this.showRenameModal}>
         <form className="ui form" onSubmit={this.showRenameModal}>
