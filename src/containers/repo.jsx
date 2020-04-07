@@ -83,7 +83,9 @@ class Repo extends Component {
       minerva: minerva,
       textEdit: false,
       showModal: false,
-      showRenameModal: false,
+      renameModal: false,
+      addGroupModal: false,
+      needNewGroup: false,
 			activeArrow: 0,
       viewport: null,
       activeStory: 0,
@@ -155,7 +157,9 @@ class Repo extends Component {
     this.save = this.save.bind(this);
     this.deleteActiveGroup = this.deleteActiveGroup.bind(this);
     this.showRenameModal = this.showRenameModal.bind(this);
+    this.showAddGroupModal = this.showAddGroupModal.bind(this);
     this.handleGroupRename = this.handleGroupRename.bind(this);
+    this.handleAddGroup = this.handleAddGroup.bind(this);
   }
   
   handleViewport(viewport) {
@@ -281,8 +285,38 @@ class Repo extends Component {
     }
   }
 
+  showAddGroupModal() {
+    this.setState({ needNewGroup: !this.state.addGroupModal});
+    this.setState({ addGroupModal: !this.state.addGroupModal});
+  }
+
   showRenameModal() {
     this.setState({ renameModal: !this.state.renameModal});
+  }
+
+  handleAddGroup(evt) {
+    let groups = this.state.groups;
+    if (this.state.needNewGroup) {
+      const id = groups.size;
+      const newGroup = {
+        chanRender: this.state.chanRender,
+        activeIds: this.state.activeIds,
+        label: evt.target.value,
+        value: id
+      }
+    
+      const newGroups = new Map([...groups,
+                                ...(new Map([[id, newGroup]]))]);
+
+      this.setState({
+        needNewGroup: false,
+        groups: newGroups,
+        activeGroup: id
+      });
+    }
+    else {
+      this.handleGroupRename(evt);
+    }
   }
 
   handleGroupRename(evt) {
@@ -931,12 +965,19 @@ class Repo extends Component {
               </button>
               {saveButton}
             </span>
-            <CreatableSelect
-              isClearable
-              value={group}
-              onChange={this.handleSelectGroup}
-              options={Array.from(groups.values())}
-            />
+            <div class="row">
+              <div class="col-8">
+                <CreatableSelect
+                  isClearable
+                  value={group}
+                  onChange={this.handleSelectGroup}
+                  options={Array.from(groups.values())}
+                />
+              </div>
+              <div class="col-4 pl-0 pr-0 pt-1">
+                {this.renderAddGroupModal()}
+              </div>
+            </div>
             <Controls 
 							addArrowText={this.addArrowText}
 							deleteArrow={this.deleteArrow}
@@ -971,10 +1012,25 @@ class Repo extends Component {
             />
             
           </div>
-          <div className="col">
+          <div className="col pl-2 pr-0 pt-1">
             { this.renderRenameModal()}
           </div>
         </div>
+      </div>
+    );
+  }
+
+  renderAddGroupModal() {
+    return (
+      <div className="addGroupButton">
+        <button className="ui button compact" onClick={this.showAddGroupModal}>Add Group</button>
+        <Modal show={this.state.addGroupModal} toggle={this.showAddGroupModal}>
+        <form className="ui form" onSubmit={this.showAddGroupModal}>
+          <label className="ui label">Add group</label>
+          <input type="text"
+            onChange={this.handleAddGroup} />
+        </form>
+        </Modal>
       </div>
     );
   }
@@ -988,7 +1044,7 @@ class Repo extends Component {
       <div className="renameButton">
         <button className="ui button compact" onClick={this.showRenameModal}>Rename</button>
         <Modal show={this.state.renameModal} toggle={this.showRenameModal}>
-        <form className="ui form">
+        <form className="ui form" onSubmit={this.showRenameModal}>
           <label className="ui label">Rename group</label>
           <input type="text" value={group.label}
             onChange={this.handleGroupRename} />
