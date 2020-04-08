@@ -9,6 +9,7 @@ import { faArrowLeft } from "@fortawesome/free-solid-svg-icons";
 import { faArrowRight } from "@fortawesome/free-solid-svg-icons";
 import {faLocationArrow} from "@fortawesome/free-solid-svg-icons";
 import {faCrosshairs} from "@fortawesome/free-solid-svg-icons";
+import {faPlus} from "@fortawesome/free-solid-svg-icons";
 
 import '../style/controls'
 
@@ -24,8 +25,8 @@ class Controls extends Component {
     const {addArrowText} = this.props;
     const {deleteOverlay, deleteArrow} = this.props;
     const {storyName, storyText, textEdit} = this.props;
-    const {handleStoryName, handleStoryText} = this.props;
-    const {handleStoryChange, overlays, arrows} = this.props;
+    const {handleStoryInsert, handleStoryName, handleStoryText} = this.props;
+    const {handleStoryRemove, handleStoryChange, overlays, arrows} = this.props;
     const {arrowClick, lassoClick, boxClick, drawType} = this.props;
 
     if (textEdit) {
@@ -34,6 +35,9 @@ class Controls extends Component {
 				<div className="row">
 					<div className="col no-right-padding">
 						<div className="bg-trans">
+              <button className="ui button red compact" onClick={handleStoryRemove}>
+                X
+              </button>
 							<div className="bg-black">
 								Waypoint #{activeStory + 1}: 
 							</div>
@@ -42,6 +46,9 @@ class Controls extends Component {
 							}}>
 								<FontAwesomeIcon icon={faArrowLeft} />
 							</button>
+              <button className="ui button compact" onClick={handleStoryInsert}>
+								<FontAwesomeIcon icon={faPlus} />
+              </button>
 							<button className="ui button compact" onClick={()=>{
 								handleStoryChange(activeStory + 1)
 							}}>

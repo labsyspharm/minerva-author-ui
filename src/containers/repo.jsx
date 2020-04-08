@@ -150,6 +150,8 @@ class Repo extends Component {
     this.handleStoryText = this.handleStoryText.bind(this);
     this.handleArrowText = this.handleArrowText.bind(this);
     this.handleStoryChange = this.handleStoryChange.bind(this);
+    this.handleStoryInsert = this.handleStoryInsert.bind(this);
+    this.handleStoryRemove = this.handleStoryRemove.bind(this);
     this.handleSelectGroup = this.handleSelectGroup.bind(this);
     this.handleViewport = this.handleViewport.bind(this);
     this.toggleTextEdit = this.toggleTextEdit.bind(this);
@@ -213,6 +215,40 @@ class Repo extends Component {
         })
       }
     }
+  }
+
+  handleStoryRemove() {
+
+    const {stories, activeStory} = this.state;
+
+    const newStories = new Map([...stories].filter(([k,v]) => {
+                                return k != activeStory;
+                              }).map(([k,v])=>{
+                                return [k < activeStory? k : k - 1, v]
+                              }))
+
+    this.setState({stories: newStories});
+  }
+
+  handleStoryInsert() {
+    const {stories, activeStory, activeGroup, viewport} = this.state;
+
+     const newStory = {
+      text: '',
+      name: '',
+      arrows: [],
+      overlays: [],
+      group: activeGroup,
+      pan: [viewport.getCenter().x, viewport.getCenter().y],
+      zoom: viewport.getZoom()
+    };
+
+    const newStories = new Map([...[...stories].map(([k,v]) => {
+                                return [k <= activeStory? k: k+1, v];
+                              }),
+                              ...(new Map([[activeStory + 1, newStory]]))]);
+
+    this.setState({stories: newStories, activeStory: activeStory + 1});
   }
 
   handleStoryName(event) {
@@ -369,12 +405,15 @@ class Repo extends Component {
   _handleSelectGroupForWaypoint(g) {
     const activeStory = this.state.activeStory;
     const story = this.state.stories.get(activeStory);
-    let newStory = {};
-    Object.assign(newStory, story);
-    newStory.group = g.value;
-    const newStories = new Map([...this.state.stories,
+    if (story) {
+      let newStory = {};
+      Object.assign(newStory, story);
+      newStory.group = g.value;
+      const newStories = new Map([...this.state.stories,
         ...(new Map([[activeStory, newStory]]))]);
-    this.setState({ stories: newStories, activeGroup: g.value, activeIds: g.activeIds});
+      this.setState({ stories: newStories});
+    }
+    this.setState({ activeGroup: g.value, activeIds: g.activeIds});
   }
 
   _handleSelectGroupForEditing(g) {
@@ -995,6 +1034,8 @@ class Repo extends Component {
               handleStoryName={this.handleStoryName}
               handleStoryText={this.handleStoryText}
               handleStoryChange={this.handleStoryChange}
+              handleStoryInsert={this.handleStoryInsert}
+              handleStoryRemove={this.handleStoryRemove}
 							overlays={overlays}
 							arrows={arrows}
               storyName={storyName}
