@@ -6,6 +6,8 @@ import Modal from "../components/modal";
 import ImageView from "./imageview";
 import Controls from "./controls";
 import { Confirm } from 'semantic-ui-react';
+import ClipLoader from "react-spinners/ClipLoader";
+import { Progress } from 'semantic-ui-react'
 
 import '../style/repo'
 
@@ -90,6 +92,9 @@ class Repo extends Component {
       viewport: null,
       activeStory: 0,
       deleteGroupModal: false,
+      saving: false,
+      saveProgress: 0,
+      saveProgressMax: 0,
       stories: new Map(waypoints.map((v,k) => {
 				return [k, {
 					'name': v.name,
@@ -314,7 +319,9 @@ class Repo extends Component {
   toggleTextEdit(value) {
     const {textEdit, activeStory} = this.state;
     this.setState({
-      textEdit: value
+      textEdit: value,
+      saveProgress: 0,
+      saveProgressMax: 0
     })
     if (!textEdit) {
       this.handleStoryChange(activeStory);
@@ -845,6 +852,8 @@ class Repo extends Component {
       }
     });
 
+    this.setState({saving: true});
+
     fetch('http://localhost:2020/api/stories', {
       method: 'POST',
       body: JSON.stringify({
@@ -897,7 +906,7 @@ class Repo extends Component {
       });
     }
     else {
-      fetch('http://localhost:2020/api/render', {
+      let render = fetch('http://localhost:2020/api/render', {
         method: 'POST',
         body: JSON.stringify({
           'groups': group_output
@@ -907,7 +916,7 @@ class Repo extends Component {
         }
       })
 
-			fetch('http://localhost:2020/api/save', {
+			let save = fetch('http://localhost:2020/api/save', {
 				method: 'POST',
 				body: JSON.stringify({
 					'waypoints': story_output,
@@ -916,8 +925,41 @@ class Repo extends Component {
 				headers: {
 					"Content-Type": "application/json"
 				}
-			})
+      })
+
+      this.setProgressPolling(true);
+      
+      Promise.all([render, save]).then(res => {
+        this.setState({saving: false});
+        this.setProgressPolling(false);
+        this.getSaveProgress();
+      }).catch(err => {
+        console.error(err);
+        this.setState({saving: false});
+        this.setProgressPolling(false);
+      })
     }
+  }
+
+  setProgressPolling(poll) {
+    if (poll) {
+      this.progressInterval = setInterval(() => {
+        this.getSaveProgress();
+      }, 500);
+    } else {
+      clearInterval(this.progressInterval);
+    }
+  }
+
+  getSaveProgress() {
+    fetch('http://127.0.0.1:2020/api/render/progress').then(response => {
+      return response.json();
+    }).then(progress => {
+      this.setState({
+        saveProgress: progress.progress,
+        saveProgressMax: progress.max
+      });
+    });
   }
 
   render() {
@@ -974,8 +1016,11 @@ class Repo extends Component {
     let saveButton = ''
     if (group != undefined) {
       saveButton = (
-        <button className="ui button primary" onClick={this.save}>
-          Save
+        <button className="ui button primary" onClick={this.save} disabled={this.state.saving}>
+          Save&nbsp;
+          <ClipLoader animation="border"
+          size={12} color={"#FFFFFF"}
+          loading={this.state.saving}/>
         </button>
       )
     }
@@ -993,8 +1038,9 @@ class Repo extends Component {
 						  onChange={this.handleArrowText} />
             </form>
 				</Modal>
+
         <div className="row justify-content-between">
-          <div className="col-md-5">
+          <div className="col-md-6">
             <span className="ui buttons">
               <button className={editGroupsButton} onClick={() => this.toggleTextEdit(false)}>
                 Edit Groups
@@ -1004,6 +1050,7 @@ class Repo extends Component {
               </button>
               {saveButton}
             </span>
+            {this.renderProgressBar()}
             <div class="row">
               <div class="col-8">
                 <CreatableSelect
@@ -1014,7 +1061,10 @@ class Repo extends Component {
                 />
               </div>
               <div class="col-4 pl-0 pr-0 pt-1">
-                {this.renderAddGroupModal()}
+                <span className="ui buttons">
+                  {this.renderAddGroupModal()}
+                  {this.renderRenameModal()}
+                </span>
               </div>
             </div>
             <Controls 
@@ -1053,9 +1103,6 @@ class Repo extends Component {
             />
             
           </div>
-          <div className="col no-pointer pl-2 pr-0 pt-1">
-            { this.renderRenameModal()}
-          </div>
         </div>
       </div>
     );
@@ -1063,7 +1110,7 @@ class Repo extends Component {
 
   renderAddGroupModal() {
     return (
-      <div className="addGroupButton">
+      <div className="">
         <button className="ui button compact" onClick={this.showAddGroupModal}>Add Group</button>
         <Modal show={this.state.addGroupModal} toggle={this.showAddGroupModal}>
         <form className="ui form" onSubmit={this.showAddGroupModal}>
@@ -1082,7 +1129,7 @@ class Repo extends Component {
       return null;
     }
     return (
-      <div className="all-pointer renameButton">
+      <div className="all-pointer">
         <button className="ui button compact" onClick={this.showRenameModal}>Rename</button>
         <Modal show={this.state.renameModal} toggle={this.showRenameModal}>
         <form className="ui form" onSubmit={this.showRenameModal}>
@@ -1091,6 +1138,20 @@ class Repo extends Component {
             onChange={this.handleGroupRename} />
         </form>
         </Modal>
+      </div>
+    );
+  }
+
+  renderProgressBar() {
+    if (this.state.saveProgress <= 0) {
+      return null;
+    }
+    let percent = Math.round(this.state.saveProgress/this.state.saveProgressMax*100);
+    return (
+      <div className="row">
+        <div className="col">
+          <Progress percent={percent} color='blue' progress autoSuccess active />
+        </div>
       </div>
     );
   }
