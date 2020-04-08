@@ -23,3 +23,13 @@
 .all-pointer {
   pointer-events: All;
 }
+
+/* Cancel bootstrap .progress class because it conflicts with Semantic UI progress bar */
+.progress {
+  display: initial;
+  height: initial;
+  overflow: initial;
+  font-size: initial;
+  background-color: initial;
+  border-radius: initial;
+}
