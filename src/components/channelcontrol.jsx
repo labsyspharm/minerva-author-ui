@@ -79,6 +79,7 @@ const ChannelControl = ({ id, color, range, minRange, maxRange,
           minValue={ minRange }
           value={ range }
           step={ stepSize }
+          formatLabel={ label => '' }
           onChange={ range => handleChange(id, null, range, null, visible) } />
       </div>
     </div>
