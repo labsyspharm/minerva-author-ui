@@ -92,6 +92,7 @@ class Repo extends Component {
       viewport: null,
       activeStory: 0,
       deleteGroupModal: false,
+      deleteStoryModal: false,
       saving: false,
       saveProgress: 0,
       saveProgressMax: 0,
@@ -151,12 +152,14 @@ class Repo extends Component {
     this.boxClick = this.boxClick.bind(this);
     this.handleChange = this.handleChange.bind(this);
     this.handleSelect = this.handleSelect.bind(this);
+    this.handleSelectStory = this.handleSelectStory.bind(this);
     this.handleStoryName = this.handleStoryName.bind(this);
     this.handleStoryText = this.handleStoryText.bind(this);
     this.handleArrowText = this.handleArrowText.bind(this);
     this.handleStoryChange = this.handleStoryChange.bind(this);
     this.handleStoryInsert = this.handleStoryInsert.bind(this);
     this.handleStoryRemove = this.handleStoryRemove.bind(this);
+    this.deleteStory = this.deleteStory.bind(this);
     this.handleSelectGroup = this.handleSelectGroup.bind(this);
     this.handleViewport = this.handleViewport.bind(this);
     this.toggleTextEdit = this.toggleTextEdit.bind(this);
@@ -225,6 +228,19 @@ class Repo extends Component {
   handleStoryRemove() {
 
     const {stories, activeStory} = this.state;
+    const story = stories.get(activeStory);
+    if (story === undefined) {
+      this.deleteStory();
+    }
+    else {
+      this.setState({deleteStoryModal: true})
+    }
+
+  }
+
+  deleteStory() {
+
+    const {stories, activeStory} = this.state;
 
     const newStories = new Map([...stories].filter(([k,v]) => {
                                 return k != activeStory;
@@ -232,7 +248,8 @@ class Repo extends Component {
                                 return [k < activeStory? k : k - 1, v]
                               }))
 
-    this.setState({stories: newStories});
+    this.setState({stories: newStories, activeStory: Math.max(0, activeStory - 1)});
+    this.setState({deleteStoryModal: false})
   }
 
   handleStoryInsert() {
@@ -393,6 +410,13 @@ class Repo extends Component {
       deleteGroupModal: false,
       activeIds: newActiveIds });
   }
+
+  handleSelectStory(s) {
+    this.setState({
+      activeStory: s.value,
+    })
+  }
+
 
   handleSelectGroup(g) {
     if (g === null) {
@@ -1068,6 +1092,7 @@ class Repo extends Component {
               </div>
             </div>
             <Controls 
+              stories={this.state.stories}
 							addArrowText={this.addArrowText}
 							deleteArrow={this.deleteArrow}
 							deleteOverlay={this.deleteOverlay}
@@ -1077,6 +1102,7 @@ class Repo extends Component {
               boxClick = {this.boxClick}
               handleChange={this.handleChange}
               handleSelect={this.handleSelect}
+              handleSelectStory={this.handleSelectStory}
               chanLabel={chanLabel}
               activeChanLabel={activeChanLabel}
               activeChannels={activeChannels}
@@ -1101,7 +1127,15 @@ class Repo extends Component {
               onCancel={() => { this.setState({deleteGroupModal: false})} }
               onConfirm={this.deleteActiveGroup}
             />
-            
+            <Confirm
+              header="Delete waypoint"
+              content="Are you sure?"
+              confirmButton="Delete"
+              size="small"
+              open={this.state.deleteStoryModal}
+              onCancel={() => { this.setState({deleteStoryModal: false})} }
+              onConfirm={this.deleteStory}
+            />
           </div>
         </div>
       </div>

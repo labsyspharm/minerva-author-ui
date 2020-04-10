@@ -21,13 +21,26 @@ class Controls extends Component {
 
   render() {
 
-    const {activeStory} = this.props;
     const {addArrowText} = this.props;
     const {deleteOverlay, deleteArrow} = this.props;
-    const {storyName, storyText, textEdit} = this.props;
+    const {activeStory, handleSelectStory} = this.props;
+    const {stories, storyName, storyText, textEdit} = this.props;
     const {handleStoryInsert, handleStoryName, handleStoryText} = this.props;
     const {handleStoryRemove, handleStoryChange, overlays, arrows} = this.props;
     const {arrowClick, lassoClick, boxClick, drawType} = this.props;
+
+    const storyLabels = new Map([...stories].map(([k,v])=>{
+                                  return [k, {
+                                    value: k, id: k,
+                                    label: '#' + (k+1) + (v.name? ': ' + v.name : '')
+                                  }]
+                                }))
+
+    let activeStoryLabel = storyLabels.get(activeStory)
+    if (activeStoryLabel === undefined) {
+      activeStoryLabel = {value: activeStory, id: activeStory,
+                          label: '#' + (activeStory+1)}
+    }
 
     if (textEdit) {
       return (
@@ -38,9 +51,6 @@ class Controls extends Component {
               <button className="ui button red compact" onClick={handleStoryRemove}>
                 X
               </button>
-							<div className="bg-black">
-								Waypoint #{activeStory + 1}: 
-							</div>
 							<button className="ui button compact" onClick={()=>{
 								handleStoryChange(Math.max(0, activeStory - 1))
 							}}>
@@ -54,6 +64,13 @@ class Controls extends Component {
 							}}>
 								<FontAwesomeIcon icon={faArrowRight} />
 							</button>
+              <div className="width-200px inline-block">
+                <Select
+                  onChange={handleSelectStory}
+                  value={activeStoryLabel}
+                  options={Array.from(storyLabels.values())}
+                />
+              </div>
 						</div>
 						<input className="width-100" type="text" placeholder="Waypoint Name" value={storyName} onChange={handleStoryName}></input>
             <textarea className="width-100 height-33vh" placeholder="Waypoint Description" value={storyText} onChange={handleStoryText}></textarea>

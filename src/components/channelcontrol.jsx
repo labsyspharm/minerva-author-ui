@@ -38,10 +38,32 @@ const ChannelControl = ({ id, color, range, minRange, maxRange,
         />
       </div>
       <div className="col">
-        <div className="ui input mini">
-        <input type="text" value={label} 
-          onChange={ e => handleChange(id, null, null, e.target.value, visible) }
-        />
+        <div className="ui input mini width-75px">
+          <input type="text" value={label} 
+            onChange={ e => handleChange(id, null, null, e.target.value, visible) }
+          />
+        </div>
+        <div className="ui input mini width-75px">
+          <input type="text" value={range.min} 
+            onChange={ e => {
+              let r0 = parseInt(e.target.value);
+              r0 = isNaN(r0) ? 0 : r0;
+              r0 = r0 >= maxRange ? maxRange : r0;
+              let r1 = r0 >= range.max ? Math.min(r0 + 1, maxRange) : range.max;
+              handleChange(id, null, {min: r0, max: r1}, null, visible);
+            }}
+          />
+        </div>
+        <div className="ui input mini width-75px">
+          <input type="text" value={range.max} 
+            onChange={ e => {
+              let r1 = parseInt(e.target.value);
+              r1 = isNaN(r1) ? 0 : r1;
+              r1 = r1 >= maxRange ? maxRange : r1;
+              let r0 = range.min >= r1 ? Math.max(r1 - 1, 0) : range.min;
+              handleChange(id, null, {min: r0, max: r1}, null, visible);
+            }}
+          />
         </div>
 			  <span className="nav-item">
 			     <a className="btn negative-top-margin" onClick={e => {

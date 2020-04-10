@@ -41,3 +41,7 @@ div.input-range__slider {
 .negative-top-margin {
   margin-top: -1em;
 }
+
+.width-75px {
+  width: 75px;
+}

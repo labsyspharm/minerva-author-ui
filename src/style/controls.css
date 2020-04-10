@@ -15,6 +15,13 @@
 .bg-trans {
   background: rgba(0, 0, 0, .8);
 }
+.inline-block {
+  display: inline-block;
+}
+.width-200px {
+  width: 200px;
+}
+
 .width-100 {
   width: 100%;
 }
