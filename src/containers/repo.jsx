@@ -7,9 +7,11 @@ import ImageView from "./imageview";
 import Controls from "./controls";
 import { Confirm } from 'semantic-ui-react';
 import ClipLoader from "react-spinners/ClipLoader";
-import { Progress } from 'semantic-ui-react'
+import { Progress, Popup } from 'semantic-ui-react'
 
 import '../style/repo'
+
+const validNameRegex = /^([a-zA-Z0-9 _-]+)$/;
 
 const randInt = n => Math.floor(Math.random() * n);
 const randColor = () => {
@@ -170,6 +172,7 @@ class Repo extends Component {
     this.showAddGroupModal = this.showAddGroupModal.bind(this);
     this.handleGroupRename = this.handleGroupRename.bind(this);
     this.handleAddGroup = this.handleAddGroup.bind(this);
+    this.getCreateLabel = this.getCreateLabel.bind(this);
   }
   
   handleViewport(viewport) {
@@ -354,7 +357,16 @@ class Repo extends Component {
     this.setState({ renameModal: !this.state.renameModal});
   }
 
+  validateChannelGroupLabel(label) {
+    return label && validNameRegex.test(label);
+  }
+
   handleAddGroup(evt) {
+    if (!this.validateChannelGroupLabel(evt.target.value)) {
+      this.setState({invalidChannelGroupName: true});
+      return;
+    }
+    this.setState({invalidChannelGroupName: false});
     let groups = this.state.groups;
     if (this.state.needNewGroup) {
       const id = groups.size;
@@ -380,6 +392,12 @@ class Repo extends Component {
   }
 
   handleGroupRename(evt) {
+    if (!this.validateChannelGroupLabel(evt.target.value)) {
+      this.setState({invalidChannelGroupName: true});
+      return;
+    }
+    this.setState({invalidChannelGroupName: false});
+
     let group = this.state.groups.get(this.state.activeGroup);
     let newGroups = new Map(this.state.groups);
     group.label = evt.target.value;
@@ -418,8 +436,8 @@ class Repo extends Component {
   }
 
 
-  handleSelectGroup(g) {
-    if (g === null) {
+  handleSelectGroup(g, action) {
+    if (action.action === 'clear') {
       this.setState({deleteGroupModal: true});
       return;
     }
@@ -450,6 +468,9 @@ class Repo extends Component {
   _handleSelectGroupForEditing(g) {
     let groups = this.state.groups;
     if (g.__isNew__) {
+      if (!this.validateChannelGroupLabel(g.label)) {
+        return;
+      }
       const id = groups.size;
       const newGroup = {
         chanRender: this.state.chanRender,
@@ -986,6 +1007,13 @@ class Repo extends Component {
     });
   }
 
+  getCreateLabel(label) {
+    if (!this.validateChannelGroupLabel(label)) {
+      return "Name contains invalid characters.";
+    }
+    return "Create Group: " + label;
+  }
+
   render() {
     const { minerva, token } = this.state;
     const { img, groups, chanLabel, textEdit } = this.state;
@@ -1077,11 +1105,12 @@ class Repo extends Component {
             {this.renderProgressBar()}
             <div class="row">
               <div class="col-8">
-                <CreatableSelect
+                  <CreatableSelect
                   isClearable
                   value={group}
                   onChange={this.handleSelectGroup}
                   options={Array.from(groups.values())}
+                  formatCreateLabel={this.getCreateLabel}
                 />
               </div>
               <div class="col-4 pl-0 pr-0 pt-1">
@@ -1119,7 +1148,7 @@ class Repo extends Component {
               activeStory={activeStory}
             />
             <Confirm
-              header="Delete channel group"
+              header="Delete channel group" 
               content="Are you sure?"
               confirmButton="Delete"
               size="small"
@@ -1149,8 +1178,12 @@ class Repo extends Component {
         <Modal show={this.state.addGroupModal} toggle={this.showAddGroupModal}>
         <form className="ui form" onSubmit={this.showAddGroupModal}>
           <label className="ui label">Add group</label>
-          <input type="text"
-            onChange={this.handleAddGroup} />
+           <Popup
+            trigger={<input type="text" onChange={this.handleAddGroup} />}
+            open={this.state.invalidChannelGroupName} 
+            content='Channel group name can contain only letters, numbers, space, dash or underscore.'
+            position='top center'
+          />
         </form>
         </Modal>
       </div>
@@ -1168,8 +1201,13 @@ class Repo extends Component {
         <Modal show={this.state.renameModal} toggle={this.showRenameModal}>
         <form className="ui form" onSubmit={this.showRenameModal}>
           <label className="ui label">Rename group</label>
-          <input type="text" value={group.label}
-            onChange={this.handleGroupRename} />
+          <Popup
+            trigger={<input type="text" value={group.label} onChange={this.handleGroupRename} />}
+            open={this.state.invalidChannelGroupName} 
+            content='Channel group name can contain only letters, numbers, space, dash or underscore.'
+            position='top center'
+        />
+          
         </form>
         </Modal>
       </div>
