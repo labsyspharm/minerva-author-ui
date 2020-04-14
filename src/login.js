@@ -3,6 +3,7 @@ import {
     AuthenticationDetails,
     CognitoUser,
 } from 'amazon-cognito-identity-js';
+import MinervaConfig from './config';
 
 const authenticateUser = function(cognitoUser, authenticationDetails) {
   return new Promise(function(resolve, reject) {
@@ -15,12 +16,10 @@ const authenticateUser = function(cognitoUser, authenticationDetails) {
   });
 };
 
-const authenticate = function(username, pass) {
+const authenticate = function(username, password) {
 
-  return pass.then(function(password) {
-
-    const minervaPoolId = 'us-east-1_d3Wusx6qp'; 
-    const minervaClientId = 'cvuuuuogh6nmqm8491iiu1lh5';
+    const minervaPoolId = MinervaConfig.CognitoUserPoolId;
+    const minervaClientId = MinervaConfig.CognitoClientId;
     const minervaPool = new CognitoUserPool({
       UserPoolId : minervaPoolId,
       ClientId : minervaClientId
@@ -37,8 +36,12 @@ const authenticate = function(username, pass) {
     });
 
     return authenticateUser(cognitoUser, authenticationDetails)
-      .then(response => response.getIdToken().getJwtToken());
-  });
+      .then(response => {
+        return {
+          token: response.getIdToken().getJwtToken(),
+          user: cognitoUser
+        };
+      });
 }
 
-export default authenticate
+export default authenticate;

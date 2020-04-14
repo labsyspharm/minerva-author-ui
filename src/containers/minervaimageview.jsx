@@ -41,7 +41,7 @@ class MinervaImageView extends Component {
 		const getTileUrl = function(l, x, y) {
       const lod = (this.maxLevel - l) + '/';
       const pos = x + '/' + y + '/0/0/';
-      const tile_url = url + uuid + '/render-tile/' + pos + lod + channelPath;
+      const tile_url = url + '/' + uuid + '/render-tile/' + pos + lod + channelPath;
       return tile_url;
 		}
 
@@ -68,7 +68,7 @@ class MinervaImageView extends Component {
       ajaxHeaders: {
         'Content-Type': 'application/json',
         'Authorization': token,
-        'Accept': 'image/png'
+        'Accept': 'image/jpeg'
       },
       loadTilesWithAjax: true,
       success: function() {

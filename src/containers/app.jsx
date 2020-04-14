@@ -5,10 +5,11 @@ import Import from "./import";
 
 import authenticate from '../login';
 import 'semantic-ui-css/semantic.min.css'
+import MinervaConfig from '../config';
 
 const getAjaxHeaders = function(){
-  const user = 'john_hoffer@hms.harvard.edu';
-  const pass = Promise.resolve('MEETING@lsp2');
+  //const user = 'john_hoffer@hms.harvard.edu';
+  //const pass = Promise.resolve('MEETING@lsp2');
   return authenticate(user, pass).then(function(token){
     return {
       'Content-Type': 'application/json',
@@ -39,32 +40,35 @@ class App extends Component {
       height: 1024
     }
 
+    this.onToken = this.onToken.bind(this);
+    this.onMinervaImage = this.onMinervaImage.bind(this);
+
   }
 
   async componentDidMount() {
     const {minerva, url, uuid} = this.state;
 
-    if (minerva) {
-      const fetch_dimensions = async () => {
+    // if (minerva) {
+    //   const fetch_dimensions = async () => {
           
-        const ajaxHeaders = await getAjaxHeaders();
-        const res = await fetch(url + uuid + '/dimensions', {
-          headers: ajaxHeaders
-        });
-        const result = await res.json();
-        const pixels = result.data.pixels;
+    //     const ajaxHeaders = await getAjaxHeaders();
+    //     const res = await fetch(url + uuid + '/dimensions', {
+    //       headers: ajaxHeaders
+    //     });
+    //     const result = await res.json();
+    //     const pixels = result.data.pixels;
 
-        this.setState({
-          loaded: true,
-          token: ajaxHeaders.Authorization,
-          channels: [...Array(pixels.SizeC).keys()].map(String),
-          width: pixels.SizeX,
-          height: pixels.SizeY,
-        })
-      }
-      fetch_dimensions();
-      return;
-    }
+    //     this.setState({
+    //       loaded: true,
+    //       token: ajaxHeaders.Authorization,
+    //       channels: [...Array(pixels.SizeC).keys()].map(String),
+    //       width: pixels.SizeX,
+    //       height: pixels.SizeY,
+    //     })
+    //   }
+    //   fetch_dimensions();
+    //   return;
+    // }
 
     try {
       setInterval(async () => {
@@ -88,6 +92,21 @@ class App extends Component {
     }
   }
 
+  onToken(data) {
+    this.setState({token: data.token, minerva: true});
+  }
+
+  onMinervaImage(image) {
+    this.setState({
+      loaded: true,
+      uuid: image.uuid,
+      channels: [...Array(image.channels).keys()].map(String),
+      width: image.width,
+      height: image.height,
+      url: MinervaConfig.minervaBaseUrl + '/' + MinervaConfig.minervaStage + '/image'
+    });
+  }
+
   render() {
     const {token, loaded, width, height, minerva, url, uuid} = this.state;
     const {channels, waypoints, groups} = this.state;
@@ -100,7 +119,7 @@ class App extends Component {
       )
     }
     return (
-      <Import/>
+      <Import onToken={this.onToken} onMinervaImage={this.onMinervaImage}/>
     );
   }
 }

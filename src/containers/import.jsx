@@ -7,7 +7,7 @@ class Import extends Component {
   render() {
     return (
       <div className="full-height">
-        <ImportForm/>
+        <ImportForm onToken={this.props.onToken} onMinervaImage={this.props.onMinervaImage} />
       </div>
     );
   }

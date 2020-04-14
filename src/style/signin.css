@@ -1,0 +1,15 @@
+.signin-button {
+    position: fixed;
+    right: 10px;
+    top: 10px;
+  }
+  
+  .minerva-signin.modal{
+    top: initial;
+    left: initial;
+    right: initial;
+    bottom: initial;
+    outline: initial;
+    height: initial;
+    overflow: initial;
+  }
