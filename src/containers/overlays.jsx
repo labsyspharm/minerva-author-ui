@@ -12,12 +12,12 @@ class Overlays extends Component {
     const arrowDivs = arrows.map((o, i) => {
       return (
       <div className="ui buttons">
-        <button className="ui button red compact overlay-x" onClick={()=>{
+        <button className="ui button red compact overlay-x" title="Delete" onClick={()=>{
 						deleteArrow(i);
 					}}>
           X
         </button>
-        <button className="ui button compact overlay-arrow" onClick={()=>{
+        <button className="ui button compact overlay-arrow" title="Edit description" onClick={()=>{
             addArrowText(i);
         }}>
         Arrow {i}
@@ -28,7 +28,7 @@ class Overlays extends Component {
     const overlayDivs = overlays.map((o, i) => {
       return (
       <div className="ui buttons">
-        <button className="ui button red compact overlay-x" onClick={()=>{
+        <button className="ui button red compact overlay-x" title="Delete" onClick={()=>{
 						deleteOverlay(i);
 					}}>
           X

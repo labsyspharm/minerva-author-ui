@@ -48,18 +48,18 @@ class Controls extends Component {
 				<div className="row">
 					<div className="col no-right-padding">
 						<div className="bg-trans">
-              <button className="ui button red compact" onClick={handleStoryRemove}>
+              <button className="ui button red compact" title="Delete waypoint" onClick={handleStoryRemove}>
                 X
               </button>
-							<button className="ui button compact" onClick={()=>{
+							<button className="ui button compact" title="Previous waypoint" onClick={()=>{
 								handleStoryChange(Math.max(0, activeStory - 1))
 							}}>
 								<FontAwesomeIcon icon={faArrowLeft} />
 							</button>
-              <button className="ui button compact" onClick={handleStoryInsert}>
+              <button className="ui button compact" onClick={handleStoryInsert} title="Add waypoint">
 								<FontAwesomeIcon icon={faPlus} />
               </button>
-							<button className="ui button compact" onClick={()=>{
+							<button className="ui button compact" title="Next waypoint" onClick={()=>{
 								handleStoryChange(activeStory + 1)
 							}}>
 								<FontAwesomeIcon icon={faArrowRight} />
@@ -78,14 +78,14 @@ class Controls extends Component {
 					<div className="col-1 p-0">
 						<div className="btn-group-vertical bg-trans">
 							<span id="arrow-switch" className="nav-item arrow-switch">
-							<a className="btn" onClick={arrowClick}>
+							<a className="btn" onClick={arrowClick} title="Add arrow">
 									<FontAwesomeIcon icon={faLocationArrow}
 										color={(drawType == 'arrow')? 'blue': 'white'}
 									/>
 							</a>
 							</span>
 							<span id="draw-switch" className="nav-item draw-switch">
-							<a className="btn" onClick={boxClick}>
+							<a className="btn" onClick={boxClick} title="Add rectangle">
 									<FontAwesomeIcon icon={faCrosshairs}
 										color={(drawType == 'box')? 'blue': 'white'}
 									/>
