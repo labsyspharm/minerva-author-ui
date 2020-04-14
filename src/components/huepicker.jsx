@@ -65,7 +65,7 @@ class HuePicker extends React.Component {
 
     return (
       <div>
-        <div className="ColorPickerSwatch" style={ styles.swatch }
+        <div className="ColorPickerSwatch" style={ styles.swatch } title="Select color"
              onClick={ this.handleClick }>
           <div style={ styles.color } />
         </div>
