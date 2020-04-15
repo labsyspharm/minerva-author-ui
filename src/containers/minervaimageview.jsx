@@ -4,6 +4,7 @@ import authenticate from '../login';
 import SvgArrow from '../components/svgarrow.jsx'
 
 import '../style/imageview';
+import styled from 'styled-components';
 
 const IntToHex = c => {
   var hex = c.toString(16);
@@ -123,7 +124,17 @@ class MinervaImageView extends Component {
     arrows.forEach((a,i) => {
       const o = a.position;
       const el = "arrow-" + i;
-      const current = viewer.getOverlayById(el);
+			const elNew = "new-" + el;
+			const element = document.getElementById(el);
+			let newElement = document.getElementById(elNew);
+			if (!newElement) {
+				newElement = element.cloneNode(true);
+				newElement.id = elNew;
+			}
+			else {
+				newElement.className = element.className;
+			}
+      const current = viewer.getOverlayById(elNew);
       const xy = new OpenSeadragon.Point(o[0], o[1]);
       if (current) {
         current.update({
@@ -134,15 +145,15 @@ class MinervaImageView extends Component {
         viewer.addOverlay({
           x: o[0],
           y: o[1],
-          element: el,
+          element: newElement,
           placement: OpenSeadragon.Placement.CENTER
         });
       }
     })
     // Hide extra arrows
     for (var i = arrows.length; i < 100; i ++) {
-      const el = "arrow-" + i;
-      const current = viewer.getOverlayById(el);
+      const elNew = "new-arrow-" + i;
+      const current = viewer.getOverlayById(elNew);
       const xy = new OpenSeadragon.Point(-1, -1)
       if (current) {
         current.update({
@@ -192,6 +203,7 @@ class MinervaImageView extends Component {
 
   render() {
     const {viewer} = this;
+    const {arrows} = this.props;
 
     // After first render
     if (viewer !== undefined) {
@@ -235,13 +247,25 @@ class MinervaImageView extends Component {
         </div>
       )
     })
-    const arrow_divs = [...Array(100).keys()].map((o,i) => {
+    const arrow_divs = [...Array(arrows.length).keys()].map((o,i) => {
       const el = "arrow-" + i;
+      const radius = 122.8 / 2;
+      const a = arrows.length > i ? arrows[i] : undefined;
+      const angle = a && a.angle !== '' ? a.angle: 60;
+      const a_y = radius * Math.sin(angle * Math.PI /180);
+      const a_x = radius * Math.cos(angle * Math.PI /180);
+      let Transform = styled.div`
+        transform: translate(${a_x}px,${a_y}px)rotate(${angle}deg);
+      `
+			if (a.hide) {
+				Transform = styled.div`
+					opacity: 0;
+				`
+			}
       return (
-        <div className="arrow-overlay"
-             key={el} id={el}>
-          <SvgArrow></SvgArrow>
-        </div>
+				<Transform key={el} id={el}>
+					<SvgArrow></SvgArrow>
+				</Transform>
       )
     })
 

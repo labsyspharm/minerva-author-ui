@@ -158,6 +158,8 @@ class Repo extends Component {
     this.handleStoryName = this.handleStoryName.bind(this);
     this.handleStoryText = this.handleStoryText.bind(this);
     this.handleArrowText = this.handleArrowText.bind(this);
+    this.handleArrowHide = this.handleArrowHide.bind(this);
+    this.handleArrowAngle = this.handleArrowAngle.bind(this);
     this.handleStoryChange = this.handleStoryChange.bind(this);
     this.handleStoryInsert = this.handleStoryInsert.bind(this);
     this.handleStoryRemove = this.handleStoryRemove.bind(this);
@@ -540,7 +542,7 @@ class Repo extends Component {
     };
   }
 
-	handleArrowText(event) {
+  handleArrowAngle(event) {
 
     const {stories, activeStory, activeGroup, viewport} = this.state;
     const story = stories.get(activeStory);
@@ -558,10 +560,85 @@ class Repo extends Component {
 			return;
 		}
 	
-		arrows[activeArrow] = {
-			position: arrows[activeArrow].position,
-			text: event.target.value 
+    let angle = parseInt(event.target.value)
+    arrows[activeArrow].angle = isNaN(angle) ? '' : angle; 
+
+    const newStory = {
+      text: text,
+      name: name,
+      overlays: overlays,
+      arrows: arrows,
+      group: group,
+      pan: pan,
+      zoom: zoom
+    };
+
+    const newStories = new Map([...stories,
+                              ...(new Map([[activeStory, newStory]]))]);
+
+    this.setState({
+      stories: newStories
+    })
+  }
+
+  handleArrowHide() {
+
+    const {stories, activeStory, activeGroup, viewport} = this.state;
+    const story = stories.get(activeStory);
+    const group = story ? story.group : activeGroup;
+    const overlays = story ? story.overlays : [];
+    const arrows = story ? story.arrows : [];
+    const text = story ? story.text : '';
+    const name = story ? story.name : '';
+    const pan = story ? story.pan : [viewport.getCenter().x, viewport.getCenter().y]
+    const zoom = story ? story.zoom : viewport.getZoom();
+		
+		const activeArrow = this.state.activeArrow;
+
+		if (arrows.length - 1 < activeArrow) {
+			return;
 		}
+	
+		arrows[activeArrow].hide = !arrows[activeArrow].hide;
+
+    const newStory = {
+      text: text,
+      name: name,
+      overlays: overlays,
+      arrows: arrows,
+      group: group,
+      pan: pan,
+      zoom: zoom
+    };
+
+    const newStories = new Map([...stories,
+                              ...(new Map([[activeStory, newStory]]))]);
+
+    this.setState({
+      stories: newStories
+    })
+  }
+
+
+  handleArrowText(event) {
+
+    const {stories, activeStory, activeGroup, viewport} = this.state;
+    const story = stories.get(activeStory);
+    const group = story ? story.group : activeGroup;
+    const overlays = story ? story.overlays : [];
+    const arrows = story ? story.arrows : [];
+    const text = story ? story.text : '';
+    const name = story ? story.name : '';
+    const pan = story ? story.pan : [viewport.getCenter().x, viewport.getCenter().y]
+    const zoom = story ? story.zoom : viewport.getZoom();
+		
+		const activeArrow = this.state.activeArrow;
+
+		if (arrows.length - 1 < activeArrow) {
+			return;
+		}
+	
+		arrows[activeArrow].text = event.target.value;
 
     const newStory = {
       text: text,
@@ -602,6 +679,8 @@ class Repo extends Component {
       overlays: overlays,
       arrows: arrows.concat([{
 				position: new_xy,
+        hide: false,
+        angle: '',
 				text: ''
 			}]),
       group: group,
@@ -1040,9 +1119,17 @@ class Repo extends Component {
     const overlays = story ? story.overlays : [];
     const arrows = story ? story.arrows : [];
 		const activeArrow = this.state.activeArrow;
-		let arrowText = ''
+		let arrowText = '';
 		if (arrows.length > 0) {
 			arrowText = arrows[activeArrow].text;
+		}
+		let arrowAngle = '';
+		if (arrows.length > 0) {
+			arrowAngle = arrows[activeArrow].angle;
+		}
+		let arrowHidden = false;
+		if (arrows.length > 0) {
+			arrowHidden = arrows[activeArrow].hide;
 		}
 
     let viewer;
@@ -1085,7 +1172,13 @@ class Repo extends Component {
         {viewer}
 				<Modal toggle={this.toggleModal}
 					show={this.state.showModal}>
-            <form className="ui form">
+            <button className="ui button compact" onClick={this.handleArrowHide}>
+            {arrowHidden? 'Show Arrow' : 'Hide Arrow'}
+            </button>
+            <form className="ui form" onSubmit={this.toggleModal}>
+              <input type='text' placeholder='Arrow Angle'
+              value={arrowAngle} onChange={this.handleArrowAngle}
+              />
 						  <textarea placeholder='Arrow Description' value={arrowText}
 						  onChange={this.handleArrowText} />
             </form>

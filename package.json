@@ -49,6 +49,7 @@
     "reactcss": "^1.2.3",
     "semantic-ui-css": "^2.4.1",
     "semantic-ui-react": "^0.88.2",
+    "styled-components": "^5.1.0",
     "viawebgl": "git://github.com/thejohnhoffer/viaWebGL.git#webgl2"
   }
 }
