@@ -1,9 +1,9 @@
 import React from 'react';
 import { Modal, Popup } from 'semantic-ui-react';
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
-import { faTimes, faSignInAlt } from '@fortawesome/free-solid-svg-icons'
-import authenticate from '../login';
-import { Button, Form, Grid, Header, Image, Message, Segment } from 'semantic-ui-react'
+import { faTimes, faSignInAlt, faSignOutAlt } from '@fortawesome/free-solid-svg-icons'
+import login from '../login';
+import { Button, Form, Grid, Header, Loader, Message, Segment, Dimmer } from 'semantic-ui-react'
 import MinervaConfig from '../config';
 import '../style/signin.css';
 
@@ -18,12 +18,39 @@ export default class SignIn extends React.Component {
             showMessage: false,
             email: '',
             password: '',
-            success: false
+            success: false,
+            loading: false,
         }
 
         this.handleChange = this.handleChange.bind(this);
         this.signIn = this.signIn.bind(this);
         this.inputRef = React.createRef();
+    }
+
+    componentDidMount() {
+        // Check if there is previous authentication stored in local storage
+        login.storedAuthentication().then(user => {
+            user.getUserData((err, userData) => {
+                if (err) {
+                    console.error(err);
+                    return;
+                }
+                let email = '';
+                for (let attribute of userData.UserAttributes) {
+                    if (attribute.Name == 'email') {
+                        email = attribute.Value;
+                    }
+                }
+                this.setState({success: true, email: email});
+                this.props.onToken({
+                    token: user.signInUserSession.idToken.jwtToken,
+                    user: user
+                });
+            });
+
+        }).catch(err => {
+            console.log(err);
+        });
     }
 
     handleChange(evt) {
@@ -44,15 +71,20 @@ export default class SignIn extends React.Component {
     }
 
     signIn() {
-        this.setState({message: '', showMessage: false});
+        this.setState({message: '', showMessage: false, loading: true});
 
-        authenticate(this.state.email, this.state.password).then(token => {
-            this.setState({showModal: false, success: true});
+        login.authenticate(this.state.email, this.state.password).then(token => {
+            this.setState({showModal: false, success: true, loading: false});
             this.props.onToken(token);
         }).catch(err => {
             console.error(err);
-            this.setState({message: 'Invalid email or password', showMessage: true});
+            this.setState({message: 'Invalid email or password', showMessage: true, loading: false});
         });
+    }
+
+    signOut() {
+        login.logout();
+        this.setState({success: false});
     }
 
     render() {
@@ -63,7 +95,9 @@ export default class SignIn extends React.Component {
             <div>
                 <div className="signin-button">
                     { this.state.success ? 
-                        <span className="ui label">{this.state.email}</span>
+                        <button className="ui button" onClick={() => this.signOut()}>
+                            <FontAwesomeIcon icon={faSignOutAlt} size="lg" />&nbsp;
+                            {this.state.email}</button>
                         :
                         <button className="ui circular icon mini button" onClick={() => this.open()}>
                             <FontAwesomeIcon icon={faSignInAlt} size="lg"/>
@@ -120,6 +154,11 @@ export default class SignIn extends React.Component {
                         open={this.state.messageOpen}
                     />
                 </Modal.Content>
+                 { this.state.loading ?    
+                    <Dimmer active inverted>
+                        <Loader active>Signing in...</Loader>
+                    </Dimmer>
+                : null }
             </Modal>
             </div>
         );

@@ -141,6 +141,7 @@ class ImportForm extends Component {
               />
           </div>
           <br/>
+          <br/>
             {this.renderMinervaUuid()}
           <br/>
           <label htmlFor="filepath">Optional marker_name csv: </label>
@@ -180,7 +181,7 @@ class ImportForm extends Component {
     }
     return (
       <div>
-      <label htmlFor="image_uuid">Minerva image uuid: </label>
+      <label htmlFor="image_uuid">Minerva Cloud image uuid: </label>
       <br/>
       <div className="ui action input">
         <input className='full-width-input' id="imageUuid" name="imageUuid" type="text" value={this.state.imageUuid} onChange={this.imageUuidChanged}/>

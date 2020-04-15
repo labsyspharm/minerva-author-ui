@@ -1,6 +1,5 @@
 import React, { Component } from "react";
 
-import authenticate from '../login';
 import SvgArrow from '../components/svgarrow.jsx'
 
 import '../style/imageview';
@@ -26,6 +25,8 @@ class MinervaImageView extends Component {
     this.state = {
       old_channels: new Map([])
     }
+
+    this.items = [];
   }
 
   makeTileSource() {
@@ -42,7 +43,7 @@ class MinervaImageView extends Component {
       const lod = (this.maxLevel - l) + '/';
       const pos = x + '/' + y + '/0/0/';
       const tile_url = url + '/' + uuid + '/render-tile/' + pos + lod + channelPath;
-      return tile_url;
+      return tile_url + '?gamma=1';
 		}
 
     return {
@@ -61,17 +62,23 @@ class MinervaImageView extends Component {
     const {viewer} = this;
     const makeTileSource = this.makeTileSource.bind(this);
     const {img, token, channels} = this.props;
+    console.log('Add image at index ', this.state.index);
     viewer.addTiledImage({
       tileSource: makeTileSource(),
       width: img.width / img.height,
-      crossOriginPolicy: 'Anonymous',
+      crossOriginPolicy: 'Anonymous', 
       ajaxHeaders: {
         'Content-Type': 'application/json',
         'Authorization': token,
         'Accept': 'image/jpeg'
       },
       loadTilesWithAjax: true,
-      success: function() {
+      success: (evt) => {
+        this.items.push(evt.item);
+        if (this.items.length >= 3) {
+          let prevItem = this.items.shift();
+          viewer.world.removeItem(prevItem);
+        }
         viewer.viewport.panTo(pan, true);
         viewer.viewport.zoomTo(zoom, true);
       }
@@ -84,8 +91,8 @@ class MinervaImageView extends Component {
   componentDidMount() {
     const {channels, img, handleViewport} = this.props;
     const {interactor} = this.props;
-    const ids = [...channels.keys()];
 
+    console.log('Creating new OpenSeadragon');
     // Set up openseadragon viewer
     this.viewer = OpenSeadragon({
       collectionMode: false,
@@ -93,9 +100,9 @@ class MinervaImageView extends Component {
       showHomeControl: false,
       loadTilesWithAjax: true,
       showFullPageControl: false,
+      immediateRender: true,
       // Specific to this project
       id: "ImageView",
-      compositeOperation: "lighter",
       prefixUrl: "images/openseadragon/"
     });
     interactor(this.viewer);
@@ -219,11 +226,16 @@ class MinervaImageView extends Component {
       if (viewer.uuid != uuid || removed.length || added.length
           || changed.length) {
         // Update the whole image
-        const pan = viewer.viewport.getCenter();
-        const zoom = viewer.viewport.getZoom();
-        world.removeAll();
-        viewer.uuid = uuid;
-        this.addChannels(pan, zoom);
+        // Use timeout to prevent excessive requests to Minerva tile-render endpoint
+        if (this.updateTimeout) {
+          clearTimeout(this.updateTimeout);
+        }
+        this.updateTimeout = setTimeout(() => {
+          const pan = viewer.viewport.getCenter();
+          const zoom = viewer.viewport.getZoom();
+          viewer.uuid = uuid;
+          this.addChannels(pan, zoom);
+        }, 300);
       }
     }
 
