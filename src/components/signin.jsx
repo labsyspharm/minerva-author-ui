@@ -20,6 +20,7 @@ export default class SignIn extends React.Component {
             password: '',
             success: false,
             loading: false,
+            enableCloudFeatures: MinervaConfig.enableCloudFeatures
         }
 
         this.handleChange = this.handleChange.bind(this);
@@ -28,6 +29,11 @@ export default class SignIn extends React.Component {
     }
 
     componentDidMount() {
+        let validConfig = this._validateConfig();
+        if (!this.state.enableCloudFeatures || !validConfig) {
+            this.setState({enableCloudFeatures: false});
+            return;
+        }
         // Check if there is previous authentication stored in local storage
         login.storedAuthentication().then(user => {
             user.getUserData((err, userData) => {
@@ -51,6 +57,28 @@ export default class SignIn extends React.Component {
         }).catch(err => {
             console.log(err);
         });
+    }
+
+    _validateConfig() {
+        let valid = true;
+        if (MinervaConfig.enableCloudFeatures) {
+            if (!MinervaConfig.minervaBaseUrl) {
+                console.error('minervaBaseUrl must be defined in config.js');
+                valid = false;
+            }
+            if (!MinervaConfig.CognitoClientId) {
+                console.error('CognitoUserPoolId must be defined in config.js');
+                valid = false;
+            }
+            if (!MinervaConfig.CognitoUserPoolId) {
+                console.error('CognitoUserPoolId must be defined in config.js');
+                valid = false;
+            }
+            if (!valid) {
+                console.error('Cloud features are disabled');
+            }
+        }
+        return valid;
     }
 
     handleChange(evt) {
@@ -88,7 +116,7 @@ export default class SignIn extends React.Component {
     }
 
     render() {
-        if (!MinervaConfig.enableCloudFeatures) {
+        if (!this.state.enableCloudFeatures) {
             return null;
         }
         return (
