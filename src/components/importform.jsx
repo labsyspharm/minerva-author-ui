@@ -99,7 +99,7 @@ class ImportForm extends Component {
         uuid: res.data.image_uuid,
         width: res.data.pixels.SizeX,
         height: res.data.pixels.SizeY,
-        channels: res.data.pixels.SizeC
+        channels: res.data.pixels.channels
       };
       this.props.onMinervaImage(image);
     }).catch(err => {

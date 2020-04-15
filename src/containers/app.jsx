@@ -7,18 +7,6 @@ import authenticate from '../login';
 import 'semantic-ui-css/semantic.min.css'
 import MinervaConfig from '../config';
 
-const getAjaxHeaders = function(){
-  //const user = 'john_hoffer@hms.harvard.edu';
-  //const pass = Promise.resolve('MEETING@lsp2');
-  return authenticate(user, pass).then(function(token){
-    return {
-      'Content-Type': 'application/json',
-      'Authorization': token,
-      'Accept': 'application/json'
-    };
-  });  
-};
-
 class App extends Component {
 
   constructor() {
@@ -30,8 +18,7 @@ class App extends Component {
       minerva: false,
       url: 'http://localhost:2020/api/u16',
       //minerva: true,
-      //url: 'https://3v21j4dh1d.execute-api.us-east-1.amazonaws.com/dev/image/',
-			uuid: '4b7274d1-44de-4bda-989d-9ed48d24c1ac',
+			uuid: null,
       //uuid: '0c18ba28-872c-4d83-9904-ecb8b12b514d',
       waypoints: [],
       groups: [],
@@ -47,28 +34,6 @@ class App extends Component {
 
   async componentDidMount() {
     const {minerva, url, uuid} = this.state;
-
-    // if (minerva) {
-    //   const fetch_dimensions = async () => {
-          
-    //     const ajaxHeaders = await getAjaxHeaders();
-    //     const res = await fetch(url + uuid + '/dimensions', {
-    //       headers: ajaxHeaders
-    //     });
-    //     const result = await res.json();
-    //     const pixels = result.data.pixels;
-
-    //     this.setState({
-    //       loaded: true,
-    //       token: ajaxHeaders.Authorization,
-    //       channels: [...Array(pixels.SizeC).keys()].map(String),
-    //       width: pixels.SizeX,
-    //       height: pixels.SizeY,
-    //     })
-    //   }
-    //   fetch_dimensions();
-    //   return;
-    // }
 
     try {
       setInterval(async () => {
@@ -97,10 +62,14 @@ class App extends Component {
   }
 
   onMinervaImage(image) {
+    let channels = [];
+    for (let channel of image.channels) {
+      channels.push(channel.Name);
+    }
     this.setState({
       loaded: true,
       uuid: image.uuid,
-      channels: [...Array(image.channels).keys()].map(String),
+      channels: channels,
       width: image.width,
       height: image.height,
       url: MinervaConfig.minervaBaseUrl + '/' + MinervaConfig.minervaStage + '/image'
