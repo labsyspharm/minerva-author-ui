@@ -59,7 +59,7 @@ class Repo extends Component {
     super();
 
     const { width, height, token, minerva, uuid, url } = props;
-    const { channels, waypoints, groups } = props;
+    const { channels, sample_info, waypoints, groups } = props;
 
     const maxLevel = Math.ceil(Math.log2(Math.max(width, height) / 1024))
 
@@ -74,6 +74,8 @@ class Repo extends Component {
 		}));
 
 		this.state = {
+      sampleName: sample_info.name,
+      sampleText: sample_info.text,
       drawType: '',
       drawing: 0,
 			img: {
@@ -87,6 +89,7 @@ class Repo extends Component {
       minerva: minerva,
       textEdit: false,
       showModal: false,
+      sampleInfo: false,
       renameModal: false,
       addGroupModal: false,
       needNewGroup: false,
@@ -158,6 +161,8 @@ class Repo extends Component {
     this.handleStoryName = this.handleStoryName.bind(this);
     this.handleStoryText = this.handleStoryText.bind(this);
     this.handleArrowText = this.handleArrowText.bind(this);
+    this.handleSampleText = this.handleSampleText.bind(this);
+    this.handleSampleName = this.handleSampleName.bind(this);
     this.handleArrowHide = this.handleArrowHide.bind(this);
     this.handleArrowAngle = this.handleArrowAngle.bind(this);
     this.handleStoryChange = this.handleStoryChange.bind(this);
@@ -167,6 +172,7 @@ class Repo extends Component {
     this.handleSelectGroup = this.handleSelectGroup.bind(this);
     this.handleViewport = this.handleViewport.bind(this);
     this.toggleTextEdit = this.toggleTextEdit.bind(this);
+    this.toggleSampleInfo = this.toggleSampleInfo.bind(this);
     this.toggleModal = this.toggleModal.bind(this);
     this.save = this.save.bind(this);
     this.deleteActiveGroup = this.deleteActiveGroup.bind(this);
@@ -338,6 +344,12 @@ class Repo extends Component {
     });
 	}
 
+	toggleSampleInfo() {
+	  this.setState({
+      sampleInfo: !this.state.sampleInfo
+    });
+	}
+
   toggleTextEdit(value) {
     const {textEdit, activeStory} = this.state;
     this.setState({
@@ -432,9 +444,7 @@ class Repo extends Component {
   }
 
   handleSelectStory(s) {
-    this.setState({
-      activeStory: s.value,
-    })
+    this.handleStoryChange(s.value);
   }
 
 
@@ -444,34 +454,43 @@ class Repo extends Component {
       return;
     }
 
-    if (this.state.textEdit) {
-      // Waypoint mode
-      this._handleSelectGroupForWaypoint(g);
-    } else {
-      // Group editing mode
-      this._handleSelectGroupForEditing(g);
-    }
+    const id = this._handleSelectGroupForEditing(g);
+    this._handleSelectGroupForWaypoint(id);
   }
 
-  _handleSelectGroupForWaypoint(g) {
-    const activeStory = this.state.activeStory;
+  _handleSelectGroupForWaypoint(id) {
+    const {activeStory, textEdit, viewport} = this.state;
     const story = this.state.stories.get(activeStory);
-    if (story) {
-      let newStory = {};
-      Object.assign(newStory, story);
-      newStory.group = g.value;
+    if ((id !== undefined) && textEdit) {
+
+      const overlays = story ? story.overlays : [];
+      const arrows = story ? story.arrows : [];
+      const text = story ? story.text : '';
+      const pan = story ? story.pan : [viewport.getCenter().x, viewport.getCenter().y]
+      const zoom = story ? story.zoom : viewport.getZoom();
+      const name = story ? story.name : '';
+
+      const newStory = {
+        text: text,
+        name: name,
+        arrows: arrows,
+        overlays: overlays,
+        group: id,
+        pan: pan,
+        zoom: zoom
+      };
+
       const newStories = new Map([...this.state.stories,
         ...(new Map([[activeStory, newStory]]))]);
       this.setState({ stories: newStories});
     }
-    this.setState({ activeGroup: g.value, activeIds: g.activeIds});
   }
 
   _handleSelectGroupForEditing(g) {
     let groups = this.state.groups;
     if (g.__isNew__) {
       if (!this.validateChannelGroupLabel(g.label)) {
-        return;
+        return undefined;
       }
       const id = groups.size;
       const newGroup = {
@@ -488,13 +507,16 @@ class Repo extends Component {
         groups: newGroups,
         activeGroup: id
       });
+      return id;
     }
     else {
       this.setState({
         activeGroup: g.value,
         activeIds: g.activeIds
       });
+      return g.value;
     }
+    return true;
   }
 
   handleSelect(channels) {
@@ -619,6 +641,17 @@ class Repo extends Component {
     })
   }
 
+  handleSampleName(event) {
+    this.setState({
+      sampleName: event.target.value
+    })
+  }
+
+  handleSampleText(event) {
+    this.setState({
+      sampleText: event.target.value
+    })
+  }
 
   handleArrowText(event) {
 
@@ -1033,7 +1066,11 @@ class Repo extends Component {
       let render = fetch('http://localhost:2020/api/render', {
         method: 'POST',
         body: JSON.stringify({
-          'groups': group_output
+          'groups': group_output,
+          'header': this.state.sampleText,
+          'image': {
+            'description': this.state.sampleName
+          }
         }),
         headers: {
           "Content-Type": "application/json"
@@ -1044,7 +1081,11 @@ class Repo extends Component {
 				method: 'POST',
 				body: JSON.stringify({
 					'waypoints': story_output,
-					'groups': group_output
+					'groups': group_output,
+          'sample_info': {
+            'name': this.state.sampleName,
+            'text': this.state.sampleText
+          }
 				}),
 				headers: {
 					"Content-Type": "application/json"
@@ -1109,8 +1150,6 @@ class Repo extends Component {
     const visibleChannels = new Map(
       [...activeChannels].filter(([k, v]) => v.visible)
     );
-
-    const editLabel = textEdit ? 'Edit Groups' : 'Edit Story';
 
     const {stories, activeStory} = this.state;
     const story = stories.get(activeStory);
@@ -1184,8 +1223,22 @@ class Repo extends Component {
             </form>
 				</Modal>
 
+				<Modal toggle={this.toggleSampleInfo}
+					show={this.state.sampleInfo}>
+            <form className="ui form" onSubmit={this.toggleSampleInfo}>
+              <input type='text' placeholder='Sample Name'
+              value={this.state.sampleName} onChange={this.handleSampleName}
+              />
+						  <textarea placeholder='Sample Description' value={this.state.sampleText}
+						  onChange={this.handleSampleText} />
+            </form>
+				</Modal>
+
         <div className="row justify-content-between">
           <div className="col-md-6">
+              <button className="ui button compact" onClick={() => this.toggleSampleInfo()}>
+              Sample Info
+              </button>
             <span className="ui buttons">
               <button className={editGroupsButton} onClick={() => this.toggleTextEdit(false)}>
                 Edit Groups
@@ -1196,8 +1249,11 @@ class Repo extends Component {
               {saveButton}
             </span>
             {this.renderProgressBar()}
-            <div class="row">
-              <div class="col-8">
+            <div className="row bg-trans">
+              <div className="col-5 pr-0">
+                  <div className="font-white">
+                    Channel Groups:
+                  </div>
                   <CreatableSelect
                   isClearable
                   value={group}
@@ -1206,7 +1262,7 @@ class Repo extends Component {
                   formatCreateLabel={this.getCreateLabel}
                 />
               </div>
-              <div class="col-4 pl-0 pr-0 pt-1">
+              <div className="col-7 pl-0 pr-0 pt-3">
                 <span className="ui buttons">
                   {this.renderAddGroupModal()}
                   {this.renderRenameModal()}
@@ -1267,7 +1323,7 @@ class Repo extends Component {
   renderAddGroupModal() {
     return (
       <div className="">
-        <button className="ui button compact" onClick={this.showAddGroupModal}>Add Group</button>
+        <button className="ui button compact ml-1 mr-1" onClick={this.showAddGroupModal}>Add Group</button>
         <Modal show={this.state.addGroupModal} toggle={this.showAddGroupModal}>
         <form className="ui form" onSubmit={this.showAddGroupModal}>
           <label className="ui label">Add group</label>

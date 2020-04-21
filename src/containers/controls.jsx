@@ -48,32 +48,41 @@ class Controls extends Component {
 				<div className="row">
 					<div className="col no-right-padding">
 						<div className="bg-trans">
-              <button className="ui button red compact" title="Delete waypoint" onClick={handleStoryRemove}>
-                X
-              </button>
-							<button className="ui button compact" title="Previous waypoint" onClick={()=>{
-								handleStoryChange(Math.max(0, activeStory - 1))
-							}}>
-								<FontAwesomeIcon icon={faArrowLeft} />
-							</button>
-              <button className="ui button compact" onClick={handleStoryInsert} title="Add waypoint">
-								<FontAwesomeIcon icon={faPlus} />
-              </button>
-							<button className="ui button compact" title="Next waypoint" onClick={()=>{
-								handleStoryChange(activeStory + 1)
-							}}>
-								<FontAwesomeIcon icon={faArrowRight} />
-							</button>
-              <div className="width-200px inline-block">
-                <Select
-                  onChange={handleSelectStory}
-                  value={activeStoryLabel}
-                  options={Array.from(storyLabels.values())}
-                />
+              <div className="row">
+                <div className="col-5">
+                  <div className="font-white">
+                    Waypoints:
+                  </div>
+                  <div className="width-100">
+                    <Select
+                      onChange={handleSelectStory}
+                      value={activeStoryLabel}
+                      options={Array.from(storyLabels.values())}
+                    />
+                  </div>
+                </div>
+                <div className="pt-2 pl-0 col-7">
+                  <button className="ui button compact" title="Previous waypoint" onClick={()=>{
+                    handleStoryChange(Math.max(0, activeStory - 1))
+                  }}>
+                    <FontAwesomeIcon icon={faArrowLeft} />
+                  </button>
+                  <button className="ui button compact" onClick={handleStoryInsert} title="Add waypoint">
+                    <FontAwesomeIcon icon={faPlus} />
+                  </button>
+                  <button className="ui button compact" title="Next waypoint" onClick={()=>{
+                    handleStoryChange(activeStory + 1)
+                  }}>
+                    <FontAwesomeIcon icon={faArrowRight} />
+                  </button>
+                  <button className="ui button red compact" title="Delete waypoint" onClick={handleStoryRemove}>
+                    X
+                  </button>
+                </div>
               </div>
 						</div>
 						<input className="width-100" type="text" placeholder="Waypoint Name" value={storyName} onChange={handleStoryName}></input>
-            <textarea className="width-100 height-33vh" placeholder="Waypoint Description" value={storyText} onChange={handleStoryText}></textarea>
+            <textarea className="width-100 height-20vh" placeholder="Waypoint Description" value={storyText} onChange={handleStoryText}></textarea>
 					</div>
 					<div className="col-1 p-0">
 						<div className="btn-group-vertical bg-trans">

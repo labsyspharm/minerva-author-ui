@@ -419,7 +419,6 @@ class ImageView extends Component {
 					opacity: 0;
 				`
 			}
-      console.log(a.text)
       if (a.text === '') {
         TransformLabel = styled.div`
 					display: None;
