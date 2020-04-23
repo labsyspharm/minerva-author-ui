@@ -33,3 +33,10 @@
   background-color: initial;
   border-radius: initial;
 }
+
+.font-white {
+  color: white;
+}
+.bg-trans {
+  background: rgba(0, 0, 0, .8);
+}

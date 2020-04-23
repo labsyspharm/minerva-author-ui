@@ -16,6 +16,11 @@
   overflow:auto;
 }
 
+.align-center {
+  text-align: center;
+  padding-top: 4em;
+}
+
 .full-width-input {
   width: 50vw !important;
   max-width: 500px;
@@ -25,3 +30,13 @@ form label {
   color: white;
 }
 
+.font-white {
+  color: white;
+}
+
+.import-errors {
+  position: fixed;
+  bottom: 0px;
+  left: 0;
+  right: 0;
+}

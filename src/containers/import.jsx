@@ -7,7 +7,14 @@ class Import extends Component {
   render() {
     return (
       <div className="full-height">
-        <ImportForm onToken={this.props.onToken} onMinervaImage={this.props.onMinervaImage} />
+        <div className="align-center">
+          <div>
+            <h1 className="font-white">Minerva Author</h1>
+          </div>
+        </div>
+        <div>
+          <ImportForm onToken={this.props.onToken} onMinervaImage={this.props.onMinervaImage} />
+        </div>
       </div>
     );
   }

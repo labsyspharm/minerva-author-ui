@@ -20,6 +20,10 @@ class App extends Component {
       //minerva: true,
 			uuid: null,
       //uuid: '0c18ba28-872c-4d83-9904-ecb8b12b514d',
+      sample_info: {
+        'name': '',
+        'text': ''
+      },
       waypoints: [],
       groups: [],
       channels: [],
@@ -41,8 +45,10 @@ class App extends Component {
         if (loaded === false) {
           const res = await fetch('http://localhost:2020/api/import');
           const import_result = await res.json();
+          const sample_info = import_result.sample_info;
 
           this.setState({
+            sample_info: sample_info || this.state.sample_info,
             waypoints: import_result.waypoints,
             groups: import_result.groups,
             loaded: import_result.loaded,
@@ -78,13 +84,14 @@ class App extends Component {
 
   render() {
     const {token, loaded, width, height, minerva, url, uuid} = this.state;
-    const {channels, waypoints, groups} = this.state;
+    const {channels, sample_info, waypoints, groups} = this.state;
 
     if (loaded) {
       return (<Repo token={token} minerva={minerva}
                     channels={channels} waypoints={waypoints}
                     groups={groups} url={url} uuid={uuid}
-                    width={width} height={height}/>
+                    width={width} height={height}
+                    sample_info={sample_info}/>
       )
     }
     return (

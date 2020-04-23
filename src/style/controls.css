@@ -12,19 +12,19 @@
   padding-right: 0px;
 }
 
+.font-white {
+  color: white;
+}
 .bg-trans {
   background: rgba(0, 0, 0, .8);
 }
 .inline-block {
   display: inline-block;
 }
-.width-200px {
-  width: 200px;
-}
 
 .width-100 {
   width: 100%;
 }
-.height-33vh {
-  height: 33vh;
+.height-20vh {
+  height: 20vh !important;
 }

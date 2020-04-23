@@ -5,6 +5,8 @@ import SignIn from "./signin";
 import Client from '../MinervaClient';
 import "regenerator-runtime/runtime";
 import 'semantic-ui-css/semantic.min.css';
+import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
+import { faExclamationCircle } from "@fortawesome/free-solid-svg-icons";
 
 class ImportForm extends Component {
   constructor() {
@@ -196,8 +198,13 @@ class ImportForm extends Component {
       return null;
     }
     return (
-      <div className="ui label red below">
-        {this.state.error}
+      <div className="import-errors">
+        <div className="ui icon message">
+          <FontAwesomeIcon className="icon" icon={faExclamationCircle} />
+          <div class="content">
+            <div className="header">{this.state.error}</div>
+          </div>
+        </div>
       </div>
     );
   }
