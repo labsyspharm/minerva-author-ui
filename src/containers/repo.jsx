@@ -8,6 +8,7 @@ import Controls from "./controls";
 import { Confirm } from 'semantic-ui-react';
 import ClipLoader from "react-spinners/ClipLoader";
 import { Progress, Popup } from 'semantic-ui-react'
+import Client from '../MinervaClient';
 
 import '../style/repo'
 
@@ -1026,18 +1027,8 @@ class Repo extends Component {
     })
 
     if (minerva) {
-       fetch(img.url + img.uuid + '/rendering_settings', {
-        method: 'POST',
-        body: JSON.stringify({
-          'groups': group_output
-        }),
-        headers: {
-          "Content-Type": "application/json",
-          "Authorization": token
-        }
-      }).then(response => {
-        return response.json();
-      }).then(json => {
+      Client.createRenderingSettings(img.uuid, { groups: group_output }).then(json => {
+        this.setState({saving: false});
         json.groups.forEach((g,i) => {
           groups.get(i).id = g.id
         })

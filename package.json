@@ -39,6 +39,7 @@
     "@fortawesome/free-solid-svg-icons": "^5.12.0",
     "@fortawesome/react-fontawesome": "^0.1.8",
     "amazon-cognito-identity-js": "^3.2.1",
+    "bootstrap": "4.1.0",
     "prop-types": "^15.6.1",
     "react": "^16.12.0",
     "react-color": "^2.14.1",

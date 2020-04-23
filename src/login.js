@@ -1,30 +1,25 @@
 import {
-    CognitoUserPool,
-    AuthenticationDetails,
-    CognitoUser,
+  CognitoUserPool,
+  AuthenticationDetails,
+  CognitoUser,
 } from 'amazon-cognito-identity-js';
+import MinervaConfig from './config';
 
-const authenticateUser = function(cognitoUser, authenticationDetails) {
-  return new Promise(function(resolve, reject) {
-    cognitoUser.authenticateUser(authenticationDetails, {
-      onSuccess: result => resolve(result),
-      onFailure: err => reject(err),
-      mfaRequired: codeDeliveryDetails => reject(codeDeliveryDetails),
-      newPasswordRequired: (fields, required) => reject({fields, required})
+class Login {
+  authenticateUser(cognitoUser, authenticationDetails) {
+    return new Promise(function (resolve, reject) {
+      cognitoUser.authenticateUser(authenticationDetails, {
+        onSuccess: result => resolve(result),
+        onFailure: err => reject(err),
+        mfaRequired: codeDeliveryDetails => reject(codeDeliveryDetails),
+        newPasswordRequired: (fields, required) => reject({ fields, required })
+      });
     });
-  });
-};
+  };
 
-const authenticate = function(username, pass) {
+  authenticate(username, password) {
 
-  return pass.then(function(password) {
-
-    const minervaPoolId = 'us-east-1_d3Wusx6qp'; 
-    const minervaClientId = 'cvuuuuogh6nmqm8491iiu1lh5';
-    const minervaPool = new CognitoUserPool({
-      UserPoolId : minervaPoolId,
-      ClientId : minervaClientId
-    });
+    const minervaPool = this._getUserPool();
 
     const cognitoUser = new CognitoUser({
       Username: username,
@@ -36,9 +31,50 @@ const authenticate = function(username, pass) {
       Password: password
     });
 
-    return authenticateUser(cognitoUser, authenticationDetails)
-      .then(response => response.getIdToken().getJwtToken());
-  });
+    return this.authenticateUser(cognitoUser, authenticationDetails)
+      .then(response => {
+        return {
+          token: response.getIdToken().getJwtToken(),
+          user: cognitoUser
+        };
+      });
+  }
+
+  storedAuthentication() {
+    const userPool = this._getUserPool();
+    return new Promise((resolve, reject) => {
+      let cognitoUser = userPool.getCurrentUser();
+      if (cognitoUser != null) {
+        cognitoUser.getSession((err, session) => {
+          if (err) {
+            reject(err);
+          }
+          console.log("session: ", session);
+          resolve(cognitoUser);
+        });
+      } else {
+        reject();
+      }
+    });
+
+  }
+
+  logout() {
+    const userPool = this._getUserPool();
+    let cognitoUser = userPool.getCurrentUser();
+    if (cognitoUser) {
+      cognitoUser.signOut();
+    }
+  }
+
+  _getUserPool() {
+    return new CognitoUserPool({
+      UserPoolId: MinervaConfig.CognitoUserPoolId,
+      ClientId: MinervaConfig.CognitoClientId
+    });
+  }
 }
 
-export default authenticate
+var login = new Login();
+
+export default login;

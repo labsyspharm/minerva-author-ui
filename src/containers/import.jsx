@@ -13,7 +13,7 @@ class Import extends Component {
           </div>
         </div>
         <div>
-          <ImportForm/>
+          <ImportForm onToken={this.props.onToken} onMinervaImage={this.props.onMinervaImage} />
         </div>
       </div>
     );
