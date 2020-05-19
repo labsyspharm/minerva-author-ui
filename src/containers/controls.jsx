@@ -21,7 +21,7 @@ class Controls extends Component {
 
   render() {
 
-    const {addArrowText} = this.props;
+    const {addArrowText, rgba} = this.props;
     const {deleteOverlay, deleteArrow} = this.props;
     const {activeStory, handleSelectStory} = this.props;
     const {stories, storyName, storyText, textEdit} = this.props;
@@ -42,7 +42,7 @@ class Controls extends Component {
                           label: '#' + (activeStory+1)}
     }
 
-    if (textEdit) {
+    if (textEdit || rgba) {
       return (
 			<div className="ui form">
 				<div className="row">

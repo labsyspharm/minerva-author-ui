@@ -138,7 +138,7 @@ class ImportForm extends Component {
             <FileBrowserModal open={this.state.showFileBrowser} close={this.onFileSelected}
               title="Select an image" 
               onFileSelected={this.onFileSelected} 
-              filter={["dat", "tif", "tiff"]}
+              filter={["dat", "tif", "tiff", "svs"]}
               home={imageHome}
               />
           </div>

@@ -2,6 +2,7 @@ import React, { Component } from "react";
 import CreatableSelect from 'react-select/creatable';
 
 import MinervaImageView from "./minervaimageview";
+import SimpleImageView from "./simpleimageview";
 import Modal from "../components/modal";
 import ImageView from "./imageview";
 import Controls from "./controls";
@@ -59,7 +60,7 @@ class Repo extends Component {
   constructor(props) {
     super();
 
-    const { width, height, token, minerva, uuid, url } = props;
+    const { width, height, token, rgba, minerva, uuid, url } = props;
     const { channels, sample_info, waypoints, groups } = props;
 
     const maxLevel = Math.ceil(Math.log2(Math.max(width, height) / 1024))
@@ -86,6 +87,7 @@ class Repo extends Component {
           maxLevel: maxLevel,
 					url: url 
 			},
+      rgba: rgba,
       token: token,
       minerva: minerva,
       textEdit: false,
@@ -182,6 +184,65 @@ class Repo extends Component {
     this.handleGroupRename = this.handleGroupRename.bind(this);
     this.handleAddGroup = this.handleAddGroup.bind(this);
     this.getCreateLabel = this.getCreateLabel.bind(this);
+    this.labelRGBA = this.labelRGBA.bind(this);
+  }
+
+  componentDidMount() {
+    this.labelRGBA();
+  }
+
+  labelRGBA() {
+    const {rgba} = this.state;
+    console.log(rgba)
+    if (rgba) {
+      this.setState({
+        activeGroup: 0,
+        groups: new Map([
+          [0, {
+            value: 0,
+            label: 'H&E',
+            activeIds: [0, 1],
+            chanRender: new Map([
+              [0, {
+                id: 0,
+                value: 0,
+                color: [128, 0, 128],
+                range: {
+                  min: 0,
+                  max: 65535
+                },
+                maxRange: 65535,
+                visible: true
+              }],
+              [1, {
+                id: 1,
+                value: 1,
+                color: [255, 0, 255],
+                range: {
+                  min: 0,
+                  max: 65535
+                },
+                maxRange: 65535,
+                visible: true
+              }],
+            ])
+          }]
+        ]),
+        activeIds: [0, 1],
+        chanLabel: new Map([
+          [0, {
+            id: 0,
+            value: 0,
+            label: 'Hematoxylin'
+          }],
+          [1, {
+            id: 1,
+            value: 1,
+            label: 'Eosin'
+          }]
+        ])
+      })    
+    }
   }
   
   handleViewport(viewport) {
@@ -1126,7 +1187,7 @@ class Repo extends Component {
   }
 
   render() {
-    const { minerva, token } = this.state;
+    const { rgba, minerva, token } = this.state;
     const { img, groups, chanLabel, textEdit } = this.state;
     const { chanRender, activeIds, activeGroup } = this.state;
     const group = groups.get(activeGroup);
@@ -1172,6 +1233,15 @@ class Repo extends Component {
         interactor={ this.interactor }
       />
     }
+    else if (rgba) {
+      viewer = <SimpleImageView className="ImageView"
+        img={ img } token={ token }
+        channels={ visibleChannels }
+        overlays={ overlays } arrows={ arrows }
+        handleViewport={ this.handleViewport }
+        interactor={ this.interactor }
+      />
+    }
     else {
       viewer = <ImageView className="ImageView"
         img={ img }
@@ -1195,6 +1265,54 @@ class Repo extends Component {
     }
     let editGroupsButton = this.state.textEdit ? "ui button" : "ui button active";
     let editStoryButton = this.state.textEdit ? "ui button active" : "ui button";
+
+    let tabBar = '';
+    if (!rgba) {
+      tabBar = (
+        <span className="ui buttons">
+          <button className={editGroupsButton} onClick={() => this.toggleTextEdit(false)}>
+            Edit Groups
+          </button>
+          <button className={editStoryButton} onClick={() => this.toggleTextEdit(true)}>
+            Edit Story
+          </button>
+          {saveButton}
+        </span>
+      )
+    }
+    else {
+      tabBar = (
+        <span className="ui buttons">
+          {saveButton}
+        </span>
+      )
+    }
+
+    let groupBar = ''
+    if (!rgba) {
+      groupBar = (
+      <div className="row bg-trans">
+        <div className="col-5 pr-0">
+            <div className="font-white">
+              Channel Groups:
+            </div>
+            <CreatableSelect
+            isClearable
+            value={group}
+            onChange={this.handleSelectGroup}
+            options={Array.from(groups.values())}
+            formatCreateLabel={this.getCreateLabel}
+          />
+        </div>
+        <div className="col-7 pl-0 pr-0 pt-3">
+          <span className="ui buttons">
+            {this.renderAddGroupModal()}
+            {this.renderRenameModal()}
+          </span>
+        </div>
+      </div>
+      )
+    }
 
     return (
 
@@ -1230,37 +1348,11 @@ class Repo extends Component {
               <button className="ui button compact" onClick={() => this.toggleSampleInfo()}>
               Sample Info
               </button>
-            <span className="ui buttons">
-              <button className={editGroupsButton} onClick={() => this.toggleTextEdit(false)}>
-                Edit Groups
-              </button>
-              <button className={editStoryButton} onClick={() => this.toggleTextEdit(true)}>
-                Edit Story
-              </button>
-              {saveButton}
-            </span>
+            {tabBar}
             {this.renderProgressBar()}
-            <div className="row bg-trans">
-              <div className="col-5 pr-0">
-                  <div className="font-white">
-                    Channel Groups:
-                  </div>
-                  <CreatableSelect
-                  isClearable
-                  value={group}
-                  onChange={this.handleSelectGroup}
-                  options={Array.from(groups.values())}
-                  formatCreateLabel={this.getCreateLabel}
-                />
-              </div>
-              <div className="col-7 pl-0 pr-0 pt-3">
-                <span className="ui buttons">
-                  {this.renderAddGroupModal()}
-                  {this.renderRenameModal()}
-                </span>
-              </div>
-            </div>
+            {groupBar}
             <Controls 
+              rgba={this.state.rgba}
               stories={this.state.stories}
 							addArrowText={this.addArrowText}
 							deleteArrow={this.deleteArrow}

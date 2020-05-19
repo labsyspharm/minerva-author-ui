@@ -16,6 +16,7 @@ class App extends Component {
       token: '',
       loaded: false,
       minerva: false,
+      rgba: false,
       url: 'http://localhost:2020/api/u16',
       //minerva: true,
 			uuid: null,
@@ -55,6 +56,7 @@ class App extends Component {
             channels: import_result.channels,
             width: import_result.width,
             height: import_result.height,
+            rgba: import_result.rgba
           })
         }
       }, 3000);
@@ -83,11 +85,11 @@ class App extends Component {
   }
 
   render() {
-    const {token, loaded, width, height, minerva, url, uuid} = this.state;
+    const {token, loaded, width, height, rgba, minerva, url, uuid} = this.state;
     const {channels, sample_info, waypoints, groups} = this.state;
 
     if (loaded) {
-      return (<Repo token={token} minerva={minerva}
+      return (<Repo token={token} minerva={minerva} rgba={rgba}
                     channels={channels} waypoints={waypoints}
                     groups={groups} url={url} uuid={uuid}
                     width={width} height={height}
