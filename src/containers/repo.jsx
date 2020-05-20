@@ -1354,9 +1354,6 @@ class Repo extends Component {
               />
 						  <textarea placeholder='Sample Description' value={this.state.sampleText}
 						  onChange={this.handleSampleText} />
-              <input type='text' placeholder='Rotation'
-              value={this.state.rotation} onChange={this.handleRotation}
-              />
             </form>
 				</Modal>
 
