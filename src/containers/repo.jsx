@@ -76,6 +76,7 @@ class Repo extends Component {
 		}));
 
 		this.state = {
+      rotation: 0,
       sampleName: sample_info.name,
       sampleText: sample_info.text,
       drawType: '',
@@ -166,6 +167,7 @@ class Repo extends Component {
     this.handleArrowText = this.handleArrowText.bind(this);
     this.handleSampleText = this.handleSampleText.bind(this);
     this.handleSampleName = this.handleSampleName.bind(this);
+    this.handleRotation = this.handleRotation.bind(this);
     this.handleArrowHide = this.handleArrowHide.bind(this);
     this.handleArrowAngle = this.handleArrowAngle.bind(this);
     this.handleStoryChange = this.handleStoryChange.bind(this);
@@ -703,6 +705,15 @@ class Repo extends Component {
     })
   }
 
+  handleRotation(event) {
+    let angle = parseInt(event.target.value)
+    angle = isNaN(angle) ? 0 : angle; 
+
+    this.setState({
+      rotation: angle
+    })
+  }
+
   handleSampleName(event) {
     this.setState({
       sampleName: event.target.value
@@ -1231,6 +1242,7 @@ class Repo extends Component {
         overlays={ overlays } arrows={ arrows }
         handleViewport={ this.handleViewport }
         interactor={ this.interactor }
+        rotation={this.state.rotation}
       />
     }
     else if (rgba) {
@@ -1240,6 +1252,7 @@ class Repo extends Component {
         overlays={ overlays } arrows={ arrows }
         handleViewport={ this.handleViewport }
         interactor={ this.interactor }
+        rotation={this.state.rotation}
       />
     }
     else {
@@ -1249,6 +1262,7 @@ class Repo extends Component {
         overlays={ overlays } arrows={ arrows }
         handleViewport={ this.handleViewport }
         interactor={ this.interactor }
+        rotation={this.state.rotation}
       />
     }
 
@@ -1340,6 +1354,9 @@ class Repo extends Component {
               />
 						  <textarea placeholder='Sample Description' value={this.state.sampleText}
 						  onChange={this.handleSampleText} />
+              <input type='text' placeholder='Rotation'
+              value={this.state.rotation} onChange={this.handleRotation}
+              />
             </form>
 				</Modal>
 

@@ -128,6 +128,9 @@ class MinervaImageView extends Component {
   componentDidUpdate() {
     const {viewer} = this;
     const {overlays, arrows} = this.props;
+
+    this.viewer.viewport.setRotation(this.props.rotation);
+
     arrows.forEach((a,i) => {
       const o = a.position;
       const el = "arrow-" + i;
