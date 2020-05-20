@@ -133,6 +133,37 @@ class MinervaImageView extends Component {
 
     arrows.forEach((a,i) => {
       const o = a.position;
+      const el = "label-" + i;
+			const elNew = "new-" + el;
+			const element = document.getElementById(el);
+			let newElement = document.getElementById(elNew);
+			if (!newElement) {
+				newElement = element.cloneNode(true);
+				newElement.id = elNew;
+			}
+			else {
+				newElement.className = element.className;
+        newElement.innerText = element.innerText;
+			}
+      const current = viewer.getOverlayById(elNew);
+      const xy = new OpenSeadragon.Point(o[0], o[1]);
+      if (current) {
+        current.update({
+          location: xy
+        });
+      }
+      else {
+        viewer.addOverlay({
+          x: o[0],
+          y: o[1],
+          element: newElement,
+          placement: OpenSeadragon.Placement.CENTER
+        });
+      }
+    })
+
+    arrows.forEach((a,i) => {
+      const o = a.position;
       const el = "arrow-" + i;
 			const elNew = "new-" + el;
 			const element = document.getElementById(el);
@@ -163,6 +194,16 @@ class MinervaImageView extends Component {
     // Hide extra arrows
     for (var i = arrows.length; i < 100; i ++) {
       const elNew = "new-arrow-" + i;
+      const current = viewer.getOverlayById(elNew);
+      const xy = new OpenSeadragon.Point(-1, -1)
+      if (current) {
+        current.update({
+          location: xy
+        });
+      }
+    }
+    for (var i = arrows.length; i < 100; i ++) {
+      const elNew = "new-label-" + i;
       const current = viewer.getOverlayById(elNew);
       const xy = new OpenSeadragon.Point(-1, -1)
       if (current) {
@@ -264,23 +305,53 @@ class MinervaImageView extends Component {
     })
     const arrow_divs = [...Array(arrows.length).keys()].map((o,i) => {
       const el = "arrow-" + i;
+      const elText = "label-" + i;
       const radius = 122.8 / 2;
       const a = arrows.length > i ? arrows[i] : undefined;
       const angle = a && a.angle !== '' ? a.angle: 60;
       const a_y = radius * Math.sin(angle * Math.PI /180);
       const a_x = radius * Math.cos(angle * Math.PI /180);
-      let Transform = styled.div`
+
+      const t_w = 200;
+      const t_h = 50;
+      let t_x = 2 * a_x + t_w * Math.sign(Math.round(a_x)) / 2;
+      let t_y = 2 * a_y + t_h * Math.sign(Math.round(a_y)) / 2;
+      if (a.hide) {
+        t_x = 0;
+        t_y = 0;
+      }
+
+      let TransformArrow = styled.div`
         transform: translate(${a_x}px,${a_y}px)rotate(${angle}deg);
       `
+      let TransformLabel = styled.div`
+        transform: translate(${t_x}px,${t_y}px);
+        background: rgba(0, 0, 0, .8);
+        padding: 1em;
+        width: ${t_w}px;
+        height: ${t_h}px;
+        overflow: hidden;
+        color: white;
+      `
 			if (a.hide) {
-				Transform = styled.div`
+				TransformArrow = styled.div`
 					opacity: 0;
 				`
 			}
+      if (a.text === '') {
+        TransformLabel = styled.div`
+					display: None;
+        `
+      }
       return (
-				<Transform key={el} id={el}>
-					<SvgArrow></SvgArrow>
-				</Transform>
+        <div key={el}>
+          <TransformArrow id={el}>
+            <SvgArrow></SvgArrow>
+          </TransformArrow>
+          <TransformLabel id={elText}>
+            {a.text}
+          </TransformLabel>
+        </div>
       )
     })
 
