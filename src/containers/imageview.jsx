@@ -149,7 +149,8 @@ class ImageView extends Component {
       id: "ImageView",
       compositeOperation: "lighter",
       prefixUrl: "images/openseadragon/",
-      tileSources: this.makeTileSources(ids)
+      tileSources: this.makeTileSources(ids),
+      maxZoomPixelRatio: 10
     });
     interactor(this.viewer);
 
@@ -165,6 +166,24 @@ class ImageView extends Component {
     }, this);
 
     this.viewer.uuid = img.uuid;
+
+		const viewer = this.viewer;
+
+		function updateOverlays() {
+				viewer.currentOverlays.forEach(overlay => {
+						const isWhite = overlay.element.className == 'white-overlay';
+						const isGreen = overlay.element.className == 'green-overlay';
+						if (!(isWhite || isGreen)) {
+							overlay.element.style.transform = '';
+						}
+				});
+		}
+
+		viewer.addHandler("update-viewport", function(){
+				setTimeout(updateOverlays, 1);
+		});
+
+		viewer.addHandler("animation", updateOverlays);
 
     // Define interface to shaders
     const seaGL = new viaWebGL.openSeadragonGL(this.viewer);

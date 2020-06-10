@@ -86,7 +86,8 @@ class MinervaImageView extends Component {
       immediateRender: true,
       // Specific to this project
       id: "ImageView",
-      prefixUrl: "images/openseadragon/"
+      prefixUrl: "images/openseadragon/",
+      maxZoomPixelRatio: 10
     });
     interactor(this.viewer);
 
@@ -105,6 +106,24 @@ class MinervaImageView extends Component {
     }, this);
 
     this.viewer.uuid = img.uuid;
+
+		const viewer = this.viewer;
+
+		function updateOverlays() {
+				viewer.currentOverlays.forEach(overlay => {
+						const isWhite = overlay.element.className == 'white-overlay';
+						const isGreen = overlay.element.className == 'green-overlay';
+						if (!(isWhite || isGreen)) {
+							overlay.element.style.transform = '';
+						}
+				});
+		}
+
+		viewer.addHandler("update-viewport", function(){
+				setTimeout(updateOverlays, 1);
+		});
+
+		viewer.addHandler("animation", updateOverlays);
   }
 
   componentDidUpdate() {

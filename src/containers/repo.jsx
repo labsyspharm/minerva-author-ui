@@ -76,7 +76,7 @@ class Repo extends Component {
 		}));
 
 		this.state = {
-      rotation: 0,
+      rotation: sample_info.rotation,
       sampleName: sample_info.name,
       sampleText: sample_info.text,
       drawType: '',
@@ -1131,6 +1131,7 @@ class Repo extends Component {
         body: JSON.stringify({
           'groups': group_output,
           'header': this.state.sampleText,
+          'rotation': this.state.rotation,
           'image': {
             'description': this.state.sampleName
           }
@@ -1146,6 +1147,7 @@ class Repo extends Component {
 					'waypoints': story_output,
 					'groups': group_output,
           'sample_info': {
+            'rotation': this.state.rotation,
             'name': this.state.sampleName,
             'text': this.state.sampleText
           }
@@ -1354,6 +1356,9 @@ class Repo extends Component {
               />
 						  <textarea placeholder='Sample Description' value={this.state.sampleText}
 						  onChange={this.handleSampleText} />
+              <input type='text' placeholder='Rotation'
+              value={this.state.rotation} onChange={this.handleRotation}
+              />
             </form>
 				</Modal>
 
