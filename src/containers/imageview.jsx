@@ -52,7 +52,7 @@ class ImageView extends Component {
 			maxLevel: img.maxLevel,
 			height: img.height,
 			width: img.width,
-			minLevel: 0,
+      minLevel: 0,
     }
   }
 
@@ -150,7 +150,10 @@ class ImageView extends Component {
       compositeOperation: "lighter",
       prefixUrl: "images/openseadragon/",
       tileSources: this.makeTileSources(ids),
-      maxZoomPixelRatio: 10
+      maxZoomPixelRatio: 10,
+      ajaxHeaders: {
+        "Cache-Control": "no-store"
+      }
     });
     interactor(this.viewer);
 
