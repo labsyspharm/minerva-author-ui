@@ -141,7 +141,7 @@ class Repo extends Component {
 					value: k
 				}]
 			})),
-      activeIds: [0, 1],
+      activeIds: channels.length < 2 ? [0] : [0, 1],
       chanLabel: new Map(channels.map((v,k) => {
         return [k, {
           value: k, id: k,
