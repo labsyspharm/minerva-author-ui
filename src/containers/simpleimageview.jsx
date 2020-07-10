@@ -49,7 +49,7 @@ class MinervaImageView extends Component {
 			// Custom functions
 			getTileUrl: getTileUrl,
 			// Standard parameters
-			tileSize: 1024,
+			tileSize: img.tilesize,
 			width: img.width,
 			height: img.height,
 			maxLevel: img.maxLevel,

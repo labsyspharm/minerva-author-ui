@@ -54,6 +54,8 @@ class App extends Component {
             groups: import_result.groups,
             loaded: import_result.loaded,
             channels: import_result.channels,
+            tilesize: import_result.tilesize,
+            maxLevel: import_result.maxLevel,
             width: import_result.width,
             height: import_result.height,
             rgba: import_result.rgba
@@ -76,23 +78,25 @@ class App extends Component {
     }
     this.setState({
       loaded: true,
+      tilesize: 1024,
       uuid: image.uuid,
       channels: channels,
       width: image.width,
       height: image.height,
+      maxLevel: Math.ceil(Math.log2(Math.max(image.width, image.height) / 1024)),
       url: MinervaConfig.minervaBaseUrl + '/' + MinervaConfig.minervaStage + '/image'
     });
   }
 
   render() {
-    const {token, loaded, width, height, rgba, minerva, url, uuid} = this.state;
+    const {token, loaded, width, height, tilesize, maxLevel, rgba, minerva, url, uuid} = this.state;
     const {channels, sample_info, waypoints, groups} = this.state;
 
     if (loaded) {
       return (<Repo token={token} minerva={minerva} rgba={rgba}
                     channels={channels} waypoints={waypoints}
-                    groups={groups} url={url} uuid={uuid}
-                    width={width} height={height}
+                    groups={groups} url={url} uuid={uuid} maxLevel={maxLevel}
+                    width={width} height={height} tilesize={tilesize}
                     sample_info={sample_info}/>
       )
     }

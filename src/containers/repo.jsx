@@ -3,6 +3,7 @@ import CreatableSelect from 'react-select/creatable';
 
 import MinervaImageView from "./minervaimageview";
 import SimpleImageView from "./simpleimageview";
+import FileBrowserModal from "../components/filebrowsermodal";
 import Modal from "../components/modal";
 import ImageView from "./imageview";
 import Controls from "./controls";
@@ -10,6 +11,8 @@ import { Confirm } from 'semantic-ui-react';
 import ClipLoader from "react-spinners/ClipLoader";
 import { Progress, Popup } from 'semantic-ui-react'
 import Client from '../MinervaClient';
+import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
+import { faExclamationCircle } from "@fortawesome/free-solid-svg-icons";
 
 import '../style/repo'
 
@@ -60,10 +63,8 @@ class Repo extends Component {
   constructor(props) {
     super();
 
-    const { width, height, token, rgba, minerva, uuid, url } = props;
+    const { width, height, maxLevel, tilesize, token, rgba, minerva, uuid, url } = props;
     const { channels, sample_info, waypoints, groups } = props;
-
-    const maxLevel = Math.ceil(Math.log2(Math.max(width, height) / 1024))
 
 		const defaultChanRender = new Map(channels.map((v,k) => {
 			return [k, {
@@ -76,6 +77,8 @@ class Repo extends Component {
 		}));
 
 		this.state = {
+      error: null,
+      showFileBrowser: false,
       rotation: sample_info.rotation,
       sampleName: sample_info.name,
       sampleText: sample_info.text,
@@ -86,6 +89,7 @@ class Repo extends Component {
           width: width,
           height: height,
           maxLevel: maxLevel,
+          tilesize: tilesize,
 					url: url 
 			},
       rgba: rgba,
@@ -151,7 +155,11 @@ class Repo extends Component {
       chanRender: defaultChanRender
     };
 
+    this.filePath = React.createRef();
     // Bind
+    this.updateGroups = this.updateGroups.bind(this);
+    this.openFileBrowser = this.openFileBrowser.bind(this);
+    this.onFileSelected = this.onFileSelected.bind(this);
     this.interactor = this.interactor.bind(this);
     this.arrowClick = this.arrowClick.bind(this);
     this.lassoClick = this.lassoClick.bind(this);
@@ -178,6 +186,7 @@ class Repo extends Component {
     this.handleViewport = this.handleViewport.bind(this);
     this.toggleTextEdit = this.toggleTextEdit.bind(this);
     this.toggleSampleInfo = this.toggleSampleInfo.bind(this);
+    this.submitSampleInfo = this.submitSampleInfo.bind(this);
     this.toggleModal = this.toggleModal.bind(this);
     this.save = this.save.bind(this);
     this.deleteActiveGroup = this.deleteActiveGroup.bind(this);
@@ -408,10 +417,87 @@ class Repo extends Component {
     });
 	}
 
+  updateGroups(groups) {
+    const maxChan = this.state.chanLabel.size - 1;
+    let extraChan = false;
+
+    const g = new Map(groups.map((v,k) => {
+			return [k, {
+				activeIds: v.channels.map(chan => {
+          if (chan.id > maxChan) {
+            extraChan = true;
+          }
+					return chan.id;
+				}),
+				chanRender: new Map([...this.state.chanRender,
+				...new Map(v.channels.map(chan => {
+					return [chan.id, {
+						color: hexToRgb(chan.color),
+						range: {
+							min: chan.min * 65535, 
+							max: chan.max * 65535
+						},
+						maxRange: 65535,
+						value: chan.id, id: chan.id,
+            visible: true
+					}]
+				}))]),
+				label: v.label,
+				value: k
+			}]
+		}))
+    if (extraChan) {
+      this.setState({
+        error: 'Unsupported case of dat file with excess channels'
+      })
+    }
+    else {
+      this.setState({
+        groups: g
+      })
+    }
+  }
+
+	submitSampleInfo() {
+    fetch('http://127.0.0.1:2020/api/import/groups', {
+      method: 'POST',
+      body: JSON.stringify({
+        'filepath': this.filePath.current.value
+      }),
+      headers: {
+        "Content-Type": "application/json"
+      }
+    }).then(response => {
+      if (response.ok) {
+        return response.json();
+      }
+      else if (response.status == 404){
+        this.setState({
+          error: 'Imported dat file is not found.'
+        })
+        return null;
+      }
+      else {
+        this.setState({
+          error: 'Imported dat file is invalid.'
+        })
+        return null;
+      }
+    }).then(data => {
+      if (data) {
+        this.updateGroups(data.groups);
+      }
+    });
+	}
+
 	toggleSampleInfo() {
 	  this.setState({
       sampleInfo: !this.state.sampleInfo
     });
+    const filePath = this.filePath.current ? this.filePath.current.value : false;
+    if (this.state.sampleInfo && !!filePath) {
+      this.submitSampleInfo();
+    }
 	}
 
   toggleTextEdit(value) {
@@ -1199,6 +1285,35 @@ class Repo extends Component {
     return "Create Group: " + label;
   }
 
+  openFileBrowser() {
+    this.setState({ showFileBrowser: true});
+  }
+
+  onFileSelected(file, folder=null) {
+    this.setState({ 
+      showFileBrowser: false
+    });
+    if (file && file.path) {
+      this.filePath.current.value = file.path;
+    }
+  }
+
+  renderErrors() {
+    if (!this.state.error) {
+      return null;
+    }
+    return (
+      <div className="import-errors">
+        <div className="ui icon message">
+          <FontAwesomeIcon className="icon" icon={faExclamationCircle} />
+          <div class="content">
+            <div className="header">{this.state.error}</div>
+          </div>
+        </div>
+      </div>
+    );
+  }
+
   render() {
     const { rgba, minerva, token } = this.state;
     const { img, groups, chanLabel, textEdit } = this.state;
@@ -1350,15 +1465,25 @@ class Repo extends Component {
 
 				<Modal toggle={this.toggleSampleInfo}
 					show={this.state.sampleInfo}>
-            <form className="ui form" onSubmit={this.toggleSampleInfo}>
+            <form className="ui form">
               <input type='text' placeholder='Sample Name'
               value={this.state.sampleName} onChange={this.handleSampleName}
               />
 						  <textarea placeholder='Sample Description' value={this.state.sampleText}
 						  onChange={this.handleSampleText} />
               <input type='text' placeholder='Rotation'
-              value={this.state.rotation} onChange={this.handleRotation}
+              value={this.state.rotation? this.state.rotation : ''}
+              onChange={this.handleRotation}
               />
+              <div className="ui action input">
+                <input ref={this.filePath} className='full-width-input' id="filepath" name="filepath" type="text" placeholder='Channel groups dat file'/>
+                <button type="button" onClick={this.openFileBrowser} className="ui button">Browse</button>
+                <FileBrowserModal open={this.state.showFileBrowser} close={this.onFileSelected}
+                  title="Select a dat file" 
+                  onFileSelected={this.onFileSelected} 
+                  filter={["dat"]}
+                  />
+              </div>
             </form>
 				</Modal>
 
@@ -1417,6 +1542,7 @@ class Repo extends Component {
               onConfirm={this.deleteStory}
             />
           </div>
+          { this.renderErrors() }
         </div>
       </div>
     );

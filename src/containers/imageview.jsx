@@ -48,7 +48,7 @@ class ImageView extends Component {
       many_channel_range: [range['min'] / maxRange, range['max'] / maxRange],
       many_channel_color: color.map(c => c / 255.),
 			// Standard parameters
-			tileSize: 1024,
+			tileSize: img.tilesize,
 			maxLevel: img.maxLevel,
 			height: img.height,
 			width: img.width,
