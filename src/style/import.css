@@ -1,6 +1,7 @@
 .full-height {
   height: 100vh;
   position: relative;
+  background: radial-gradient(circle, rgba(0,0,0,1) 0%, rgba(150,60,189,1) 300%);
 }
 
 .full-height .center-div {
@@ -39,4 +40,11 @@ form label {
   bottom: 0px;
   left: 0;
   right: 0;
+}
+
+.minerva-author-logo {
+  margin: auto;
+  margin-bottom: 20px;
+  width: 500px;
+  max-width: 100%;
 }
