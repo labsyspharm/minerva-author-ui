@@ -129,6 +129,7 @@ class ImportForm extends Component {
     return (
       <div className="center-div">
         <SignIn onToken={this.onToken}/>
+        <img className="minerva-author-logo" src="images/Minerva-Author_HorizLogo_RGB.svg"></img>
         <form className="ui form" onSubmit={this.handleSubmit}>
           <label htmlFor="filepath">Enter path to tiff or dat: </label>
           <br/>
