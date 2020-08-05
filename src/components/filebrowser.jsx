@@ -169,28 +169,29 @@ export default class FileBrowser extends React.Component {
         let contents = dir.entries.map((value, index) => {
  
             return (
-                <div className="ui card filebrowser-item" onClick={() => this.openItem(value)} key={index}>
+                <div className="ui item filebrowser-item" onClick={() => this.openItem(value)} key={index}>
                     <div className={this._getIconClass(value)}>
                          {this.renderIcon(value)}
                     </div>
-                    <div className="content">
-                        <div className="header">
+                    <div className="content ui grid">
+                        <div className="seven wide column">
                             <h5>{value.name}</h5>
                         </div>
                         { value.size ? 
-                            <div className="meta">
+                            <div className="five wide column">
                                 Size: {this._formatSize(value.size)}
                             </div> : null
                         }
-                    </div>
-                    
+
                     { this.renderSelectButton(value) }
+
+                    </div>
                         
                 </div>
             );
         });
         return (
-            <div className="ui four cards">
+            <div className="ui list">
                 {contents}
             </div>
         );
@@ -204,7 +205,7 @@ export default class FileBrowser extends React.Component {
             icon = this.isImage(item) ? faImage : faFile;
         }
         return (
-            <FontAwesomeIcon icon={icon} size="4x" />
+            <FontAwesomeIcon icon={icon} size="2x" />
         );
     }
 
@@ -219,7 +220,7 @@ export default class FileBrowser extends React.Component {
             }
         }
         return (
-            <div className="extra content">
+            <div className="four wide column">
             <button type="button" onClick={() => this.selectFile(item)} className="ui button primary">
                 <FontAwesomeIcon icon={faCheck} />&nbsp;
                 Select

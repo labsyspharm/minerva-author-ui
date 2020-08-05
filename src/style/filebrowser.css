@@ -8,7 +8,7 @@
 
 .filebrowser-item:hover {
     transition: all .2s ease-in-out;
-    transform: scale(1.1);
+    background-color: #9cdefc;
 }
 
 .filebrowser-icon-dir {
