@@ -45,23 +45,29 @@ const ChannelControl = ({ id, color, range, minRange, maxRange,
         </div>
         <div className="ui input mini width-75px">
           <input type="text" value={range.min} 
+            onBlur={ e=> {
+              let r0 = range.min >= maxRange ? maxRange : range.min;
+              let r1 = r0 >= range.max ? Math.min(r0 + 1, maxRange) : range.max;
+              handleChange(id, null, {min: r0, max: r1}, null, visible);
+            }}
             onChange={ e => {
               let r0 = parseInt(e.target.value);
               r0 = isNaN(r0) ? 0 : r0;
-              r0 = r0 >= maxRange ? maxRange : r0;
-              let r1 = r0 >= range.max ? Math.min(r0 + 1, maxRange) : range.max;
-              handleChange(id, null, {min: r0, max: r1}, null, visible);
+              handleChange(id, null, {min: r0, max: range.max}, null, visible);
             }}
           />
         </div>
         <div className="ui input mini width-75px">
           <input type="text" value={range.max} 
+            onBlur={ e=> {
+              let r1 = range.max >= maxRange ? maxRange : range.max;
+              let r0 = range.min >= r1 ? Math.max(r1 - 1, 0) : range.min;
+              handleChange(id, null, {min: r0, max: r1}, null, visible);
+            }}
             onChange={ e => {
               let r1 = parseInt(e.target.value);
               r1 = isNaN(r1) ? 0 : r1;
-              r1 = r1 >= maxRange ? maxRange : r1;
-              let r0 = range.min >= r1 ? Math.max(r1 - 1, 0) : range.min;
-              handleChange(id, null, {min: r0, max: r1}, null, visible);
+              handleChange(id, null, {min: range.min, max: r1}, null, visible);
             }}
           />
         </div>
