@@ -17,6 +17,7 @@ class App extends Component {
       loaded: false,
       minerva: false,
       rgba: false,
+      warning: '',
       url: 'http://localhost:2020/api/u16',
       //minerva: true,
 			uuid: null,
@@ -58,7 +59,8 @@ class App extends Component {
             maxLevel: import_result.maxLevel,
             width: import_result.width,
             height: import_result.height,
-            rgba: import_result.rgba
+            rgba: import_result.rgba,
+            warning: import_result.warning
           })
         }
       }, 3000);
@@ -90,14 +92,14 @@ class App extends Component {
 
   render() {
     const {token, loaded, width, height, tilesize, maxLevel, rgba, minerva, url, uuid} = this.state;
-    const {channels, sample_info, waypoints, groups} = this.state;
+    const {channels, sample_info, waypoints, groups, warning} = this.state;
 
     if (loaded) {
       return (<Repo token={token} minerva={minerva} rgba={rgba}
                     channels={channels} waypoints={waypoints}
                     groups={groups} url={url} uuid={uuid} maxLevel={maxLevel}
                     width={width} height={height} tilesize={tilesize}
-                    sample_info={sample_info}/>
+                    sample_info={sample_info} warning={warning}/>
       )
     }
     return (

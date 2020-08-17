@@ -63,7 +63,8 @@ class Repo extends Component {
   constructor(props) {
     super();
 
-    const { width, height, maxLevel, tilesize, token, rgba, minerva, uuid, url } = props;
+    const { width, height, maxLevel, tilesize,
+      token, rgba, minerva, uuid, url, warning} = props;
     const { channels, sample_info, waypoints, groups } = props;
 
 		const defaultChanRender = new Map(channels.map((v,k) => {
@@ -78,6 +79,7 @@ class Repo extends Component {
 
 		this.state = {
       error: null,
+      warning: warning,
       showFileBrowser: false,
       rotation: sample_info.rotation,
       sampleName: sample_info.name,
@@ -157,6 +159,7 @@ class Repo extends Component {
 
     this.filePath = React.createRef();
     // Bind
+    this.dismissWarning = this.dismissWarning.bind(this);
     this.updateGroups = this.updateGroups.bind(this);
     this.openFileBrowser = this.openFileBrowser.bind(this);
     this.onFileSelected = this.onFileSelected.bind(this);
@@ -1297,6 +1300,26 @@ class Repo extends Component {
       this.filePath.current.value = file.path;
     }
   }
+  dismissWarning() {
+    this.setState({warning: ''});
+  }
+  renderWarning() {
+    console.log(this.state.warning)
+    if (!this.state.warning) {
+      return null;
+    }
+    return (
+      <div className="import-warning">
+        <div className="ui icon message">
+          <FontAwesomeIcon className="icon" icon={faExclamationCircle} />
+          <div class="content">
+            <div className="header">{this.state.warning}</div>
+            <button className="ui button compact ml-1 mr-1" onClick={this.dismissWarning}>Dismiss</button>
+          </div>
+        </div>
+      </div>
+    );
+  }
 
   renderErrors() {
     if (!this.state.error) {
@@ -1542,6 +1565,7 @@ class Repo extends Component {
               onConfirm={this.deleteStory}
             />
           </div>
+          { this.renderWarning() }
           { this.renderErrors() }
         </div>
       </div>
