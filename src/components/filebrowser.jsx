@@ -41,11 +41,16 @@ export default class FileBrowser extends React.Component {
         if (parent) {
             parameter += '&parent=true';
         }
-        return fetch('http://127.0.0.1:2020/api/filebrowser?' + parameter)
-            .then(response => {
-                console.log(response);
-                return response.json();
-            });
+        return fetch('http://127.0.0.1:2020/api/filebrowser?' + parameter, {
+            headers: {
+                'pragma': 'no-cache',
+                'cache-control': 'no-cache'
+            }
+        })
+        .then(response => {
+            console.log(response);
+            return response.json();
+        });
     }
 
     openItem(item, parent=false) {

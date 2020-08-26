@@ -45,7 +45,12 @@ class App extends Component {
       setInterval(async () => {
         const {loaded} = this.state;
         if (loaded === false) {
-          const res = await fetch('http://localhost:2020/api/import');
+          const res = await fetch('http://localhost:2020/api/import', {
+            headers: {
+              'pragma': 'no-cache',
+              'cache-control': 'no-store'
+            }
+          });
           const import_result = await res.json();
           const sample_info = import_result.sample_info;
 
