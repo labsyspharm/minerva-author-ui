@@ -4,8 +4,10 @@ import Repo from "./repo";
 import Import from "./import";
 
 import authenticate from '../login';
+import Client from '../MinervaClient';
+import login from '../login';
 import 'semantic-ui-css/semantic.min.css'
-import MinervaConfig from '../config';
+//import MinervaConfig from '../config';
 
 class App extends Component {
 
@@ -14,6 +16,9 @@ class App extends Component {
 
     this.state = {
       token: '',
+      config: {
+        enableCloudFeatures: false
+      },
       loaded: false,
       minerva: false,
       rgba: false,
@@ -21,7 +26,6 @@ class App extends Component {
       url: 'http://localhost:2020/api/u16',
       //minerva: true,
 			uuid: null,
-      //uuid: '0c18ba28-872c-4d83-9904-ecb8b12b514d',
       sample_info: {
         'name': '',
         'text': ''
@@ -38,20 +42,27 @@ class App extends Component {
 
   }
 
+  async getImportResult() {
+    return fetch('http://localhost:2020/api/import', {
+      headers: {
+        'pragma': 'no-cache',
+        'cache-control': 'no-store'
+      }
+    }).then(async res => {
+      return res.json();
+    });
+  }
+
   async componentDidMount() {
     const {minerva, url, uuid} = this.state;
+
+    this.getConfiguration();
 
     try {
       setInterval(async () => {
         const {loaded} = this.state;
         if (loaded === false) {
-          const res = await fetch('http://localhost:2020/api/import', {
-            headers: {
-              'pragma': 'no-cache',
-              'cache-control': 'no-store'
-            }
-          });
-          const import_result = await res.json();
+          const import_result = await this.getImportResult();
           const sample_info = import_result.sample_info;
 
           this.setState({
@@ -65,8 +76,10 @@ class App extends Component {
             width: import_result.width,
             height: import_result.height,
             rgba: import_result.rgba,
-            warning: import_result.warning
-          })
+            warning: import_result.warning,
+            uuid: import_result.imageUuid
+          });
+
         }
       }, 3000);
     } catch(e) {
@@ -74,24 +87,45 @@ class App extends Component {
     }
   }
 
+  getConfiguration() {
+    fetch('http://localhost:2020/api/configuration').then(res => {
+      res.json().then(config => {
+        login.configure(config);
+        Client.configure(config);
+        this.setState({ config: config});
+        this.setState({ url: config.minervaBaseUrl + '/' + config.minervaStage + '/image' });
+      })
+    });
+  }
+
   onToken(data) {
     this.setState({token: data.token, minerva: true});
+    Client.guest = false;
   }
 
   onMinervaImage(image) {
-    let channels = [];
+    let minervaCloudChannels = [];
     for (let channel of image.channels) {
-      channels.push(channel.Name);
+      minervaCloudChannels.push(channel.Name);
     }
-    this.setState({
-      loaded: true,
-      tilesize: 1024,
-      uuid: image.uuid,
-      channels: channels,
-      width: image.width,
-      height: image.height,
-      maxLevel: Math.ceil(Math.log2(Math.max(image.width, image.height) / 1024)),
-      url: MinervaConfig.minervaBaseUrl + '/' + MinervaConfig.minervaStage + '/image'
+
+    this.getImportResult().then(result => {
+
+      let channels = minervaCloudChannels;
+      // If the user gave a custom channel names csv, replace Minerva Cloud's provided channel names
+      if (result.channels[0] !== '0') {
+        channels = result.channels;
+      }
+
+      this.setState({
+        loaded: true,
+        tilesize: 1024,
+        uuid: image.uuid,
+        channels: channels,
+        width: image.width,
+        height: image.height,
+        maxLevel: Math.ceil(Math.log2(Math.max(image.width, image.height) / 1024))
+      });
     });
   }
 
@@ -108,7 +142,7 @@ class App extends Component {
       )
     }
     return (
-      <Import onToken={this.onToken} onMinervaImage={this.onMinervaImage}/>
+      <Import onToken={this.onToken} onMinervaImage={this.onMinervaImage} enableCloudFeatures={this.state.config.enableCloudFeatures}/>
     );
   }
 }

@@ -1,13 +1,19 @@
-import MinervaConfig from './config';
+//import MinervaConfig from './config';
 
 class MinervaClient {
 
-    constructor(baseUrl) {
-        this.baseUrl = baseUrl;
+    constructor() {
+        this.baseUrl = '';
         this.currentUser = null;
         this.GRANTS = ['Admin', 'Read', 'Write'];
-        this.guest = false;
+        this.guest = true;
+        this.config = {};
     }
+
+    configure(config) {
+        this.baseUrl = config.minervaBaseUrl + '/' + config.minervaStage;
+    }
+
 
     loggedIn() {
         return this.currentUser !== null;
@@ -155,8 +161,9 @@ class MinervaClient {
     }
 
     apiFetch(method, route, config = {}) {
-        if (!this.currentUser) {
-            console.warn("Tried to call apiFetch but no current session available.");
+        console.log('apiFetch');
+        if (!this.guest && !this.currentUser) {
+            console.error("Tried to call apiFetch but no current session available.");
             return Promise.reject();
         }
         let params = config.params;
@@ -189,6 +196,7 @@ class MinervaClient {
             args['body'] = JSON.stringify(body)
         }
         if (this.guest) {
+            console.log('Anonymous');
             return this._fetch(url, args, 'Anonymous', headers, binary);
         } else {
             return this.currentUser.getSession((err, session) => {
@@ -250,6 +258,7 @@ class MinervaClient {
 
 }
 
-var Client = new MinervaClient(MinervaConfig.minervaBaseUrl + '/' + MinervaConfig.minervaStage);
+//var Client = new MinervaClient(MinervaConfig.minervaBaseUrl + '/' + MinervaConfig.minervaStage);
+var Client = new MinervaClient();
 
 export default Client;

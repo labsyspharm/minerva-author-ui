@@ -13,3 +13,8 @@
     height: initial;
     overflow: initial;
   }
+
+  .minerva-cloud-logo {
+    width: 300px;
+    margin-bottom: 10px;
+  }

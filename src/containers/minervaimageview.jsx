@@ -105,10 +105,7 @@ class MinervaImageView extends Component {
       // Specific to this project
       id: "ImageView",
       prefixUrl: "images/openseadragon/",
-      maxZoomPixelRatio: 10,
-      ajaxHeaders: {
-        "Cache-Control": "no-store"
-      }
+      maxZoomPixelRatio: 10
     });
     interactor(this.viewer);
 

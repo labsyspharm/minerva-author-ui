@@ -1189,14 +1189,14 @@ class Repo extends Component {
 
     if (minerva) {
       Client.createRenderingSettings(img.uuid, { groups: group_output }).then(json => {
-        this.setState({saving: false});
+        
         json.groups.forEach((g,i) => {
           groups.get(i).id = g.id
         })
         this.setState({
           groups: groups
         })
-        fetch('http://localhost:2020/api/minerva/yaml', {
+        fetch('http://localhost:2020/api/minerva/save', {
           method: 'POST',
           body: JSON.stringify({
             'groups': json.groups,
@@ -1211,7 +1211,26 @@ class Repo extends Component {
           headers: {
             "Content-Type": "application/json"
           }
-        })
+        }).then(res => {
+          this.setState({saving: false});
+        });
+
+        fetch('http://localhost:2020/api/save', {
+          method: 'POST',
+          body: JSON.stringify({
+            'waypoints': story_output,
+            'groups': group_output,
+            'sample_info': {
+              'rotation': this.state.rotation,
+              'name': this.state.sampleName,
+              'text': this.state.sampleText
+            }
+          }),
+          headers: {
+            "Content-Type": "application/json"
+          }
+        });
+
       });
     }
     else {

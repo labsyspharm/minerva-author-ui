@@ -4,7 +4,6 @@ import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
 import { faTimes, faSignInAlt, faSignOutAlt } from '@fortawesome/free-solid-svg-icons'
 import login from '../login';
 import { Button, Form, Grid, Header, Loader, Message, Segment, Dimmer } from 'semantic-ui-react'
-import MinervaConfig from '../config';
 import '../style/signin.css';
 
 export default class SignIn extends React.Component {
@@ -20,7 +19,6 @@ export default class SignIn extends React.Component {
             password: '',
             success: false,
             loading: false,
-            enableCloudFeatures: MinervaConfig.enableCloudFeatures
         }
 
         this.handleChange = this.handleChange.bind(this);
@@ -28,57 +26,32 @@ export default class SignIn extends React.Component {
         this.inputRef = React.createRef();
     }
 
-    componentDidMount() {
-        let validConfig = this._validateConfig();
-        if (!this.state.enableCloudFeatures || !validConfig) {
-            this.setState({enableCloudFeatures: false});
-            return;
-        }
-        // Check if there is previous authentication stored in local storage
-        login.storedAuthentication().then(user => {
-            user.getUserData((err, userData) => {
-                if (err) {
-                    console.error(err);
-                    return;
-                }
-                let email = '';
-                for (let attribute of userData.UserAttributes) {
-                    if (attribute.Name == 'email') {
-                        email = attribute.Value;
+    componentDidUpdate(prevProps, prevState, snapshot) {
+        if (!prevProps.enableCloudFeatures && this.props.enableCloudFeatures) {
+            // Check if there is previous authentication stored in local storage
+            login.storedAuthentication().then(user => {
+                user.getUserData((err, userData) => {
+                    if (err) {
+                        console.error(err);
+                        return;
                     }
-                }
-                this.setState({success: true, email: email});
-                this.props.onToken({
-                    token: user.signInUserSession.idToken.jwtToken,
-                    user: user
+                    let email = '';
+                    for (let attribute of userData.UserAttributes) {
+                        if (attribute.Name == 'email') {
+                            email = attribute.Value;
+                        }
+                    }
+                    this.setState({success: true, email: email});
+                    this.props.onToken({
+                        token: user.signInUserSession.idToken.jwtToken,
+                        user: user
+                    });
                 });
+
+            }).catch(err => {
+                console.log(err);
             });
-
-        }).catch(err => {
-            console.log(err);
-        });
-    }
-
-    _validateConfig() {
-        let valid = true;
-        if (MinervaConfig.enableCloudFeatures) {
-            if (!MinervaConfig.minervaBaseUrl) {
-                console.error('minervaBaseUrl must be defined in config.js');
-                valid = false;
-            }
-            if (!MinervaConfig.CognitoClientId) {
-                console.error('CognitoUserPoolId must be defined in config.js');
-                valid = false;
-            }
-            if (!MinervaConfig.CognitoUserPoolId) {
-                console.error('CognitoUserPoolId must be defined in config.js');
-                valid = false;
-            }
-            if (!valid) {
-                console.error('Cloud features are disabled');
-            }
         }
-        return valid;
     }
 
     handleChange(evt) {
@@ -116,7 +89,7 @@ export default class SignIn extends React.Component {
     }
 
     render() {
-        if (!this.state.enableCloudFeatures) {
+        if (!this.props.enableCloudFeatures) {
             return null;
         }
         return (
@@ -128,7 +101,7 @@ export default class SignIn extends React.Component {
                             {this.state.email}</button>
                         :
                         <button className="ui circular icon mini button" onClick={() => this.open()}>
-                            <FontAwesomeIcon icon={faSignInAlt} size="lg"/>
+                            Sign in <FontAwesomeIcon icon={faSignInAlt} size="lg"/>
                         </button>
                     }
                 </div>
@@ -143,9 +116,7 @@ export default class SignIn extends React.Component {
                 <Modal.Content>
                 <Grid textAlign='center' verticalAlign='middle'>
                 <Grid.Column style={{ maxWidth: 450 }}>
-                <Header as='h2' color='teal' textAlign='center'>
-                    Sign in Minerva
-                </Header>
+                <img className="minerva-cloud-logo" src="images/Minerva-Cloud_HorizLogo_RGB.svg"/>
                 <Form size='large'>
                     <Segment stacked>
                     <Form.Input 

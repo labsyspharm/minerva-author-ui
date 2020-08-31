@@ -20,7 +20,8 @@ class ImportForm extends Component {
       currentFileFolder: null,
       currentMarkerFolder: null,
       showMinervaFields: false,
-      imageUuid: ''
+      imageUuid: '',
+      output: ''
     }
 
     this.handleSubmit = this.handleSubmit.bind(this);
@@ -31,6 +32,7 @@ class ImportForm extends Component {
     this.onToken = this.onToken.bind(this);
     this.openMinervaImage = this.openMinervaImage.bind(this);
     this.imageUuidChanged = this.imageUuidChanged.bind(this);
+    this.outputChanged = this.outputChanged.bind(this);
 
     this.filePath = React.createRef();
     this.markerPath = React.createRef();
@@ -39,19 +41,45 @@ class ImportForm extends Component {
   handleSubmit(event) {
     event.preventDefault();
     const data = new FormData(event.target);
+    let imageUuid = data.get('imageUuid');
+    let loadFrom = (imageUuid && imageUuid.length > 0) ? "cloud" : "local";
+    data.set('loadFrom', loadFrom);
+    data.set('imageUuid', imageUuid);
 
     this.setState({
       loading: true,
       error: null
     });
-    
-    fetch('http://localhost:2020/api/import', {
+
+    if (loadFrom === "cloud") {
+      this.openMinervaImage().then(image => {
+        let numChannels = image.channels.length;
+        data.set('numChannels', numChannels);
+        this.importImage(data).then(() => {
+          this.props.onMinervaImage(image);
+          this.setState({ loading: false });
+        })
+      }).catch(err => {
+        console.error(err);
+        let errObject = JSON.parse(err.message);
+        this.setState({ error: errObject.error, loading: false });
+      });
+    } else {
+      this.importImage(data).then(() => {
+        this.setState({ loading: false });
+      });
+    }
+  }
+
+  importImage(data) {
+    return fetch('http://localhost:2020/api/import', {
       method: 'POST',
       body: data,
     }).then(response => {
       this.setState({ loading: false });
       if (!response.ok) {
         response.json().then(data => {
+          console.error(data);
           this.setState({ error: data.error}); 
         });
       }
@@ -94,8 +122,7 @@ class ImportForm extends Component {
   }
 
   openMinervaImage() {
-    this.setState({ loading: true });
-    Client.getImageDimensions(this.state.imageUuid).then(res => {
+    return Client.getImageDimensions(this.state.imageUuid).then(res => {
       console.log(res);
       let image = {
         uuid: res.data.image_uuid,
@@ -103,16 +130,12 @@ class ImportForm extends Component {
         height: res.data.pixels.SizeY,
         channels: res.data.pixels.channels
       };
-      this.props.onMinervaImage(image);
-    }).catch(err => {
-      console.error(err);
-      this.setState({ loading: false, error: 'Image not found.' });
+      return image;
+      //this.props.onMinervaImage(image);
     });
   }
 
   onToken(data) {
-    console.log(data.token);
-    console.log(data.user);
     Client.setUser(data.user);
     this.setState({showMinervaFields: true});
     this.props.onToken(data);
@@ -122,13 +145,17 @@ class ImportForm extends Component {
     this.setState({imageUuid: evt.target.value});
   }
 
+  outputChanged(evt) {
+    this.setState({output: evt.target.value});
+  }
+
   render() {
     const {loading} = this.state;
     let imageHome = this.state.currentFileFolder ? this.state.currentFileFolder : this.state.currentMarkerFolder;
     let markerHome = this.state.currentMarkerFolder ? this.state.currentMarkerFolder : this.state.currentFileFolder;
     return (
       <div className="center-div">
-        <SignIn onToken={this.onToken}/>
+        <SignIn onToken={this.onToken} enableCloudFeatures={this.props.enableCloudFeatures} />
         <img className="minerva-author-logo" src="images/Minerva-Author_HorizLogo_RGB.svg"></img>
         <form className="ui form" onSubmit={this.handleSubmit}>
           <label htmlFor="filepath">Enter path to tiff or dat: </label>
@@ -162,7 +189,7 @@ class ImportForm extends Component {
           <br/>
           <label htmlFor="filepath">Optional output name: </label>
           <br/>
-          <input className='full-width-input' id="dataset" name="dataset" type="text" />
+          <input className='full-width-input' id="dataset" name="dataset" type="text" value={this.state.output} onChange={this.outputChanged} />
           <br/>
           <br/>
           <button className="ui button"> Import </button>
@@ -188,7 +215,6 @@ class ImportForm extends Component {
         <br/>
         <div className="ui action input">
           <input className='full-width-input' id="imageUuid" name="imageUuid" type="text" value={this.state.imageUuid} onChange={this.imageUuidChanged}/>
-          <button type="button" onClick={this.openMinervaImage} className="ui button">Open</button>
         </div>
       </div>
     );

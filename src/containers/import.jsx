@@ -8,7 +8,7 @@ class Import extends Component {
     return (
       <div className="full-height">
         <div>
-          <ImportForm onToken={this.props.onToken} onMinervaImage={this.props.onMinervaImage} />
+          <ImportForm onToken={this.props.onToken} onMinervaImage={this.props.onMinervaImage} enableCloudFeatures={this.props.enableCloudFeatures} />
         </div>
       </div>
     );
