@@ -64,7 +64,7 @@ class Repo extends Component {
     super();
 
     const { width, height, maxLevel, tilesize,
-      token, rgba, minerva, uuid, url, warning} = props;
+      token, rgba, uuid, url, warning} = props;
     const { channels, sample_info, waypoints, groups } = props;
 
 		const defaultChanRender = new Map(channels.map((v,k) => {
@@ -96,7 +96,6 @@ class Repo extends Component {
 			},
       rgba: rgba,
       token: token,
-      minerva: props.env === 'cloud',
       textEdit: false,
       showModal: false,
       sampleInfo: false,
@@ -1136,7 +1135,8 @@ class Repo extends Component {
 
     let {groups} = this.state;
     const {stories, chanLabel} = this.state;
-    const {minerva, token, img} = this.state;
+    const {token, img} = this.state;
+    let minerva = props.env === 'cloud';
 
     const group_output = Array.from(groups.values()).map(v => {
       const channels = v.activeIds.map(id => {
@@ -1173,20 +1173,6 @@ class Repo extends Component {
 
     this.setState({saving: true});
 
-    fetch('http://localhost:2020/api/stories', {
-      method: 'POST',
-      body: JSON.stringify({
-        'stories': [{
-          'name': '',
-          'text': '',
-          'waypoints': story_output
-        }]
-      }),
-      headers: {
-        "Content-Type": "application/json"
-      }
-    })
-
     if (minerva) {
       Client.createRenderingSettings(img.uuid, { groups: group_output }).then(json => {
         
@@ -1196,44 +1182,58 @@ class Repo extends Component {
         this.setState({
           groups: groups
         })
-        fetch('http://localhost:2020/api/minerva/save', {
-          method: 'POST',
-          body: JSON.stringify({
-            'groups': json.groups,
-            'image': {
-              'url': img.url,
-              'id': img.uuid,
-              'width': img.width,
-              'height': img.height,
-              'maxLevel': img.maxLevel
-            }
-          }),
-          headers: {
-            "Content-Type": "application/json"
-          }
-        }).then(res => {
-          this.setState({saving: false});
-        });
+        // fetch('http://localhost:2020/api/minerva/save', {
+        //   method: 'POST',
+        //   body: JSON.stringify({
+        //     'groups': json.groups,
+        //     'image': {
+        //       'url': img.url,
+        //       'id': img.uuid,
+        //       'width': img.width,
+        //       'height': img.height,
+        //       'maxLevel': img.maxLevel
+        //     }
+        //   }),
+        //   headers: {
+        //     "Content-Type": "application/json"
+        //   }
+        // }).then(res => {
+        //   this.setState({saving: false});
+        // });
 
-        fetch('http://localhost:2020/api/save', {
-          method: 'POST',
-          body: JSON.stringify({
-            'waypoints': story_output,
-            'groups': group_output,
-            'sample_info': {
-              'rotation': this.state.rotation,
-              'name': this.state.sampleName,
-              'text': this.state.sampleText
-            }
-          }),
-          headers: {
-            "Content-Type": "application/json"
-          }
-        });
+        // fetch('http://localhost:2020/api/save', {
+        //   method: 'POST',
+        //   body: JSON.stringify({
+        //     'waypoints': story_output,
+        //     'groups': group_output,
+        //     'sample_info': {
+        //       'rotation': this.state.rotation,
+        //       'name': this.state.sampleName,
+        //       'text': this.state.sampleText
+        //     }
+        //   }),
+        //   headers: {
+        //     "Content-Type": "application/json"
+        //   }
+        // });
 
       });
     }
     else {
+      fetch('http://localhost:2020/api/stories', {
+        method: 'POST',
+        body: JSON.stringify({
+          'stories': [{
+            'name': '',
+            'text': '',
+            'waypoints': story_output
+          }]
+        }),
+        headers: {
+          "Content-Type": "application/json"
+        }
+      })
+      
       let render = fetch('http://localhost:2020/api/render', {
         method: 'POST',
         body: JSON.stringify({
@@ -1323,10 +1323,10 @@ class Repo extends Component {
     this.setState({warning: ''});
   }
   renderWarning() {
-    console.log(this.state.warning)
     if (!this.state.warning) {
       return null;
     }
+    console.log(this.state.warning);
     return (
       <div className="import-warning">
         <div className="ui icon message">
@@ -1357,7 +1357,8 @@ class Repo extends Component {
   }
 
   render() {
-    const { rgba, minerva, token } = this.state;
+    const { rgba, token } = this.state;
+    let minerva = this.props.env === 'cloud';
     const { img, groups, chanLabel, textEdit } = this.state;
     const { chanRender, activeIds, activeGroup } = this.state;
     const group = groups.get(activeGroup);

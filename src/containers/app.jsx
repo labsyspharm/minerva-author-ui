@@ -13,7 +13,7 @@ class AuthorApp extends Component {
     super(props);
 
     this.state = {
-      token: '',
+      token: 'Anonymous',
       loaded: false,
       minerva: false,
       rgba: false,
@@ -39,7 +39,7 @@ class AuthorApp extends Component {
   }
 
   async getImportResult() {
-    return fetch(config.url + '/api/import', {
+    return fetch('http://localhost:2020/api/import', {
       headers: {
         'pragma': 'no-cache',
         'cache-control': 'no-store'
@@ -103,13 +103,21 @@ class AuthorApp extends Component {
       channels: channels,
       width: image.width,
       height: image.height,
+      rgba: false,
+      warning: '',
+      sample_info: {
+        'name': '',
+        'text': ''
+      },
+      waypoints: [],
+      groups: [],
       maxLevel: Math.ceil(Math.log2(Math.max(image.width, image.height) / 1024)),
       url: this.props.config.minervaBaseUrl + '/' + this.props.config.minervaStage + '/image'
     });
   }
 
   render() {
-    const {token, loaded, width, height, tilesize, maxLevel, rgba, minerva, url, uuid} = this.state;
+    const {token, loaded, width, height, tilesize, maxLevel, rgba, url, uuid} = this.state;
     const {channels, sample_info, waypoints, groups, warning} = this.state;
 
     if (loaded) {
