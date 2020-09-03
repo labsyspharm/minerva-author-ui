@@ -104,7 +104,8 @@ class ImportForm extends Component {
   }
 
   openMinervaImage() {
-    return Client.getImageDimensions(this.state.imageUuid).then(res => {
+    this.setState({loading: true});
+    Client.getImageDimensions(this.state.imageUuid).then(res => {
       console.log(res);
       let image = {
         uuid: res.data.image_uuid,
@@ -112,7 +113,12 @@ class ImportForm extends Component {
         height: res.data.pixels.SizeY,
         channels: res.data.pixels.channels
       };
+      this.setState({loading: false});
       this.props.onMinervaImage(image);
+    }).catch(err => {
+      console.error(err);
+      let msg = JSON.parse(err.message);
+      this.setState({loading: false, error: msg.error});
     });
   }
 
@@ -204,7 +210,7 @@ class ImportForm extends Component {
 
   renderMinervaCloudForm() {
     return (
-      <form className="ui form" onSubmit={this.handleSubmit}>
+      <form>
        <SignIn onToken={this.onToken} enableCloudFeatures={this.props.env === 'cloud'} />
         <label htmlFor="image_uuid">Minerva Cloud image uuid: </label>
         <br/>
