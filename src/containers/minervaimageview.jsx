@@ -22,7 +22,6 @@ class MinervaImageView extends Component {
 
   constructor() {
     super();
-
     this.state = {
       old_channels: new Map([])
     }
@@ -66,7 +65,7 @@ class MinervaImageView extends Component {
     console.log('Add image at index ', this.state.index);
     viewer.addTiledImage({
       tileSource: makeTileSource(),
-      width: img.width / img.height,
+      width: img.width,
       crossOriginPolicy: 'Anonymous', 
       ajaxHeaders: {
         'Content-Type': 'application/json',
@@ -76,6 +75,7 @@ class MinervaImageView extends Component {
       loadTilesWithAjax: true,
       success: (evt) => {
         this.items.push(evt.item);
+        console.log('success: ', evt.item);
         if (this.items.length >= 3) {
           let prevItem = this.items.shift();
           viewer.world.removeItem(prevItem);
@@ -141,7 +141,7 @@ class MinervaImageView extends Component {
 				setTimeout(updateOverlays, 1);
 		});
 
-		viewer.addHandler("animation", updateOverlays);
+    viewer.addHandler("animation", updateOverlays);
   }
 
   componentDidUpdate() {

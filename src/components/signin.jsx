@@ -96,11 +96,11 @@ export default class SignIn extends React.Component {
             <div>
                 <div className="signin-button">
                     { this.state.success ? 
-                        <button className="ui button" onClick={() => this.signOut()}>
+                        <button type="button" className="ui button" onClick={() => this.signOut()}>
                             <FontAwesomeIcon icon={faSignOutAlt} size="lg" />&nbsp;
                             {this.state.email}</button>
                         :
-                        <button className="ui circular icon mini button" onClick={() => this.open()}>
+                        <button type="button" className="ui circular icon mini button" onClick={() => this.open()}>
                             Sign in <FontAwesomeIcon icon={faSignInAlt} size="lg"/>
                         </button>
                     }
@@ -134,7 +134,7 @@ export default class SignIn extends React.Component {
                         value={this.state.password}
                         onChange={this.handleChange}
                     />
-                    <Button color='blue' fluid size='large' onClick={this.signIn}>
+                    <Button type="button" color='blue' fluid size='large' onClick={this.signIn}>
                         Sign in
                     </Button>
                     </Segment>

@@ -96,7 +96,7 @@ class Repo extends Component {
 			},
       rgba: rgba,
       token: token,
-      minerva: minerva,
+      minerva: props.env === 'cloud',
       textEdit: false,
       showModal: false,
       sampleInfo: false,
