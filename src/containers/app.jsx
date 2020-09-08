@@ -22,7 +22,8 @@ class AuthorApp extends Component {
 			uuid: null,
       sample_info: {
         'name': '',
-        'text': ''
+        'text': '',
+        "rotation":0
       },
       waypoints: [],
       groups: [],
@@ -34,7 +35,8 @@ class AuthorApp extends Component {
     this.onToken = this.onToken.bind(this);
     this.onMinervaImage = this.onMinervaImage.bind(this);
 
-    console.log('Running environment: ', props.env);
+    login.configure(this.props.config);
+    Client.configure(this.props.config);
 
   }
 
@@ -51,9 +53,6 @@ class AuthorApp extends Component {
 
   async componentDidMount() {
     const {minerva, url, uuid} = this.state;
-
-    login.configure(this.props.config);
-    Client.configure(this.props.config);
 
     if (this.props.env === 'local') {
       try {
@@ -90,11 +89,17 @@ class AuthorApp extends Component {
     Client.guest = false;
   }
 
-  onMinervaImage(image) {
-    console.log('onMinervaImage: ', image);
+  onMinervaImage(image, loadedChannelNames) {
     let channels = [];
-    for (let channel of image.channels) {
-      channels.push(channel.Name);
+    if (loadedChannelNames) {
+      channels = loadedChannelNames;
+      if (loadedChannelNames.length !== image.channels.length) {
+        console.error(`Csv has ${loadedChannelNames.length} markers but the image has ${image.channels.length} channels.`);
+      }
+    } else {
+      for (let channel of image.channels) {
+        channels.push(channel.Name);
+      }
     }
     this.setState({
       loaded: true,
@@ -107,7 +112,8 @@ class AuthorApp extends Component {
       warning: '',
       sample_info: {
         'name': '',
-        'text': ''
+        'text': '',
+        "rotation": 0
       },
       waypoints: [],
       groups: [],

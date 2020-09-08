@@ -62,10 +62,9 @@ class MinervaImageView extends Component {
     const {viewer} = this;
     const makeTileSource = this.makeTileSource.bind(this);
     const {img, token, channels} = this.props;
-    console.log('Add image at index ', this.state.index);
     viewer.addTiledImage({
       tileSource: makeTileSource(),
-      width: img.width,
+      width: img.width / img.height,
       crossOriginPolicy: 'Anonymous', 
       ajaxHeaders: {
         'Content-Type': 'application/json',
@@ -75,7 +74,6 @@ class MinervaImageView extends Component {
       loadTilesWithAjax: true,
       success: (evt) => {
         this.items.push(evt.item);
-        console.log('success: ', evt.item);
         if (this.items.length >= 3) {
           let prevItem = this.items.shift();
           viewer.world.removeItem(prevItem);
@@ -310,7 +308,7 @@ class MinervaImageView extends Component {
           const zoom = viewer.viewport.getZoom();
           viewer.uuid = uuid;
           this.addChannels(pan, zoom);
-        }, 300);
+        }, 100);
       }
     }
 

@@ -1182,40 +1182,7 @@ class Repo extends Component {
         this.setState({
           groups: groups
         })
-        // fetch('http://localhost:2020/api/minerva/save', {
-        //   method: 'POST',
-        //   body: JSON.stringify({
-        //     'groups': json.groups,
-        //     'image': {
-        //       'url': img.url,
-        //       'id': img.uuid,
-        //       'width': img.width,
-        //       'height': img.height,
-        //       'maxLevel': img.maxLevel
-        //     }
-        //   }),
-        //   headers: {
-        //     "Content-Type": "application/json"
-        //   }
-        // }).then(res => {
-        //   this.setState({saving: false});
-        // });
-
-        // fetch('http://localhost:2020/api/save', {
-        //   method: 'POST',
-        //   body: JSON.stringify({
-        //     'waypoints': story_output,
-        //     'groups': group_output,
-        //     'sample_info': {
-        //       'rotation': this.state.rotation,
-        //       'name': this.state.sampleName,
-        //       'text': this.state.sampleText
-        //     }
-        //   }),
-        //   headers: {
-        //     "Content-Type": "application/json"
-        //   }
-        // });
+        // TODO - save story in Minerva Author Cloud backend
 
       });
     }

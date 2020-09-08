@@ -51,10 +51,9 @@ module.exports = {
   },
   plugins: [
     new webpack.HotModuleReplacementPlugin(),
-    new webpack.EnvironmentPlugin([
-      'MINERVA_URL',
-      'MINERVA_AUTHOR_ENV'
-    ]),
+    new webpack.EnvironmentPlugin({
+      'MINERVA_AUTHOR_ENV': 'local'
+    }),
     new CopyWebpackPlugin([{
         from: "static",
         to: "."

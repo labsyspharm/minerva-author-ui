@@ -8,6 +8,8 @@ import AuthorApp from "./containers/app";
 import "react-input-range/lib/css/index.css";
 import "./style/demo";
 
+console.log(process.env.MINERVA_AUTHOR_ENV);
+
 let minervaConfig = {
   "region": "us-east-1",
   "minervaBaseUrl": "https://nldzj7hd69.execute-api.us-east-1.amazonaws.com",
@@ -19,7 +21,7 @@ let minervaConfig = {
 ReactDOM.render(
   <div className="Demo">
     <div className="Banner"/>
-    <AuthorApp env={'cloud'} config={minervaConfig} />
+    <AuthorApp env={process.env.MINERVA_AUTHOR_ENV} config={minervaConfig} />
   </div>,
   document.getElementById("minerva")
 );

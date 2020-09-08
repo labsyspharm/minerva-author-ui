@@ -1,4 +1,4 @@
-.signin-button {
+.signout-button {
     position: fixed;
     right: 10px;
     top: 10px;
@@ -17,4 +17,8 @@
   .minerva-cloud-logo {
     width: 300px;
     margin-bottom: 10px;
+  }
+
+  .signin-cloud-logo {
+    width: 100px;
   }

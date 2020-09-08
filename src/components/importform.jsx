@@ -8,6 +8,7 @@ import 'semantic-ui-css/semantic.min.css';
 import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
 import { faExclamationCircle } from "@fortawesome/free-solid-svg-icons";
 import CloudBrowserModal from "./cloudbrowsermodal";
+import MarkerCsvParser from "../util/markercsvparser";
 
 class ImportForm extends Component {
   constructor() {
@@ -21,9 +22,10 @@ class ImportForm extends Component {
       showCloudBrowser: false,
       currentFileFolder: null,
       currentMarkerFolder: null,
-      showMinervaFields: false,
       imageUuid: '',
-      output: ''
+      output: '',
+      signedIn: false,
+      loadedChannelNames: null
     }
 
     this.handleSubmit = this.handleSubmit.bind(this);
@@ -37,9 +39,29 @@ class ImportForm extends Component {
     this.imageUuidChanged = this.imageUuidChanged.bind(this);
     this.outputChanged = this.outputChanged.bind(this);
     this.onMinervaCloudUuid = this.onMinervaCloudUuid.bind(this);
+    this.onSignout = this.onSignout.bind(this);
+    this.readMarkerFile = this.readMarkerFile.bind(this);
 
     this.filePath = React.createRef();
     this.markerPath = React.createRef();
+
+  }
+
+  readMarkerFile(evt) {
+    let file = evt.target.files[0];
+    if (file.size > 100000) {
+      console.error('Csv file too large: ', file);
+      return;
+    }
+
+    let reader = new FileReader();
+    reader.onload = (event) => {
+      let csvData = event.target.result; 
+      let parser = new MarkerCsvParser();
+      let channelNames = parser.parse(csvData);
+      this.setState({loadedChannelNames: channelNames});
+    };
+    reader.readAsText(file);
   }
 
   handleSubmit(event) {
@@ -114,7 +136,7 @@ class ImportForm extends Component {
         channels: res.data.pixels.channels
       };
       this.setState({loading: false});
-      this.props.onMinervaImage(image);
+      this.props.onMinervaImage(image, this.state.loadedChannelNames);
     }).catch(err => {
       console.error(err);
       let msg = JSON.parse(err.message);
@@ -124,8 +146,9 @@ class ImportForm extends Component {
 
   onToken(data) {
     Client.setUser(data.user);
-    this.setState({showMinervaFields: true});
+    this.setState({signedIn: true});
     this.props.onToken(data);
+    console.log("onToken: ", data);
   }
 
   imageUuidChanged(evt) {
@@ -141,6 +164,10 @@ class ImportForm extends Component {
     if (image) {
       this.setState({imageUuid: image.uuid});
     }
+  }
+
+  onSignout() {
+    this.setState({ signedIn: false });
   }
 
   render() {
@@ -210,23 +237,35 @@ class ImportForm extends Component {
 
   renderMinervaCloudForm() {
     return (
-      <form>
-       <SignIn onToken={this.onToken} enableCloudFeatures={this.props.env === 'cloud'} />
-        <label htmlFor="image_uuid">Minerva Cloud image uuid: </label>
-        <br/>
-        <div className="ui action input">
-          <input className='full-width-input' id="imageUuid" name="imageUuid" type="text" value={this.state.imageUuid} onChange={this.imageUuidChanged}/>
-          <button type="button" onClick={this.openCloudBrowser} className="ui button">Browse</button>
-            <CloudBrowserModal open={this.state.showCloudBrowser} close={this.onMinervaCloudUuid}
-              title="Select an image" 
-              onMinervaCloudUuid={this.onMinervaCloudUuid} 
-              />
-        </div>
-        <br/><br/>
-        <button type="button" className="ui button" onClick={this.openMinervaImage}> Import </button>
-          <ClipLoader animation="border"
-          size={15} color={"#FFFFFF"}
-          loading={this.state.loading}/>
+      <form class="ui form">
+         <SignIn onToken={this.onToken} onSignout={this.onSignout} />
+        { this.state.signedIn ? 
+          <div>
+                <label htmlFor="image_uuid">Minerva Cloud image uuid: </label>
+                <br/>
+                <div className="ui action input">
+                  <input className='full-width-input' id="imageUuid" name="imageUuid" type="text" value={this.state.imageUuid} onChange={this.imageUuidChanged}/>
+                  <button type="button" onClick={this.openCloudBrowser} className="ui button">Browse</button>
+                    <CloudBrowserModal open={this.state.showCloudBrowser} close={this.onMinervaCloudUuid}
+                      title="Select an image" 
+                      onMinervaCloudUuid={this.onMinervaCloudUuid} 
+                      />
+                </div>
+                <br/>
+                <br/>
+                <div>
+                  <label for="markerFile" className="ui icon button">Select marker file</label>
+                  <input type="file" id="markerFile" style={{ display: "none" }} onChange={this.readMarkerFile} />
+                </div>
+                <br/><br/>
+                <button type="button" className="ui button" onClick={this.openMinervaImage}> Import </button>
+                  <ClipLoader animation="border"
+                  size={15} color={"#FFFFFF"}
+                  loading={this.state.loading}/>
+          </div>
+        : null }
+       
+
       </form>
     );
   }

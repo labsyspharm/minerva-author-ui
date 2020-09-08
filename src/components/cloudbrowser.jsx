@@ -2,8 +2,9 @@ import React from "react";
 import 'semantic-ui-css/semantic.min.css'
 import '../style/filebrowser.css';
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
-import { faFolder, faFolderOpen, faFile, faCheck, faImage, faAngleLeft } from '@fortawesome/free-solid-svg-icons'
+import { faFolder, faFolderOpen, faFile, faCheck, faImage, faAngleLeft, faCircleNotch } from '@fortawesome/free-solid-svg-icons'
 import Client from '../MinervaClient';
+import Loader from '../components/loader';
 
 class Directory {
     constructor() {
@@ -19,18 +20,21 @@ export default class CloudBrowser extends React.Component {
         super(props);
 
         this.state = {
-            root: new Directory()
+            root: new Directory(),
+            loading: false,
+            dimmer: false
         }
         this.state.activeFolder = this.state.root;
         this.navigateBack = this.navigateBack.bind(this);
     }
 
     componentDidMount() {
-        console.log('activeFolder: ', this.state.activeFolder);
         this.navigateRoot();
     }
 
     navigateRoot() {
+        this.setState({loading: true, dimmer: false});
+        this.showDimmer();
         Client.getRepositories().then(response => {
             let repositories = response.included.repositories;
             let root = new Directory();
@@ -39,19 +43,30 @@ export default class CloudBrowser extends React.Component {
                 entry.isDir = true;
             }
             this.setState({root: root});
-            this.setState({activeFolder: root});
+            this.setState({activeFolder: root, loading: false, dimmer: false});
         });
     }
 
-    browse(repositoryUuid, parent=false) {
+    browse(repositoryUuid) {
+        this.setState({loading: true});
+        this.showDimmer();
         return Client.listImagesInRepository(repositoryUuid).then(response => {
+            this.setState({loading: false, dimmer: false});
             return response;
         });
     }
 
-    openItem(item, parent=false) {
+    showDimmer() {
+        setTimeout(() => {
+            if (this.state.loading) {
+                this.setState({dimmer: true});
+            }
+        }, 300);
+    }
+
+    openItem(item) {
         if (item.isDir) {
-            this.browse(item.uuid, parent).then(response => {
+            this.browse(item.uuid).then(response => {
                 item.children = response.data;
 
                 let activeFolder = new Directory();
@@ -61,6 +76,8 @@ export default class CloudBrowser extends React.Component {
                 this.setState({activeFolder: activeFolder});
                 this.forceUpdate();
             });
+        } else {
+            this.selectFile(item);
         }
     }
 
@@ -133,7 +150,10 @@ export default class CloudBrowser extends React.Component {
 
     render() {
         return (
-            <div>
+            <div className="ui blurring segment">
+                { this.state.dimmer ? <div class="ui active inverted dimmer">
+                    <Loader active={this.state.loading} />
+                </div> : null }
                 <div className="filebrowser-location-bar">
                     <button type="button" onClick={this.navigateBack} className="ui button basic" disabled={this.state.activeFolder.isRoot}>
                         <FontAwesomeIcon icon={faAngleLeft} size="lg"/>
