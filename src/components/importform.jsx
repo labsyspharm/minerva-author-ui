@@ -6,7 +6,7 @@ import Client from '../MinervaClient';
 import "regenerator-runtime/runtime";
 import 'semantic-ui-css/semantic.min.css';
 import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
-import { faExclamationCircle } from "@fortawesome/free-solid-svg-icons";
+import { faExclamationCircle, faCheckCircle } from "@fortawesome/free-solid-svg-icons";
 import CloudBrowserModal from "./cloudbrowsermodal";
 import MarkerCsvParser from "../util/markercsvparser";
 
@@ -25,7 +25,8 @@ class ImportForm extends Component {
       imageUuid: '',
       output: '',
       signedIn: false,
-      loadedChannelNames: null
+      loadedChannelNames: null,
+      markerFilename: null
     }
 
     this.handleSubmit = this.handleSubmit.bind(this);
@@ -49,19 +50,17 @@ class ImportForm extends Component {
 
   readMarkerFile(evt) {
     let file = evt.target.files[0];
-    if (file.size > 100000) {
-      console.error('Csv file too large: ', file);
-      return;
-    }
-
-    let reader = new FileReader();
-    reader.onload = (event) => {
-      let csvData = event.target.result; 
-      let parser = new MarkerCsvParser();
-      let channelNames = parser.parse(csvData);
-      this.setState({loadedChannelNames: channelNames});
+    let parser = new MarkerCsvParser();
+    let onChannels = (channelNames) => {
+      this.setState({loadedChannelNames: channelNames, 
+        markerFilename: file.name,
+        error: null});
     };
-    reader.readAsText(file);
+    let onError = (err) => {
+      console.error(err);
+      this.setState({error: 'Invalid marker csv file format.'});
+    };
+    parser.readMarkerFile(file, onChannels, onError);
   }
 
   handleSubmit(event) {
@@ -126,9 +125,17 @@ class ImportForm extends Component {
   }
 
   openMinervaImage() {
+    if (!this.state.imageUuid) {
+      this.setState({error: "Image uuid is missing"});
+      return;
+    }
+    let uuidRegex = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-5][0-9a-f]{3}-[089ab][0-9a-f]{3}-[0-9a-f]{12}$/i;
+    if (!this.state.imageUuid.match(uuidRegex)) {
+      this.setState({error: "Image uuid is invalid"});
+      return;
+    }
     this.setState({loading: true});
     Client.getImageDimensions(this.state.imageUuid).then(res => {
-      console.log(res);
       let image = {
         uuid: res.data.image_uuid,
         width: res.data.pixels.SizeX,
@@ -253,9 +260,14 @@ class ImportForm extends Component {
                 </div>
                 <br/>
                 <br/>
-                <div>
-                  <label for="markerFile" className="ui icon button">Select marker file</label>
+                <div className="ui">
+                  <label htmlFor="markerFile" className="ui icon button">Select marker file
+                   &nbsp;<FontAwesomeIcon hidden={!this.state.markerFilename} color="green" icon={faCheckCircle} />
+                  </label>
                   <input type="file" id="markerFile" style={{ display: "none" }} onChange={this.readMarkerFile} />
+                  <label>
+                    {this.state.markerFilename}
+                  </label>
                 </div>
                 <br/><br/>
                 <button type="button" className="ui button" onClick={this.openMinervaImage}> Import </button>
