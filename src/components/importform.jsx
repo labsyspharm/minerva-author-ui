@@ -6,7 +6,7 @@ import Client from '../MinervaClient';
 import "regenerator-runtime/runtime";
 import 'semantic-ui-css/semantic.min.css';
 import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
-import { faExclamationCircle, faCheckCircle } from "@fortawesome/free-solid-svg-icons";
+import { faExclamationCircle, faCheckCircle, faAngleLeft, faFileAlt} from "@fortawesome/free-solid-svg-icons";
 import CloudBrowserModal from "./cloudbrowsermodal";
 import MarkerCsvParser from "../util/markercsvparser";
 import Loader from "../components/loader";
@@ -346,19 +346,13 @@ class ImportForm extends Component {
     let list = this.state.stories.map(story => {
       let name = story.sample_info.name || 'Unnamed story';
       let uuid = story.uuid;
-      let imageName = story.image_name ? `(${story.image_name})` : '';
-      let description = story.sample_info.text;
-      if (description && description.length > 40) {
-        description = description.substring(0, 40);
-        description += '...';
-      }
-      console.log(uuid);
       return (
         <div class="item" key={story.uuid}>
-        <div class="content">
-          <a class="header" onClick={() => this.loadCloudStory(uuid)}>{name} {imageName}</a>
-          <div class="description">{description}</div>
-        </div>
+          <i className="icon middle aligned"><FontAwesomeIcon icon={faFileAlt} size="lg" inverse /></i>
+          <div class="content">
+            <a class="header" onClick={() => this.loadCloudStory(uuid)}>{name}</a>
+            <div class="description">Image: {story.image_name} &mdash; Author: {story.author_name}</div>
+          </div>
       </div>
       );
     });

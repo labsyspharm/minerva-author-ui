@@ -2,6 +2,7 @@ import React, { Component } from "react";
 
 import Repo from "./repo";
 import Import from "./import";
+import Preview from "./preview";
 
 import Client from '../MinervaClient';
 import login from '../login';
@@ -15,6 +16,7 @@ class AuthorApp extends Component {
     this.state = {
       token: 'Anonymous',
       loaded: false,
+      preview: false,
       minerva: false,
       rgba: false,
       warning: '',
@@ -37,6 +39,7 @@ class AuthorApp extends Component {
     this.onToken = this.onToken.bind(this);
     this.onMinervaImage = this.onMinervaImage.bind(this);
     this.onStoryLoaded = this.onStoryLoaded.bind(this);
+    this.onPreview = this.onPreview.bind(this);
 
     login.configure(this.props.config);
     Client.configure(this.props.config);
@@ -129,18 +132,30 @@ class AuthorApp extends Component {
     });
   }
 
+  onPreview(previewOn) {
+    console.log('preview');
+    this.setState({ preview: previewOn });
+  }
+
   render() {
     const {token, loaded, width, height, tilesize, maxLevel, rgba, url, uuid, storyUuid, imageName} = this.state;
     const {channels, sample_info, waypoints, groups, warning} = this.state;
 
     if (loaded) {
-      return (<Repo env={this.props.env} token={token} rgba={rgba}
-                    channels={channels} waypoints={waypoints}
-                    groups={groups} url={url} uuid={uuid} maxLevel={maxLevel}
-                    width={width} height={height} tilesize={tilesize}
-                    sample_info={sample_info} warning={warning} storyUuid={storyUuid}
-                    imageName={imageName}
-                     />
+      if (!this.state.preview) {
+        return (
+        <Repo   env={this.props.env} token={token} rgba={rgba}
+                channels={channels} waypoints={waypoints}
+                groups={groups} url={url} uuid={uuid} maxLevel={maxLevel}
+                width={width} height={height} tilesize={tilesize}
+                sample_info={sample_info} warning={warning} storyUuid={storyUuid}
+                imageName={imageName}
+                onPreview={() => this.onPreview(true)}
+           />
+        )
+      } else return (
+        <Preview onBack={() => this.onPreview(false)} 
+          story={this.state.story} />
       )
     }
     return (

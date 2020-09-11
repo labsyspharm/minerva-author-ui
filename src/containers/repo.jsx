@@ -187,6 +187,7 @@ class Repo extends Component {
     this.handleStoryChange = this.handleStoryChange.bind(this);
     this.handleStoryInsert = this.handleStoryInsert.bind(this);
     this.handleStoryRemove = this.handleStoryRemove.bind(this);
+    this.handleAuthorName = this.handleAuthorName.bind(this);
     this.deleteStory = this.deleteStory.bind(this);
     this.handleSelectGroup = this.handleSelectGroup.bind(this);
     this.handleViewport = this.handleViewport.bind(this);
@@ -818,6 +819,12 @@ class Repo extends Component {
     })
   }
 
+  handleAuthorName(event) {
+    this.setState({
+      authorName: event.target.value
+    });
+  }
+
   handleArrowText(event) {
 
     const {stories, activeStory, activeGroup, viewport} = this.state;
@@ -1185,7 +1192,8 @@ class Repo extends Component {
         'name': this.state.sampleName,
         'text': this.state.sampleText
       },
-      'image_name': this.state.imageName
+      'image_name': this.state.imageName,
+      'author_name': this.state.authorName
     };
     if (this.state.storyUuid) {
       story_definition.uuid = this.state.storyUuid;
@@ -1318,6 +1326,11 @@ class Repo extends Component {
   dismissWarning() {
     this.setState({warning: ''});
   }
+
+  preview() {
+    this.props.onPreview();
+  }
+
   renderWarning() {
     if (!this.state.warning) {
       return null;
@@ -1449,6 +1462,9 @@ class Repo extends Component {
           <button className={editStoryButton} onClick={() => this.toggleTextEdit(true)}>
             Edit Story
           </button>
+          <button className="ui button teal" onClick={() => this.preview()}>
+            Preview
+          </button>
           {saveButton}
         </span>
       )
@@ -1513,10 +1529,16 @@ class Repo extends Component {
               />
 						  <textarea placeholder='Sample Description' value={this.state.sampleText}
 						  onChange={this.handleSampleText} />
-              <input type='text' placeholder='Rotation'
-              value={this.state.rotation? this.state.rotation : ''}
-              onChange={this.handleRotation}
-              />
+              <input type='text' placeholder='Author Name'
+                value={this.state.authorName} onChange={this.handleAuthorName } />
+              <div class="field">
+                <label>Rotation (degrees)</label>
+               <input type='text' placeholder='Rotation'
+                value={this.state.rotation? this.state.rotation : ''}
+               onChange={this.handleRotation}
+               />
+               <input type="range" className="image-rotation-range" min="-180" max="180" value={this.state.rotation} onChange={this.handleRotation} id="myRange"></input>
+              </div>
               <div className="ui action input">
                 <input ref={this.filePath} className='full-width-input' id="filepath" name="filepath" type="text" placeholder='Channel groups dat file'/>
                 <button type="button" onClick={this.openFileBrowser} className="ui button">Browse</button>
