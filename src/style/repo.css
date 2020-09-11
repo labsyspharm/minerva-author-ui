@@ -40,6 +40,9 @@
 .bg-trans {
   background: rgba(0, 0, 0, .8);
 }
+.bg-none {
+  background: none;
+}
 
 .image-rotation-range {
   width: 100%;

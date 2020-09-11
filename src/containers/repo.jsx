@@ -1513,7 +1513,10 @@ class Repo extends Component {
             {arrowHidden? 'Show Arrow' : 'Hide Arrow'}
             </button>
             <form className="ui form" onSubmit={this.toggleModal}>
-              <input type='text' placeholder='Arrow Angle'
+              <input type='text' placeholder='Arrow Angle' 
+              value={arrowAngle} onChange={this.handleArrowAngle}
+              />
+              <input type='range' min="0" max="360" style={{ "width": "100%"}}
               value={arrowAngle} onChange={this.handleArrowAngle}
               />
 						  <textarea placeholder='Arrow Description' value={arrowText}
@@ -1552,7 +1555,7 @@ class Repo extends Component {
 				</Modal>
 
         <div className="row justify-content-between">
-          <div className="col-md-6">
+          <div className="col-md-6 col-lg-6 col-xl-4">
 
             {tabBar}
             {this.renderProgressBar()}

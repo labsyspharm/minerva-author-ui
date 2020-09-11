@@ -46,8 +46,8 @@ class Controls extends Component {
       return (
 			<div className="ui form">
 				<div className="row">
-					<div className="col no-right-padding">
-						<div className="bg-trans">
+					<div className="col no-right-padding bg-trans">
+						<div className="">
               <div className="row">
                 <div className="col-5">
                   <div className="font-white">
