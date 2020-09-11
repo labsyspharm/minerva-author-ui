@@ -160,17 +160,47 @@ class MinervaClient {
         return this.apiFetch('POST', `/image/${uuid}/rendering_settings`, { body: json });
     }
 
+    saveStory(json) {
+        let method = json.uuid ? 'PUT' : 'POST';
+        return this.apiFetch(method, `/author/story`, { body: json });
+    }
+
+    getStory(uuid) {
+        return this.apiFetch('GET', `/author/story/${uuid}`);
+    }
+
+    listStories() {
+        return this.apiFetch('GET', `/author/story`);
+    }
+
+    _getSession() {
+        let token = this.currentUser.getSession((err, session) => {
+            return session.idToken.jwtToken;
+        });
+        // When token has expired, cognito library will refresh the token, but return
+        // 'undefined' and the callback is not executed. This seems like a bug.
+        // As a workaround, call getSession again if it returns 'undefined'.
+        if (token) {
+            return token;
+        } else {
+            return this.currentUser.getSession((err, session) => {
+                return session.idToken.jwtToken;
+            });
+        }
+    }
+
     apiFetch(method, route, config = {}) {
-        console.log('apiFetch');
-        if (!this.guest && !this.currentUser) {
-            console.error("Tried to call apiFetch but no current session available.");
+        console.log(method, route, config);
+        if (!this.currentUser) {
+            console.warn("Tried to call apiFetch but no current session available.");
             return Promise.reject();
         }
         let params = config.params;
         let body = config.body;
         let binary = config.binary;
         const defaultHeaders = {
-            'Content-Type': 'application/json'
+            'Content-Type': 'application/json',
+            'Accept': 'application/json'
         };
         let headers = { ...defaultHeaders, ...config.headers };
 
@@ -196,15 +226,10 @@ class MinervaClient {
             args['body'] = JSON.stringify(body)
         }
         if (this.guest) {
-            console.log('Anonymous');
             return this._fetch(url, args, 'Anonymous', headers, binary);
         } else {
-            return this.currentUser.getSession((err, session) => {
-                if (err) {
-                    console.error(err);
-                }
-                return this._fetch(url, args, session.idToken.jwtToken, headers, binary);
-            });
+            let token = this._getSession();
+            return this._fetch(url, args, token, headers, binary);
         }
     }
 
@@ -241,18 +266,12 @@ class MinervaClient {
 
     getToken() {
         if (!this.currentUser) {
-            return Promise.reject();
+            return null;
         }
         if (this.guest) {
-            return Promise.resolve('Anonymous');
+            return 'Anonymous';
         }
-
-        return new Promise((resolve, reject) => {
-            this.currentUser.getSession((err, session) => {
-                resolve('Bearer ' + session.idToken.jwtToken);
-            });
-        });
-
+        return this._getSession();
     }
 
 

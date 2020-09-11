@@ -75,7 +75,9 @@ class Repo extends Component {
 				range: {min: 0, max: 32768},
         visible: true
 			}];
-		}));
+    }));
+    
+    console.log('imageName: ', props.imageName);
 
 		this.state = {
       error: null,
@@ -93,7 +95,8 @@ class Repo extends Component {
           maxLevel: maxLevel,
           tilesize: tilesize,
 					url: url 
-			},
+      },
+      imageName: props.imageName,
       rgba: rgba,
       token: token,
       textEdit: false,
@@ -122,8 +125,9 @@ class Repo extends Component {
 						return g.label == v.group;
 					})
 				}]
-			})),
-      activeGroup: null,
+      })),
+      storyUuid: props.storyUuid,
+      activeGroup: groups.length > 0 ? 0 : null,
       groups: new Map(groups.map((v,k) => {
 				return [k, {
 					activeIds: v.channels.map(chan => {
@@ -1136,7 +1140,7 @@ class Repo extends Component {
     let {groups} = this.state;
     const {stories, chanLabel} = this.state;
     const {token, img} = this.state;
-    let minerva = props.env === 'cloud';
+    let minerva = this.props.env === 'cloud';
 
     const group_output = Array.from(groups.values()).map(v => {
       const channels = v.activeIds.map(id => {
@@ -1173,6 +1177,23 @@ class Repo extends Component {
 
     this.setState({saving: true});
 
+    let story_definition = {
+      'waypoints': story_output,
+      'groups': group_output,
+      'sample_info': {
+        'rotation': this.state.rotation,
+        'name': this.state.sampleName,
+        'text': this.state.sampleText
+      },
+      'image_name': this.state.imageName
+    };
+    if (this.state.storyUuid) {
+      story_definition.uuid = this.state.storyUuid;
+    }
+    if (this.state.img.uuid) {
+      story_definition.imageUuid = this.state.img.uuid;
+    }
+
     if (minerva) {
       Client.createRenderingSettings(img.uuid, { groups: group_output }).then(json => {
         
@@ -1182,8 +1203,16 @@ class Repo extends Component {
         this.setState({
           groups: groups
         })
-        // TODO - save story in Minerva Author Cloud backend
-
+        Client.saveStory(story_definition).then(res => {
+          console.log(res);
+          this.setState({saving: false});
+        }).catch(err => {
+          console.error(err);
+          this.setState({saving: false});
+        });
+      }).catch(err => {
+        console.error(err);
+        this.setState({saving: false});
       });
     }
     else {
@@ -1411,6 +1440,9 @@ class Repo extends Component {
     if (!rgba) {
       tabBar = (
         <span className="ui buttons">
+          <button className="ui button" onClick={() => this.toggleSampleInfo()}>
+              Sample Info
+          </button>
           <button className={editGroupsButton} onClick={() => this.toggleTextEdit(false)}>
             Edit Groups
           </button>
@@ -1499,9 +1531,7 @@ class Repo extends Component {
 
         <div className="row justify-content-between">
           <div className="col-md-6">
-              <button className="ui button compact" onClick={() => this.toggleSampleInfo()}>
-              Sample Info
-              </button>
+
             {tabBar}
             {this.renderProgressBar()}
             {groupBar}

@@ -4,6 +4,7 @@ import SvgArrow from '../components/svgarrow.jsx'
 
 import '../style/imageview';
 import styled from 'styled-components';
+import Client from '../MinervaClient';
 
 const IntToHex = c => {
   var hex = c.toString(16);
@@ -48,7 +49,14 @@ class MinervaImageView extends Component {
 
     return {
 			// Custom functions
-			getTileUrl: getTileUrl,
+      getTileUrl: getTileUrl,
+      getTileAjaxHeaders: (level, x, y) => {
+        return {
+            'Content-Type': 'application/json',
+            'Authorization': Client.getToken(),
+            'Accept': 'image/jpeg'
+        }
+      },   
 			// Standard parameters
 			tileSize: img.tilesize,
 			width: img.width,
@@ -66,11 +74,6 @@ class MinervaImageView extends Component {
       tileSource: makeTileSource(),
       width: img.width / img.height,
       crossOriginPolicy: 'Anonymous', 
-      ajaxHeaders: {
-        'Content-Type': 'application/json',
-        'Authorization': token,
-        'Accept': 'image/jpeg'
-      },
       loadTilesWithAjax: true,
       success: (evt) => {
         this.items.push(evt.item);

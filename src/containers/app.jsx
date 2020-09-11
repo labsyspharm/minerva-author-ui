@@ -19,7 +19,9 @@ class AuthorApp extends Component {
       rgba: false,
       warning: '',
       url: 'http://localhost:2020/api/u16',
-			uuid: null,
+      uuid: null,
+      storyUuid: null,
+      imageName: null,
       sample_info: {
         'name': '',
         'text': '',
@@ -34,6 +36,7 @@ class AuthorApp extends Component {
 
     this.onToken = this.onToken.bind(this);
     this.onMinervaImage = this.onMinervaImage.bind(this);
+    this.onStoryLoaded = this.onStoryLoaded.bind(this);
 
     login.configure(this.props.config);
     Client.configure(this.props.config);
@@ -89,6 +92,15 @@ class AuthorApp extends Component {
     Client.guest = false;
   }
 
+  onStoryLoaded(story) {
+    this.setState({
+      sample_info: story.sample_info,
+      waypoints: story.waypoints,
+      groups: story.groups,
+      storyUuid: story.uuid
+    });
+  }
+
   onMinervaImage(image, loadedChannelNames) {
     let channels = [];
     if (loadedChannelNames) {
@@ -101,29 +113,24 @@ class AuthorApp extends Component {
         channels.push(channel.Name);
       }
     }
+    console.log(image);
     this.setState({
       loaded: true,
-      tilesize: 1024,
+      tilesize: image.tile_size,
       uuid: image.uuid,
       channels: channels,
       width: image.width,
       height: image.height,
       rgba: false,
       warning: '',
-      sample_info: {
-        'name': '',
-        'text': '',
-        "rotation": 0
-      },
-      waypoints: [],
-      groups: [],
+      imageName: image.name,
       maxLevel: Math.ceil(Math.log2(Math.max(image.width, image.height) / 1024)),
       url: this.props.config.minervaBaseUrl + '/' + this.props.config.minervaStage + '/image'
     });
   }
 
   render() {
-    const {token, loaded, width, height, tilesize, maxLevel, rgba, url, uuid} = this.state;
+    const {token, loaded, width, height, tilesize, maxLevel, rgba, url, uuid, storyUuid, imageName} = this.state;
     const {channels, sample_info, waypoints, groups, warning} = this.state;
 
     if (loaded) {
@@ -131,12 +138,13 @@ class AuthorApp extends Component {
                     channels={channels} waypoints={waypoints}
                     groups={groups} url={url} uuid={uuid} maxLevel={maxLevel}
                     width={width} height={height} tilesize={tilesize}
-                    sample_info={sample_info} warning={warning}
+                    sample_info={sample_info} warning={warning} storyUuid={storyUuid}
+                    imageName={imageName}
                      />
       )
     }
     return (
-      <Import env={this.props.env} onToken={this.onToken} onMinervaImage={this.onMinervaImage} />
+      <Import env={this.props.env} onToken={this.onToken} onMinervaImage={this.onMinervaImage} onStoryLoaded={this.onStoryLoaded} />
     );
   }
 }
