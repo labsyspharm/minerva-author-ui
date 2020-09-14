@@ -3,9 +3,16 @@ import {
   AuthenticationDetails,
   CognitoUser,
 } from 'amazon-cognito-identity-js';
-import MinervaConfig from './config';
 
 class Login {
+
+  configure(config) {
+    this.userPool = new CognitoUserPool({
+      UserPoolId: config.CognitoUserPoolId,
+      ClientId: config.CognitoClientId
+    });
+  }
+
   authenticateUser(cognitoUser, authenticationDetails) {
     return new Promise(function (resolve, reject) {
       cognitoUser.authenticateUser(authenticationDetails, {
@@ -19,7 +26,7 @@ class Login {
 
   authenticate(username, password) {
 
-    const minervaPool = this._getUserPool();
+    const minervaPool = this.userPool;
 
     const cognitoUser = new CognitoUser({
       Username: username,
@@ -41,15 +48,13 @@ class Login {
   }
 
   storedAuthentication() {
-    const userPool = this._getUserPool();
     return new Promise((resolve, reject) => {
-      let cognitoUser = userPool.getCurrentUser();
+      let cognitoUser = this.userPool.getCurrentUser();
       if (cognitoUser != null) {
         cognitoUser.getSession((err, session) => {
           if (err) {
             reject(err);
           }
-          console.log("session: ", session);
           resolve(cognitoUser);
         });
       } else {
@@ -60,19 +65,12 @@ class Login {
   }
 
   logout() {
-    const userPool = this._getUserPool();
-    let cognitoUser = userPool.getCurrentUser();
+    let cognitoUser = this.userPool.getCurrentUser();
     if (cognitoUser) {
       cognitoUser.signOut();
     }
   }
 
-  _getUserPool() {
-    return new CognitoUserPool({
-      UserPoolId: MinervaConfig.CognitoUserPoolId,
-      ClientId: MinervaConfig.CognitoClientId
-    });
-  }
 }
 
 var login = new Login();

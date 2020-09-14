@@ -38,6 +38,10 @@ div.input-range__slider {
   border-color: yellow;
 }
 
+.input-range {
+  margin-top: 5px;
+}
+
 .negative-top-margin {
   margin-top: -1em;
 }

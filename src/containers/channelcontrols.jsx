@@ -10,6 +10,9 @@ class ChannelControls extends Component {
 
     const channelControls = Array.from(channels.values()).map(channel => {
       const { id, color, label, range, maxRange, visible } = channel;
+      if (Object.keys(channel).length === 0) {
+        return null;
+      }
       return (
         <ChannelControl key={ id } id={ id } color={ color } range={ range }
                         minRange={0} maxRange={maxRange} label={label}

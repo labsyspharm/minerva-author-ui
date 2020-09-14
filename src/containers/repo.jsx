@@ -64,7 +64,7 @@ class Repo extends Component {
     super();
 
     const { width, height, maxLevel, tilesize,
-      token, rgba, minerva, uuid, url, warning} = props;
+      token, rgba, uuid, url, warning} = props;
     const { channels, sample_info, waypoints, groups } = props;
 
 		const defaultChanRender = new Map(channels.map((v,k) => {
@@ -75,7 +75,9 @@ class Repo extends Component {
 				range: {min: 0, max: 32768},
         visible: true
 			}];
-		}));
+    }));
+    
+    console.log('imageName: ', props.imageName);
 
 		this.state = {
       error: null,
@@ -93,10 +95,10 @@ class Repo extends Component {
           maxLevel: maxLevel,
           tilesize: tilesize,
 					url: url 
-			},
+      },
+      imageName: props.imageName,
       rgba: rgba,
       token: token,
-      minerva: minerva,
       textEdit: false,
       showModal: false,
       sampleInfo: false,
@@ -123,8 +125,9 @@ class Repo extends Component {
 						return g.label == v.group;
 					})
 				}]
-			})),
-      activeGroup: null,
+      })),
+      storyUuid: props.storyUuid,
+      activeGroup: groups.length > 0 ? 0 : null,
       groups: new Map(groups.map((v,k) => {
 				return [k, {
 					activeIds: v.channels.map(chan => {
@@ -184,6 +187,7 @@ class Repo extends Component {
     this.handleStoryChange = this.handleStoryChange.bind(this);
     this.handleStoryInsert = this.handleStoryInsert.bind(this);
     this.handleStoryRemove = this.handleStoryRemove.bind(this);
+    this.handleAuthorName = this.handleAuthorName.bind(this);
     this.deleteStory = this.deleteStory.bind(this);
     this.handleSelectGroup = this.handleSelectGroup.bind(this);
     this.handleViewport = this.handleViewport.bind(this);
@@ -815,6 +819,12 @@ class Repo extends Component {
     })
   }
 
+  handleAuthorName(event) {
+    this.setState({
+      authorName: event.target.value
+    });
+  }
+
   handleArrowText(event) {
 
     const {stories, activeStory, activeGroup, viewport} = this.state;
@@ -1136,7 +1146,8 @@ class Repo extends Component {
 
     let {groups} = this.state;
     const {stories, chanLabel} = this.state;
-    const {minerva, token, img} = this.state;
+    const {token, img} = this.state;
+    let minerva = this.props.env === 'cloud';
 
     const group_output = Array.from(groups.values()).map(v => {
       const channels = v.activeIds.map(id => {
@@ -1173,48 +1184,60 @@ class Repo extends Component {
 
     this.setState({saving: true});
 
-    fetch('http://localhost:2020/api/stories', {
-      method: 'POST',
-      body: JSON.stringify({
-        'stories': [{
-          'name': '',
-          'text': '',
-          'waypoints': story_output
-        }]
-      }),
-      headers: {
-        "Content-Type": "application/json"
-      }
-    })
+    let story_definition = {
+      'waypoints': story_output,
+      'groups': group_output,
+      'sample_info': {
+        'rotation': this.state.rotation,
+        'name': this.state.sampleName,
+        'text': this.state.sampleText
+      },
+      'image_name': this.state.imageName,
+      'author_name': this.state.authorName
+    };
+    if (this.state.storyUuid) {
+      story_definition.uuid = this.state.storyUuid;
+    }
+    if (this.state.img.uuid) {
+      story_definition.imageUuid = this.state.img.uuid;
+    }
 
     if (minerva) {
       Client.createRenderingSettings(img.uuid, { groups: group_output }).then(json => {
-        this.setState({saving: false});
+        
         json.groups.forEach((g,i) => {
           groups.get(i).id = g.id
         })
         this.setState({
           groups: groups
         })
-        fetch('http://localhost:2020/api/minerva/yaml', {
-          method: 'POST',
-          body: JSON.stringify({
-            'groups': json.groups,
-            'image': {
-              'url': img.url,
-              'id': img.uuid,
-              'width': img.width,
-              'height': img.height,
-              'maxLevel': img.maxLevel
-            }
-          }),
-          headers: {
-            "Content-Type": "application/json"
-          }
-        })
+        Client.saveStory(story_definition).then(res => {
+          console.log(res);
+          this.setState({saving: false});
+        }).catch(err => {
+          console.error(err);
+          this.setState({saving: false});
+        });
+      }).catch(err => {
+        console.error(err);
+        this.setState({saving: false});
       });
     }
     else {
+      fetch('http://localhost:2020/api/stories', {
+        method: 'POST',
+        body: JSON.stringify({
+          'stories': [{
+            'name': '',
+            'text': '',
+            'waypoints': story_output
+          }]
+        }),
+        headers: {
+          "Content-Type": "application/json"
+        }
+      })
+      
       let render = fetch('http://localhost:2020/api/render', {
         method: 'POST',
         body: JSON.stringify({
@@ -1303,11 +1326,16 @@ class Repo extends Component {
   dismissWarning() {
     this.setState({warning: ''});
   }
+
+  preview() {
+    this.props.onPreview();
+  }
+
   renderWarning() {
-    console.log(this.state.warning)
     if (!this.state.warning) {
       return null;
     }
+    console.log(this.state.warning);
     return (
       <div className="import-warning">
         <div className="ui icon message">
@@ -1338,7 +1366,8 @@ class Repo extends Component {
   }
 
   render() {
-    const { rgba, minerva, token } = this.state;
+    const { rgba, token } = this.state;
+    let minerva = this.props.env === 'cloud';
     const { img, groups, chanLabel, textEdit } = this.state;
     const { chanRender, activeIds, activeGroup } = this.state;
     const group = groups.get(activeGroup);
@@ -1424,11 +1453,17 @@ class Repo extends Component {
     if (!rgba) {
       tabBar = (
         <span className="ui buttons">
+          <button className="ui button" onClick={() => this.toggleSampleInfo()}>
+              Sample Info
+          </button>
           <button className={editGroupsButton} onClick={() => this.toggleTextEdit(false)}>
             Edit Groups
           </button>
           <button className={editStoryButton} onClick={() => this.toggleTextEdit(true)}>
             Edit Story
+          </button>
+          <button className="ui button teal" onClick={() => this.preview()}>
+            Preview
           </button>
           {saveButton}
         </span>
@@ -1478,7 +1513,10 @@ class Repo extends Component {
             {arrowHidden? 'Show Arrow' : 'Hide Arrow'}
             </button>
             <form className="ui form" onSubmit={this.toggleModal}>
-              <input type='text' placeholder='Arrow Angle'
+              <input type='text' placeholder='Arrow Angle' 
+              value={arrowAngle} onChange={this.handleArrowAngle}
+              />
+              <input type='range' min="0" max="360" style={{ "width": "100%"}}
               value={arrowAngle} onChange={this.handleArrowAngle}
               />
 						  <textarea placeholder='Arrow Description' value={arrowText}
@@ -1494,10 +1532,16 @@ class Repo extends Component {
               />
 						  <textarea placeholder='Sample Description' value={this.state.sampleText}
 						  onChange={this.handleSampleText} />
-              <input type='text' placeholder='Rotation'
-              value={this.state.rotation? this.state.rotation : ''}
-              onChange={this.handleRotation}
-              />
+              <input type='text' placeholder='Author Name'
+                value={this.state.authorName} onChange={this.handleAuthorName } />
+              <div class="field">
+                <label>Rotation (degrees)</label>
+               <input type='text' placeholder='Rotation'
+                value={this.state.rotation? this.state.rotation : ''}
+               onChange={this.handleRotation}
+               />
+               <input type="range" className="image-rotation-range" min="-180" max="180" value={this.state.rotation} onChange={this.handleRotation} id="myRange"></input>
+              </div>
               <div className="ui action input">
                 <input ref={this.filePath} className='full-width-input' id="filepath" name="filepath" type="text" placeholder='Channel groups dat file'/>
                 <button type="button" onClick={this.openFileBrowser} className="ui button">Browse</button>
@@ -1511,10 +1555,8 @@ class Repo extends Component {
 				</Modal>
 
         <div className="row justify-content-between">
-          <div className="col-md-6">
-              <button className="ui button compact" onClick={() => this.toggleSampleInfo()}>
-              Sample Info
-              </button>
+          <div className="col-md-6 col-lg-6 col-xl-4">
+
             {tabBar}
             {this.renderProgressBar()}
             {groupBar}

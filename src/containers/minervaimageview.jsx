@@ -4,6 +4,7 @@ import SvgArrow from '../components/svgarrow.jsx'
 
 import '../style/imageview';
 import styled from 'styled-components';
+import Client from '../MinervaClient';
 
 const IntToHex = c => {
   var hex = c.toString(16);
@@ -22,7 +23,6 @@ class MinervaImageView extends Component {
 
   constructor() {
     super();
-
     this.state = {
       old_channels: new Map([])
     }
@@ -49,7 +49,14 @@ class MinervaImageView extends Component {
 
     return {
 			// Custom functions
-			getTileUrl: getTileUrl,
+      getTileUrl: getTileUrl,
+      getTileAjaxHeaders: (level, x, y) => {
+        return {
+            'Content-Type': 'application/json',
+            'Authorization': Client.getToken(),
+            'Accept': 'image/jpeg'
+        }
+      },   
 			// Standard parameters
 			tileSize: img.tilesize,
 			width: img.width,
@@ -63,16 +70,10 @@ class MinervaImageView extends Component {
     const {viewer} = this;
     const makeTileSource = this.makeTileSource.bind(this);
     const {img, token, channels} = this.props;
-    console.log('Add image at index ', this.state.index);
     viewer.addTiledImage({
       tileSource: makeTileSource(),
       width: img.width / img.height,
       crossOriginPolicy: 'Anonymous', 
-      ajaxHeaders: {
-        'Content-Type': 'application/json',
-        'Authorization': token,
-        'Accept': 'image/jpeg'
-      },
       loadTilesWithAjax: true,
       success: (evt) => {
         this.items.push(evt.item);
@@ -105,10 +106,7 @@ class MinervaImageView extends Component {
       // Specific to this project
       id: "ImageView",
       prefixUrl: "images/openseadragon/",
-      maxZoomPixelRatio: 10,
-      ajaxHeaders: {
-        "Cache-Control": "no-store"
-      }
+      maxZoomPixelRatio: 10
     });
     interactor(this.viewer);
 
@@ -144,7 +142,7 @@ class MinervaImageView extends Component {
 				setTimeout(updateOverlays, 1);
 		});
 
-		viewer.addHandler("animation", updateOverlays);
+    viewer.addHandler("animation", updateOverlays);
   }
 
   componentDidUpdate() {
@@ -313,7 +311,7 @@ class MinervaImageView extends Component {
           const zoom = viewer.viewport.getZoom();
           viewer.uuid = uuid;
           this.addChannels(pan, zoom);
-        }, 300);
+        }, 100);
       }
     }
 

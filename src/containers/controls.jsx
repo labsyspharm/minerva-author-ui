@@ -46,8 +46,8 @@ class Controls extends Component {
       return (
 			<div className="ui form">
 				<div className="row">
-					<div className="col no-right-padding">
-						<div className="bg-trans">
+					<div className="col no-right-padding bg-trans">
+						<div className="">
               <div className="row">
                 <div className="col-5">
                   <div className="font-white">
@@ -115,7 +115,8 @@ class Controls extends Component {
     const {activeChannels} = this.props;
 
     return (
-      <div className="bg-trans">
+      <div className="bg-trans row">
+        <div className="col">
         <Select
           isMulti={true}
           onChange={handleSelect}
@@ -127,6 +128,7 @@ class Controls extends Component {
             channels={ activeChannels }
             handleChange={ handleChange }
           />
+        </div>
         </div>
       </div>
     );

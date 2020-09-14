@@ -2,29 +2,32 @@ import React, { Component } from "react";
 
 import Repo from "./repo";
 import Import from "./import";
+import Preview from "./preview";
 
-import authenticate from '../login';
+import Client from '../MinervaClient';
+import login from '../login';
 import 'semantic-ui-css/semantic.min.css'
-import MinervaConfig from '../config';
 
-class App extends Component {
+class AuthorApp extends Component {
 
-  constructor() {
-    super();
+  constructor(props) {
+    super(props);
 
     this.state = {
-      token: '',
+      token: 'Anonymous',
       loaded: false,
+      preview: false,
       minerva: false,
       rgba: false,
       warning: '',
       url: 'http://localhost:2020/api/u16',
-      //minerva: true,
-			uuid: null,
-      //uuid: '0c18ba28-872c-4d83-9904-ecb8b12b514d',
+      uuid: null,
+      storyUuid: null,
+      imageName: null,
       sample_info: {
         'name': '',
-        'text': ''
+        'text': '',
+        "rotation":0
       },
       waypoints: [],
       groups: [],
@@ -35,82 +38,130 @@ class App extends Component {
 
     this.onToken = this.onToken.bind(this);
     this.onMinervaImage = this.onMinervaImage.bind(this);
+    this.onStoryLoaded = this.onStoryLoaded.bind(this);
+    this.onPreview = this.onPreview.bind(this);
 
+    login.configure(this.props.config);
+    Client.configure(this.props.config);
+
+  }
+
+  async getImportResult() {
+    return fetch('http://localhost:2020/api/import', {
+      headers: {
+        'pragma': 'no-cache',
+        'cache-control': 'no-store'
+      }
+    }).then(async res => {
+      return res.json();
+    });
   }
 
   async componentDidMount() {
     const {minerva, url, uuid} = this.state;
 
-    try {
-      setInterval(async () => {
-        const {loaded} = this.state;
-        if (loaded === false) {
-          const res = await fetch('http://localhost:2020/api/import', {
-            headers: {
-              'pragma': 'no-cache',
-              'cache-control': 'no-store'
-            }
-          });
-          const import_result = await res.json();
-          const sample_info = import_result.sample_info;
+    if (this.props.env === 'local') {
+      try {
+        setInterval(async () => {
+          const {loaded} = this.state;
+          if (loaded === false) {
+            const import_result = await this.getImportResult();
+            const sample_info = import_result.sample_info;
 
-          this.setState({
-            sample_info: sample_info || this.state.sample_info,
-            waypoints: import_result.waypoints,
-            groups: import_result.groups,
-            loaded: import_result.loaded,
-            channels: import_result.channels,
-            tilesize: import_result.tilesize,
-            maxLevel: import_result.maxLevel,
-            width: import_result.width,
-            height: import_result.height,
-            rgba: import_result.rgba,
-            warning: import_result.warning
-          })
-        }
-      }, 3000);
-    } catch(e) {
-      console.log(e);
+            this.setState({
+              sample_info: sample_info || this.state.sample_info,
+              waypoints: import_result.waypoints,
+              groups: import_result.groups,
+              loaded: import_result.loaded,
+              channels: import_result.channels,
+              tilesize: import_result.tilesize,
+              maxLevel: import_result.maxLevel,
+              width: import_result.width,
+              height: import_result.height,
+              rgba: import_result.rgba,
+              warning: import_result.warning
+            });
+
+          }
+        }, 3000);
+      } catch(e) {
+        console.log(e);
+      }
     }
   }
 
   onToken(data) {
-    this.setState({token: data.token, minerva: true});
+    this.setState({token: data.token });
+    Client.guest = false;
   }
 
-  onMinervaImage(image) {
+  onStoryLoaded(story) {
+    this.setState({
+      sample_info: story.sample_info,
+      waypoints: story.waypoints,
+      groups: story.groups,
+      storyUuid: story.uuid
+    });
+  }
+
+  onMinervaImage(image, loadedChannelNames) {
     let channels = [];
-    for (let channel of image.channels) {
-      channels.push(channel.Name);
+    if (loadedChannelNames) {
+      channels = loadedChannelNames;
+      if (loadedChannelNames.length !== image.channels.length) {
+        console.error(`Csv has ${loadedChannelNames.length} markers but the image has ${image.channels.length} channels.`);
+      }
+    } else {
+      for (let channel of image.channels) {
+        channels.push(channel.Name);
+      }
     }
+    console.log(image);
     this.setState({
       loaded: true,
-      tilesize: 1024,
+      tilesize: image.tile_size,
       uuid: image.uuid,
       channels: channels,
       width: image.width,
       height: image.height,
+      rgba: false,
+      warning: '',
+      imageName: image.name,
       maxLevel: Math.ceil(Math.log2(Math.max(image.width, image.height) / 1024)),
-      url: MinervaConfig.minervaBaseUrl + '/' + MinervaConfig.minervaStage + '/image'
+      url: this.props.config.minervaBaseUrl + '/' + this.props.config.minervaStage + '/image'
     });
   }
 
+  onPreview(previewOn) {
+    console.log('preview');
+    this.setState({ preview: previewOn });
+  }
+
   render() {
-    const {token, loaded, width, height, tilesize, maxLevel, rgba, minerva, url, uuid} = this.state;
+    const {token, loaded, width, height, tilesize, maxLevel, rgba, url, uuid, storyUuid, imageName} = this.state;
     const {channels, sample_info, waypoints, groups, warning} = this.state;
 
     if (loaded) {
-      return (<Repo token={token} minerva={minerva} rgba={rgba}
-                    channels={channels} waypoints={waypoints}
-                    groups={groups} url={url} uuid={uuid} maxLevel={maxLevel}
-                    width={width} height={height} tilesize={tilesize}
-                    sample_info={sample_info} warning={warning}/>
+      if (!this.state.preview) {
+        return (
+        <Repo   env={this.props.env} token={token} rgba={rgba}
+                channels={channels} waypoints={waypoints}
+                groups={groups} url={url} uuid={uuid} maxLevel={maxLevel}
+                width={width} height={height} tilesize={tilesize}
+                sample_info={sample_info} warning={warning} storyUuid={storyUuid}
+                imageName={imageName}
+                onPreview={() => this.onPreview(true)}
+           />
+        )
+      } else return (
+        <Preview onBack={() => this.onPreview(false)} 
+          story={this.state.story} />
       )
     }
     return (
-      <Import onToken={this.onToken} onMinervaImage={this.onMinervaImage}/>
+      <Import env={this.props.env} onToken={this.onToken} onMinervaImage={this.onMinervaImage} onStoryLoaded={this.onStoryLoaded} />
     );
   }
 }
 
-export default App;
+export default AuthorApp;

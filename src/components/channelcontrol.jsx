@@ -18,13 +18,13 @@ const ChannelControl = ({ id, color, range, minRange, maxRange,
   let stepSize = Math.ceil((maxRange - minRange) / 100)
 
   let eyeIcon = (
-    <FontAwesomeIcon icon={faEye}
+    <FontAwesomeIcon icon={faEye} size="lg"
       color='white'
     />
   )
   if (visible == false) {
     eyeIcon = (
-      <FontAwesomeIcon icon={faEyeSlash}
+      <FontAwesomeIcon icon={faEyeSlash} size="lg"
         color='white'
       />
     )

@@ -2,6 +2,7 @@ const path = require("path");
 const webpack = require("webpack");
 const CopyWebpackPlugin = require("copy-webpack-plugin");
 
+
 module.exports = {
   entry: [
     "./src/demo.jsx",
@@ -50,6 +51,9 @@ module.exports = {
   },
   plugins: [
     new webpack.HotModuleReplacementPlugin(),
+    new webpack.EnvironmentPlugin({
+      'MINERVA_AUTHOR_ENV': 'local'
+    }),
     new CopyWebpackPlugin([{
         from: "static",
         to: "."
