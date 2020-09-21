@@ -76,10 +76,13 @@ class MinervaImageView extends Component {
       crossOriginPolicy: 'Anonymous', 
       loadTilesWithAjax: true,
       success: (evt) => {
-        this.items.push(evt.item);
-        if (this.items.length >= 3) {
-          let prevItem = this.items.shift();
-          viewer.world.removeItem(prevItem);
+        let tiledImage = evt.item;
+        this.items.push(tiledImage);
+        if (tiledImage.getFullyLoaded()) {
+          if (this.items.length >= 3) {
+            let prevItem = this.items.shift();
+            viewer.world.removeItem(prevItem);
+          }
         }
         viewer.viewport.panTo(pan, true);
         viewer.viewport.zoomTo(zoom, true);
@@ -304,9 +307,11 @@ class MinervaImageView extends Component {
         // Update the whole image
         // Use timeout to prevent excessive requests to Minerva tile-render endpoint
         if (this.updateTimeout) {
+          console.log('clearTimeout');
           clearTimeout(this.updateTimeout);
         }
         this.updateTimeout = setTimeout(() => {
+          console.log('setTimeout');
           const pan = viewer.viewport.getCenter();
           const zoom = viewer.viewport.getZoom();
           viewer.uuid = uuid;

@@ -7,7 +7,7 @@ export default class Modal extends React.Component {
       return null;
     }
     return (
-			<div id="myModal" className="modal">
+			<div id="myModal" className="minerva modal">
 
 				<div className="modal-content">
 					{this.props.children}

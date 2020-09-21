@@ -133,7 +133,6 @@ class AuthorApp extends Component {
   }
 
   onPreview(previewOn) {
-    console.log('preview');
     this.setState({ preview: previewOn });
   }
 

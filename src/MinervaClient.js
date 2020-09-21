@@ -173,6 +173,10 @@ class MinervaClient {
         return this.apiFetch('GET', `/author/story`);
     }
 
+    publishStory(uuid) {
+        return this.apiFetch('POST', `/author/story/${uuid}/publish?dryrun=true`);
+    }
+
     _getSession() {
         let token = this.currentUser.getSession((err, session) => {
             return session.idToken.jwtToken;

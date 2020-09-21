@@ -1,5 +1,6 @@
 import React, { Component } from "react";
-import ImportForm from '../components/importform'
+import ImportForm from '../components/importform';
+import CloudImportForm from '../components/cloudimportform';
 import '../style/import';
 
 class Import extends Component {
@@ -7,8 +8,14 @@ class Import extends Component {
   render() {
     return (
       <div className="full-height">
+        <div className="center-div">
         <div>
-          <ImportForm env={this.props.env} onToken={this.props.onToken} onMinervaImage={this.props.onMinervaImage} onStoryLoaded={this.props.onStoryLoaded}/>
+          <img className="minerva-author-logo" src="images/Minerva-Author_HorizLogo_RGB.svg"></img>
+        </div>
+          { this.props.env === 'local' ?
+            <ImportForm />
+          : 
+            <CloudImportForm onToken={this.props.onToken} onMinervaImage={this.props.onMinervaImage} onStoryLoaded={this.props.onStoryLoaded} /> }
         </div>
       </div>
     );
