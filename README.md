@@ -1,5 +1,9 @@
 # Minerva Author UI
 
+<img width="500px" src="./static/images/Minerva-Author_HorizLogo_RGB.svg" />
+          
+### Building the demo
+
 ## Running the UI locally
 
 ### Local environment
