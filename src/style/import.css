@@ -1,7 +1,7 @@
 .full-height {
   height: 100vh;
   position: relative;
-  background: radial-gradient(circle, rgba(0,0,0,1) 0%, rgba(150,60,189,1) 300%);
+  background: radial-gradient(circle, rgba(0,0,0,1) 0%, rgba(150,60,189,1) 500%);
 }
 
 .full-height .center-div {

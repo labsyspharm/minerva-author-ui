@@ -12,9 +12,10 @@ import ClipLoader from "react-spinners/ClipLoader";
 import { Progress, Popup } from 'semantic-ui-react'
 import Client from '../MinervaClient';
 import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
-import { faExclamationCircle } from "@fortawesome/free-solid-svg-icons";
+import { faExclamationCircle, faWindowClose, faShare, faSave, faEye, faBullhorn } from "@fortawesome/free-solid-svg-icons";
 
 import '../style/repo'
+import PublishStoryModal from "../components/publishstorymodal";
 
 const validNameRegex = /^([a-zA-Z0-9 _-]+)$/;
 
@@ -111,6 +112,8 @@ class Repo extends Component {
       deleteGroupModal: false,
       deleteStoryModal: false,
       saving: false,
+      publishing: false,
+      showPublishStoryModal: false,
       saveProgress: 0,
       saveProgressMax: 0,
       stories: new Map(waypoints.map((v,k) => {
@@ -196,6 +199,7 @@ class Repo extends Component {
     this.submitSampleInfo = this.submitSampleInfo.bind(this);
     this.toggleModal = this.toggleModal.bind(this);
     this.save = this.save.bind(this);
+    this.share = this.share.bind(this);
     this.deleteActiveGroup = this.deleteActiveGroup.bind(this);
     this.showRenameModal = this.showRenameModal.bind(this);
     this.showAddGroupModal = this.showAddGroupModal.bind(this);
@@ -1185,6 +1189,7 @@ class Repo extends Component {
     this.setState({saving: true});
 
     let story_definition = {
+      //'channels': [],
       'waypoints': story_output,
       'groups': group_output,
       'sample_info': {
@@ -1211,9 +1216,10 @@ class Repo extends Component {
         this.setState({
           groups: groups
         })
+        console.log(story_definition);
         Client.saveStory(story_definition).then(res => {
           console.log(res);
-          this.setState({saving: false});
+          this.setState({saving: false, storyUuid: res.uuid });
         }).catch(err => {
           console.error(err);
           this.setState({saving: false});
@@ -1331,6 +1337,26 @@ class Repo extends Component {
     this.props.onPreview();
   }
 
+  setPublishStoryModal(active) {
+    this.setState({showPublishStoryModal: active});
+  }
+
+  share() {
+    console.log(window.location.href);
+    let url = window.location.href + `?story=${this.state.storyUuid}`;
+    if (navigator.clipboard) {
+      navigator.clipboard.writeText(url);
+    }
+    this.setState({shareTooltip: 'Link copied to clipboard'});
+    setTimeout(() => { this.setState({shareTooltip: null})}, 5000);
+  }
+
+  exit() {
+    if (window.confirm("Close the story? Unsaved progress will be lost.")) {
+      window.open("/", "_self");
+    }
+  }
+
   renderWarning() {
     if (!this.state.warning) {
       return null;
@@ -1438,7 +1464,11 @@ class Repo extends Component {
     let saveButton = ''
     if (group != undefined) {
       saveButton = (
-        <button className="ui button primary" onClick={this.save} disabled={this.state.saving}>
+        <button className="ui button primary" 
+          onClick={this.save} 
+          disabled={this.state.saving} 
+          title="Save story">
+            <FontAwesomeIcon icon={faSave} />&nbsp;
           Save&nbsp;
           <ClipLoader animation="border"
           size={12} color={"#FFFFFF"}
@@ -1446,6 +1476,36 @@ class Repo extends Component {
         </button>
       )
     }
+    let previewButton = (
+      <button className="ui button teal" onClick={() => this.preview()} title="Preview story">
+        <FontAwesomeIcon icon={faEye} />&nbsp;
+         Preview
+      </button>
+    );
+    let shareButton = (
+      <button className="ui button teal" onClick={() => this.share()} title="Share story"
+        data-tooltip={this.state.shareTooltip} data-position="bottom center">
+          <FontAwesomeIcon icon={faShare} />&nbsp;
+      Share
+      </button> 
+    );
+
+    let publishButton = (
+      <button className="ui button primary" disabled={this.state.publishing} 
+        onClick={() => this.setPublishStoryModal(true)}
+        title="Publish story">
+      <FontAwesomeIcon icon={faBullhorn} />&nbsp;
+       Publish&nbsp;
+       <ClipLoader animation="border"
+          size={12} color={"#FFFFFF"}
+          loading={this.state.publishing}/>
+    </button>
+    );
+    if (this.props.env === 'local') {
+      shareButton = null;
+      publishButton = null;
+    }
+
     let editGroupsButton = this.state.textEdit ? "ui button" : "ui button active";
     let editStoryButton = this.state.textEdit ? "ui button active" : "ui button";
 
@@ -1462,16 +1522,18 @@ class Repo extends Component {
           <button className={editStoryButton} onClick={() => this.toggleTextEdit(true)}>
             Edit Story
           </button>
-          <button className="ui button teal" onClick={() => this.preview()}>
-            Preview
-          </button>
+          {previewButton}
+          {shareButton}
           {saveButton}
+          {publishButton}
         </span>
       )
     }
     else {
       tabBar = (
         <span className="ui buttons">
+          {previewButton}
+          {shareButton}
           {saveButton}
         </span>
       )
@@ -1609,6 +1671,10 @@ class Repo extends Component {
           </div>
           { this.renderWarning() }
           { this.renderErrors() }
+          { this.renderExitButton() }
+          <PublishStoryModal storyUuid={this.state.storyUuid} 
+            onClose={() => this.setPublishStoryModal(false)}
+            active={this.state.showPublishStoryModal} />
         </div>
       </div>
     );
@@ -1670,6 +1736,15 @@ class Repo extends Component {
       </div>
     );
   }
+
+  renderExitButton() {
+    return (
+      <button type="button" className="ui button secondary exit-button" onClick={this.exit}>
+        Close <FontAwesomeIcon icon={faWindowClose} size="md"/>
+      </button>
+    )
+  }
+
 }
 
 export default Repo;
