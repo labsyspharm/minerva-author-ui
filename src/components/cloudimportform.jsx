@@ -142,6 +142,10 @@ export default class CloudImportForm extends React.Component {
     if (storyUuid) {
       this.loadCloudStory(storyUuid);
     }
+    const imageUuid = urlParams.get('image');
+    if (imageUuid) {
+      this.openMinervaImage(imageUuid);
+    }
   }
 
   onSignout() {

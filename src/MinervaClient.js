@@ -3,6 +3,7 @@
 class MinervaClient {
 
     constructor() {
+        console.log('MinervaClient constructor');
         this.baseUrl = '';
         this.currentUser = null;
         this.GRANTS = ['Admin', 'Read', 'Write'];
@@ -174,7 +175,7 @@ class MinervaClient {
     }
 
     publishStory(uuid) {
-        return this.apiFetch('POST', `/author/story/${uuid}/publish?dryrun=true`);
+        return this.apiFetch('POST', `/author/story/${uuid}/publish`);
     }
 
     _getSession() {

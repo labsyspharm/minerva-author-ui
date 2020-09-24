@@ -70,14 +70,13 @@ export default class PublishStoryModal extends React.Component {
         if (!this.state.published) {
             return null;
         }
-        //let downloadText = `aws s3 sync s3://${this.state.bucket}/${this.state.key} <local_destination>`;;
         return (
             <div>
             <p>
                 The story is being exported, this will take a few minutes.
             </p>
             <p>
-                <a className="ui button primary" href={this.state.storyUrl} target="_blank">Click to open the story</a>
+                <a className="ui button primary" href={this.state.storyUrl} target="_blank">Open the Story</a>
             </p>
             </div>
         );

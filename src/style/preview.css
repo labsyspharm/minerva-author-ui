@@ -1,0 +1,7 @@
+.preview-back-button {
+    position: fixed;
+    margin: auto;
+    top: 0;
+    left: 50%;
+    z-index: 10000;
+}

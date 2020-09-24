@@ -2,7 +2,7 @@ import React from "react";
 
 export default class Loader extends React.Component {
     render() {
-        let clazz = "ui inline text loader";
+        let clazz = "ui inline text loader small";
         if (this.props.active) {
             clazz += " active";
         }
