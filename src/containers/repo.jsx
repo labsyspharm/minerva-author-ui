@@ -114,6 +114,7 @@ class Repo extends Component {
       saving: false,
       publishing: false,
       showPublishStoryModal: false,
+      rangeSliderComplete: true,
       saveProgress: 0,
       saveProgressMax: 0,
       stories: new Map(waypoints.map((v,k) => {
@@ -162,6 +163,10 @@ class Repo extends Component {
       })),
       chanRender: defaultChanRender
     };
+
+    if (this.state.groups.size > 0) {
+      this.state.activeIds = this.state.groups.get(0).activeIds;
+    }
 
     this.filePath = React.createRef();
     // Bind
@@ -1100,7 +1105,7 @@ class Repo extends Component {
     const _drawing = (_drawType == '')? 0 : 1;
     this.setState({drawing: _drawing});
   }
-  handleChange(id, color, range, label, visible) {
+  handleChange(id, color, range, label, visible, changeComplete=true) {
     const { chanRender, chanLabel, groups, activeGroup } = this.state;
     const group = groups.get(activeGroup);
     let newRender = { ...chanRender.get(id) };
@@ -1141,8 +1146,10 @@ class Repo extends Component {
 
     const newChanRender = new Map([...chanRender,
                                ...(new Map([[id, newRender]]))]);
+
     this.setState({
       chanRender: newChanRender,
+      rangeSliderComplete: changeComplete
     });
   }
 
@@ -1466,6 +1473,7 @@ class Repo extends Component {
         handleViewport={ this.handleViewport }
         interactor={ this.interactor }
         rotation={this.state.rotation}
+        rangeSliderComplete={this.state.rangeSliderComplete}
       />
     }
     else if (rgba) {
