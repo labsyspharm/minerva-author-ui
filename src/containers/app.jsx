@@ -7,6 +7,7 @@ import Preview from "./preview";
 import Client from '../MinervaClient';
 import login from '../login';
 import 'semantic-ui-css/semantic.min.css'
+import '../style/app.css';
 
 class AuthorApp extends Component {
 
@@ -93,14 +94,17 @@ class AuthorApp extends Component {
   onToken(data) {
     this.setState({token: data.token });
     Client.guest = false;
+    Client.warmupRenderTile();
   }
 
   onStoryLoaded(story) {
+    console.log('Story loaded: ', story);
     this.setState({
       sample_info: story.sample_info,
       waypoints: story.waypoints,
       groups: story.groups,
-      storyUuid: story.uuid
+      storyUuid: story.uuid,
+      story: story
     });
   }
 
@@ -128,11 +132,15 @@ class AuthorApp extends Component {
       warning: '',
       imageName: image.name,
       maxLevel: Math.ceil(Math.log2(Math.max(image.width, image.height) / 1024)),
-      url: this.props.config.minervaBaseUrl + '/' + this.props.config.minervaStage + '/image'
+      url: this.props.config.minervaBaseUrl + '/' + this.props.config.minervaStage + '/image',
+      image: image
     });
   }
 
-  onPreview(previewOn) {
+  onPreview(previewOn, story) {
+    if (story) {
+      this.setState({ story: story});
+    }
     this.setState({ preview: previewOn });
   }
 
@@ -141,21 +149,27 @@ class AuthorApp extends Component {
     const {channels, sample_info, waypoints, groups, warning} = this.state;
 
     if (loaded) {
-      if (!this.state.preview) {
+      let repoClass = this.state.preview ? "repo-div" : "repo-div show";
         return (
-        <Repo   env={this.props.env} token={token} rgba={rgba}
-                channels={channels} waypoints={waypoints}
-                groups={groups} url={url} uuid={uuid} maxLevel={maxLevel}
-                width={width} height={height} tilesize={tilesize}
-                sample_info={sample_info} warning={warning} storyUuid={storyUuid}
-                imageName={imageName}
-                onPreview={() => this.onPreview(true)}
-           />
+          <div>
+            <div className={repoClass}>
+            <Repo   env={this.props.env} token={token} rgba={rgba}
+                    channels={channels} waypoints={waypoints}
+                    groups={groups} url={url} uuid={uuid} maxLevel={maxLevel}
+                    width={width} height={height} tilesize={tilesize}
+                    sample_info={sample_info} warning={warning} storyUuid={storyUuid}
+                    imageName={imageName}
+                    onPreview={() => this.onPreview(true)}
+              />
+            </div>
+            { this.state.preview ? 
+              <Preview onBack={() => this.onPreview(false)} 
+                story={this.state.story}
+                image={this.state.image} />
+              : null }
+           </div>
         )
-      } else return (
-        <Preview onBack={() => this.onPreview(false)} 
-          story={this.state.story} />
-      )
+
     }
     return (
       <Import env={this.props.env} onToken={this.onToken} onMinervaImage={this.onMinervaImage} onStoryLoaded={this.onStoryLoaded} />

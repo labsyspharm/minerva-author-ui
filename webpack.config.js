@@ -39,10 +39,10 @@ module.exports = {
   },
   resolve: {
     extensions: [".css", ".js", ".jsx"],
-    alias: {
-      // Fake jquery needed for slider
-      "jquery": path.join(__dirname, "./src/jquery-stub.js")
-    }
+     //alias: {
+       // Fake jquery needed for slider
+    //   "jquery": path.join(__dirname, "./src/jquery-stub.js")
+    // }
   },
   output: {
     path: path.join(__dirname, "/docs"),

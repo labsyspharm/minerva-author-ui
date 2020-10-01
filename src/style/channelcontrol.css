@@ -34,8 +34,8 @@
 /* Color of slider controls  */
 .input-range__track.input-range__track--active,
 div.input-range__slider {
-  background-color: yellow;
-  border-color: yellow;
+  background-color: #FFD700;
+  border-color: #FFD700;
 }
 
 .input-range {

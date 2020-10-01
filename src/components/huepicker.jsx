@@ -74,7 +74,9 @@ class HuePicker extends React.Component {
           ? <div className="ColorPickerDialog" style={ styles.popover }>
               <div style={ styles.cover } onClick={ this.handleClose } />
               <SketchPicker color={ color }
-                            onChange={ this.handleChange } />
+                            onChange={ this.handleChange }
+                            disableAlpha={true}
+                            presetColors={['#ffffff','#ff0000', '#00ff00', '#0000ff', '#ff00ff', '#ffff00', '#00ffff']} />
             </div>
           : null
         }

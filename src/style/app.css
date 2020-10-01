@@ -1,0 +1,12 @@
+.repo-div {
+    -webkit-transition: 0.5s;
+    -moz-transition: 0.5s;
+    -o-transition: 0.5s;
+    transition: 0.5s;
+    opacity: 0;
+    visibility: hidden; 
+  }
+  .repo-div.show {
+    opacity: 1;
+    visibility: visible; 
+  }

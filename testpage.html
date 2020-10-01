@@ -1,0 +1,29 @@
+<html>
+<head>
+<title>Minerva Story</title>
+<meta charset="utf-8"/>
+<meta name="description" content="Minerva Story" />
+<script type="text/javascript" src="https://cdn.jsdelivr.net/npm/minerva-browser@2.1.0/index.min.js"></script>
+<style>
+html, body {
+  margin: 0;
+  height: 100vh;
+  width: 100vw;
+}
+#minerva-story-div {
+  height: 100%;
+  width: 100%;
+}
+</style>
+</head>
+<body>
+    <div id="minerva-story-div"></div>
+    <script type="text/javascript">
+        var storyObject = {};
+        var minervaStory = new MinervaStory({{
+            id: "minerva-story-div",
+            story: storyObject
+        }});
+    </script>
+</body>
+</html>

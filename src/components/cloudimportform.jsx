@@ -82,7 +82,6 @@ export default class CloudImportForm extends React.Component {
     this.setState({ loading: true });
 
     Client.getImageDimensions(imageUuid).then(res => {
-      console.log(res);
       let image = res.included.images[0];
       image.width = res.data.pixels.SizeX;
       image.height = res.data.pixels.SizeY;
@@ -98,7 +97,6 @@ export default class CloudImportForm extends React.Component {
 
   loadStoryList() {
     Client.listStories().then(data => {
-      console.log(data);
       let stories = data.stories;
       stories.sort((a, b) => {
         if (a.last_updated < b.last_updated) {
@@ -141,6 +139,10 @@ export default class CloudImportForm extends React.Component {
     const storyUuid = urlParams.get('story');
     if (storyUuid) {
       this.loadCloudStory(storyUuid);
+    }
+    const imageUuid = urlParams.get('image');
+    if (imageUuid) {
+      this.openMinervaImage(imageUuid);
     }
   }
 

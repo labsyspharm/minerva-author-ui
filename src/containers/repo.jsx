@@ -1146,14 +1146,8 @@ class Repo extends Component {
     });
   }
 
-  save() {
-
-    let {groups} = this.state;
-    const {stories, chanLabel} = this.state;
-    const {token, img} = this.state;
-    let minerva = this.props.env === 'cloud';
-
-    const group_output = Array.from(groups.values()).map(v => {
+  createGroupOutput(groups, chanLabel) {
+    return Array.from(groups.values()).map(v => {
       const channels = v.activeIds.map(id => {
         const chan = v.chanRender.get(id);
         return {
@@ -1161,7 +1155,7 @@ class Repo extends Component {
           'min': chan.range.min / chan.maxRange,
           'max': chan.range.max / chan.maxRange,
           'label': chanLabel.get(id).label,
-          'id': id
+          'id': id,
         } 
       });
       let group_out = {
@@ -1171,27 +1165,18 @@ class Repo extends Component {
       if (v.id) {
         group_out.id = v.id;
       }
-      return group_out
-    });
-
-    const story_output = Array.from(stories.values()).map(v => {
-      return {
-        'name': v.name,
-        'text': v.text,
-        'pan': v.pan,
-        'zoom': v.zoom,
-        'arrows': v.arrows,
-        'overlays': v.overlays,
-        'group': groups.get(v.group).label
+      if (v.uuid) {
+        group_out.uuid = v.uuid;
       }
+      return group_out;
     });
+  }
 
-    this.setState({saving: true});
-
-    let story_definition = {
+  createStoryDefinition(waypoints, groups) {
+    const story_definition = {
       //'channels': [],
-      'waypoints': story_output,
-      'groups': group_output,
+      'waypoints': waypoints,
+      'groups': groups,
       'sample_info': {
         'rotation': this.state.rotation,
         'name': this.state.sampleName,
@@ -1206,17 +1191,38 @@ class Repo extends Component {
     if (this.state.img.uuid) {
       story_definition.imageUuid = this.state.img.uuid;
     }
+    return story_definition;
+  }
+
+  createWaypoints(waypoints) {
+    return Array.from(waypoints.values()).map(v => {
+      return {
+        'name': v.name,
+        'text': v.text,
+        'pan': v.pan,
+        'zoom': v.zoom,
+        'arrows': v.arrows,
+        'overlays': v.overlays,
+        'group': this.state.groups.get(v.group).label
+      }
+    });
+  }
+
+  save() {
+
+    let {groups} = this.state;
+    const {stories, chanLabel} = this.state;
+    const {token, img} = this.state;
+    let minerva = this.props.env === 'cloud';
+
+    const group_output = this.createGroupOutput(groups, chanLabel);
+    const story_output = this.createWaypoints(stories);
+    const story_definition = this.createStoryDefinition(story_output, group_output);
+
+    this.setState({saving: true});
 
     if (minerva) {
-      Client.createRenderingSettings(img.uuid, { groups: group_output }).then(json => {
-        
-        json.groups.forEach((g,i) => {
-          groups.get(i).id = g.id
-        })
-        this.setState({
-          groups: groups
-        })
-        console.log(story_definition);
+      this.saveRenderingSettings(img.uuid, group_output).then(res => {
         Client.saveStory(story_definition).then(res => {
           console.log(res);
           this.setState({saving: false, storyUuid: res.uuid });
@@ -1224,9 +1230,6 @@ class Repo extends Component {
           console.error(err);
           this.setState({saving: false});
         });
-      }).catch(err => {
-        console.error(err);
-        this.setState({saving: false});
       });
     }
     else {
@@ -1289,6 +1292,24 @@ class Repo extends Component {
     }
   }
 
+  saveRenderingSettings(imageUuid, group_output) {
+    return Client.createRenderingSettings(imageUuid, { groups: group_output }).then(json => {
+      let groups = new Map(this.state.groups);
+      console.log('groups: ', groups);
+      console.log('Create rendering settings: ', json);
+      json.groups.forEach((g,i) => {
+        groups.get(i).id = g.id;
+        groups.get(i).uuid = g.uuid;
+      });
+      this.setState({
+        groups: groups
+      })
+    }).catch(err => {
+      console.error(err);
+      this.setState({saving: false});
+    });
+  }
+
   setProgressPolling(poll) {
     if (poll) {
       this.progressInterval = setInterval(() => {
@@ -1334,7 +1355,14 @@ class Repo extends Component {
   }
 
   preview() {
-    this.props.onPreview();
+    let {groups, chanLabel} = this.state;
+    const group_output = this.createGroupOutput(groups, chanLabel);
+    this.saveRenderingSettings(this.state.img.uuid, group_output).then(() => {
+      const group_output = this.createGroupOutput(groups, chanLabel);
+      const story_output = this.createWaypoints(this.state.stories);
+      const story_definition = this.createStoryDefinition(story_output, group_output);
+      this.props.onPreview(true, story_definition);
+    });
   }
 
   setPublishStoryModal(active) {
@@ -1502,6 +1530,9 @@ class Repo extends Component {
     </button>
     );
     if (this.props.env === 'local') {
+      // Hide buttons which are not implemented in local environment yet
+      // TODO - Implement rendering in backend and show previewButton 
+      previewButton = null;
       shareButton = null;
       publishButton = null;
     }
@@ -1512,6 +1543,7 @@ class Repo extends Component {
     let tabBar = '';
     if (!rgba) {
       tabBar = (
+        <div className="row">
         <span className="ui buttons">
           <button className="ui button" onClick={() => this.toggleSampleInfo()}>
               Sample Info
@@ -1527,6 +1559,7 @@ class Repo extends Component {
           {saveButton}
           {publishButton}
         </span>
+        </div>
       )
     }
     else {
@@ -1543,8 +1576,8 @@ class Repo extends Component {
     if (!rgba) {
       groupBar = (
       <div className="row bg-trans">
-        <div className="col-5 pr-0">
-            <div className="font-white">
+        <div className="col pr-0">
+            <div className="font-white mt-2">
               Channel Groups:
             </div>
             <CreatableSelect
@@ -1555,7 +1588,7 @@ class Repo extends Component {
             formatCreateLabel={this.getCreateLabel}
           />
         </div>
-        <div className="col-7 pl-0 pr-0 pt-3">
+        <div className="col pl-0 pr-0 pt-3">
           <span className="ui buttons">
             {this.renderAddGroupModal()}
             {this.renderRenameModal()}
@@ -1740,7 +1773,7 @@ class Repo extends Component {
   renderExitButton() {
     return (
       <button type="button" className="ui button secondary exit-button" onClick={this.exit}>
-        Close <FontAwesomeIcon icon={faWindowClose} size="md"/>
+        Close <FontAwesomeIcon icon={faWindowClose} />
       </button>
     )
   }
