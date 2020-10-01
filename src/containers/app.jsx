@@ -94,6 +94,7 @@ class AuthorApp extends Component {
   onToken(data) {
     this.setState({token: data.token });
     Client.guest = false;
+    Client.warmupRenderTile();
   }
 
   onStoryLoaded(story) {

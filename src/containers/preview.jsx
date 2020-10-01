@@ -34,6 +34,7 @@ class Preview extends Component {
   }
 
   back() {
+    window.history.replaceState({}, document.title, "/");
     this.props.onBack();
   }
 
@@ -51,11 +52,13 @@ class Preview extends Component {
   }
 
   buildExhibit(story) {
+    console.log(story);
     let Exhibit = {};
-    Exhibit.Name = story.name;
+    Exhibit.Name = story.sample_info.name;
+    Exhibit.Header = story.sample_info.text;
     Exhibit.Images = this.buildImages(story),
     Exhibit.Layout = {
-      "Grid": [[story.image_name]]
+      "Grid": [["i0"]]
     };
     Exhibit.Groups = this.buildGroups(story),
     Exhibit.Stories = this.buildStories(story)
@@ -66,8 +69,8 @@ class Preview extends Component {
   buildImages(story) {
     return [
       {
-        "Name": story.image_name,
-        "Description": "",
+        "Name": "i0",
+        "Description": story.sample_info.name,
         "Provider": "minerva",
         "Path": Client.baseUrl + '/image/' + story.imageUuid + "/prerendered-tile/",
         "Width": this.props.image.width,
@@ -104,8 +107,7 @@ class Preview extends Component {
 
   buildStories(story) {
     let storyList = [{
-      "Name": "",
-      "Description": "",
+      "Name": story.sample_info.name,
       "Waypoints": []
     }];
     for (let waypoint of story.waypoints) {

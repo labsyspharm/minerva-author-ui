@@ -16,7 +16,7 @@
     "microscopy",
     "webgl"
   ],
-  "author": "Douglas Russell",
+  "author": "John Hoffer, Juha Ruokonen, Douglas Russell",
   "devDependencies": {
     "babel-core": "^6.23.1",
     "babel-loader": "^7.1.2",
@@ -43,9 +43,9 @@
     "@fortawesome/react-fontawesome": "^0.1.8",
     "amazon-cognito-identity-js": "^3.2.1",
     "bootstrap": "4.1.0",
-    "minerva-browser": "^2.8.0",
-    "prop-types": "^15.6.1",
     "jquery": "3.5.1",
+    "minerva-browser": "2.10.0",
+    "prop-types": "^15.6.1",
     "react": "^16.12.0",
     "react-color": "^2.14.1",
     "react-dom": "^16.12.0",

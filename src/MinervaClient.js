@@ -3,7 +3,6 @@
 class MinervaClient {
 
     constructor() {
-        console.log('MinervaClient constructor');
         this.baseUrl = '';
         this.currentUser = null;
         this.GRANTS = ['Admin', 'Read', 'Write'];
@@ -128,6 +127,13 @@ class MinervaClient {
         })
     }
 
+    warmupRenderTile() {
+        return this.apiFetch(
+            'GET',
+            '/image/00000000-0000-0000-0000-000000000000/render-tile/0/0/0/0/0/0,FFFFFF,0,1?warmup=1', 
+            { binary: true, headers: { "Accept": "image/jpeg" } });
+    }
+
     getImageTile(uuid, level, x, y, z = 0, t = 0) {
         let channelPathParams = '0,FFFFFF,0,1';
         return this.apiFetch(
@@ -174,8 +180,16 @@ class MinervaClient {
         return this.apiFetch('GET', `/author/story`);
     }
 
-    publishStory(uuid) {
-        return this.apiFetch('POST', `/author/story/${uuid}/publish`);
+    getStoryStatus(uuid) {
+        return this.apiFetch('GET', `/author/story/${uuid}/status`);
+    }
+
+    publishStory(uuid, renderImages=true) {
+        let url =  `/author/story/${uuid}/publish`;
+        if (!renderImages) {
+            url += '?norender=true';
+        }
+        return this.apiFetch('POST', url);
     }
 
     _getSession() {
@@ -195,7 +209,6 @@ class MinervaClient {
     }
 
     apiFetch(method, route, config = {}) {
-        console.log(method, route, config);
         if (!this.currentUser) {
             console.warn("Tried to call apiFetch but no current session available.");
             return Promise.reject();
