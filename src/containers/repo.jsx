@@ -1530,6 +1530,9 @@ class Repo extends Component {
     </button>
     );
     if (this.props.env === 'local') {
+      // Hide buttons which are not implemented in local environment yet
+      // TODO - Implement rendering in backend and show previewButton 
+      previewButton = null;
       shareButton = null;
       publishButton = null;
     }
