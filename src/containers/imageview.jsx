@@ -148,7 +148,7 @@ class ImageView extends Component {
       // Specific to this project
       id: "ImageView",
       compositeOperation: "lighter",
-      prefixUrl: "images/openseadragon/",
+      prefixUrl: "image/openseadragon/",
       tileSources: this.makeTileSources(ids),
       maxZoomPixelRatio: 10,
       ajaxHeaders: {
