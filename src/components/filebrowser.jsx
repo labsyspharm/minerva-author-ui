@@ -159,7 +159,7 @@ export default class FileBrowser extends React.Component {
                     </button>
                     <span>{this.state.activeFolder.path}</span>
                 </div>
-                <div>
+                <div className="filebrowser-content content scrolling">
                     {this.renderDir(this.state.activeFolder)}
                 </div>
             </div>

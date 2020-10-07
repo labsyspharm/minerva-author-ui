@@ -1,3 +1,7 @@
+.ui.modal .filebrowser-content.scrolling.content {
+    max-height: calc(100vh);
+}
+
 .filebrowser-link {
     cursor: pointer;
 }
