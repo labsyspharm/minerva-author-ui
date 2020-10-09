@@ -29,7 +29,8 @@ class Preview extends Component {
       id: this.browserRef.current.id,
       authenticate: this.getToken,
       embedded: true,
-      speech_bucket: ''
+      speech_bucket: '',
+      hideWelcome: true
     });
   }
 

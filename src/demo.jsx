@@ -12,7 +12,7 @@ console.log(process.env.MINERVA_AUTHOR_ENV);
 
 let minervaConfig = {
   "region": "us-east-1",
-  "minervaBaseUrl": "https://nldzj7hd69.execute-api.us-east-1.amazonaws.com",
+  "minervaBaseUrl": "",
   "minervaStage": "dev",
   "CognitoUserPoolId": "us-east-1_YuTF9ST4J",
   "CognitoClientId": "6ctsnjjglmtna2q5fgtrjug47k"

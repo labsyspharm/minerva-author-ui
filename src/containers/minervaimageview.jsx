@@ -26,8 +26,9 @@ class MinervaImageView extends Component {
     this.state = {
       old_channels: new Map([])
     }
-
-    this.items = [];
+    
+    this.tileSource = null;
+    this.ImageViewRef = React.createRef();
   }
 
   makeTileSource() {
@@ -70,6 +71,7 @@ class MinervaImageView extends Component {
     const {viewer} = this;
     const makeTileSource = this.makeTileSource.bind(this);
     const {img, token, channels} = this.props;
+    this.tileIndex += 1;
     viewer.addTiledImage({
       tileSource: makeTileSource(),
       width: img.width / img.height,
@@ -77,12 +79,17 @@ class MinervaImageView extends Component {
       loadTilesWithAjax: true,
       success: (evt) => {
         let tiledImage = evt.item;
-        this.items.push(tiledImage);
+        let ready = () => {
+            if (this.tileSource) {
+                viewer.world.removeItem(this.tileSource);
+            }
+            this.tileSource = tiledImage;
+        }
+
         if (tiledImage.getFullyLoaded()) {
-          if (this.items.length >= 3) {
-            let prevItem = this.items.shift();
-            viewer.world.removeItem(prevItem);
-          }
+            ready();
+        } else {
+            tiledImage.addOnceHandler('fully-loaded-change', ready);
         }
         viewer.viewport.panTo(pan, true);
         viewer.viewport.zoomTo(zoom, true);
@@ -96,7 +103,6 @@ class MinervaImageView extends Component {
   componentDidMount() {
     const {channels, img, handleViewport} = this.props;
     const {interactor} = this.props;
-
     console.log('Creating new OpenSeadragon');
     // Set up openseadragon viewer
     this.viewer = OpenSeadragon({
@@ -107,9 +113,10 @@ class MinervaImageView extends Component {
       showFullPageControl: false,
       immediateRender: true,
       // Specific to this project
-      id: "ImageView",
+      id: this.ImageViewRef.current.id,
       prefixUrl: "image/openseadragon/",
-      maxZoomPixelRatio: 10
+      maxZoomPixelRatio: 10,
+      maxImageCacheCount: 500
     });
     interactor(this.viewer);
 
@@ -147,6 +154,13 @@ class MinervaImageView extends Component {
 
     viewer.addHandler("animation", updateOverlays);
   }
+
+   shouldComponentUpdate(nextProps, nextState) {
+     if (!nextProps.rangeSliderComplete) {
+       return false;
+     }
+     return true;
+   }
 
   componentDidUpdate() {
     const {viewer} = this;
@@ -304,19 +318,13 @@ class MinervaImageView extends Component {
 
       if (viewer.uuid != uuid || removed.length || added.length
           || changed.length) {
-        // Update the whole image
-        // Use timeout to prevent excessive requests to Minerva tile-render endpoint
-        if (this.updateTimeout) {
-          console.log('clearTimeout');
-          clearTimeout(this.updateTimeout);
-        }
-        this.updateTimeout = setTimeout(() => {
-          console.log('setTimeout');
-          const pan = viewer.viewport.getCenter();
-          const zoom = viewer.viewport.getZoom();
-          viewer.uuid = uuid;
-          this.addChannels(pan, zoom);
-        }, 100);
+
+          if (this.props.rangeSliderComplete) {
+            const pan = viewer.viewport.getCenter();
+            const zoom = viewer.viewport.getZoom();
+            viewer.uuid = uuid;
+            this.addChannels(pan, zoom);
+          }
       }
     }
 
@@ -382,7 +390,7 @@ class MinervaImageView extends Component {
 
     return (
       <div>
-        <div id="ImageView">
+        <div ref={this.ImageViewRef} id="ImageView">
         </div>
         <div className="d-none">
           {overlay_divs}
