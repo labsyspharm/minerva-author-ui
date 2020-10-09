@@ -25,8 +25,7 @@ class Controls extends Component {
     const {addArrowText, rgba} = this.props;
     const {deleteOverlay, deleteArrow} = this.props;
     const {activeStory, handleSelectStory} = this.props;
-    const {visDataPath, showVisDataBrowser} = this.props;
-    const {openVisDataBrowser, onVisDataSelected} = this.props;
+    const {showVisDataBrowser, openVisDataBrowser, onVisDataSelected} = this.props;
     const {visLabels, activeVisLabel, handleSelectVis} = this.props;
     const {stories, storyName, storyText, textEdit} = this.props;
     const {handleStoryInsert, handleStoryName, handleStoryText} = this.props;
@@ -45,7 +44,40 @@ class Controls extends Component {
       activeStoryLabel = {value: activeStory, id: activeStory,
                           label: '#' + (activeStory+1)}
     }
-
+    let visData = ''
+    if (activeVisLabel.id >= 0) {
+      let visDataGeneric = (
+      <div>
+        <input value={activeVisLabel.data} onChange={(v)=>handleSelectVis(activeVisLabel, v.target.value)} style={{ width: "75%" }} id="visdatapath" name="visdatapath" type="text"/>
+        <button type="button" onClick={openVisDataBrowser} className="ui button">Browse</button>
+        <FileBrowserModal open={showVisDataBrowser} close={onVisDataSelected}
+          title="Select a csv file" 
+          onFileSelected={onVisDataSelected} 
+          filter={["csv"]}
+        />
+      </div>
+      )
+      if ([0, 1].includes(activeVisLabel.id)) {
+        visData = (
+        <div>
+          {visDataGeneric}
+          <div className="font-white">
+            X Axis:
+            <input value={activeVisLabel.x} onChange={(v)=>handleSelectVis(activeVisLabel, null, v.target.value)} style={{ width: "25%", marginRight: "2em"}} id="visxaxis" name="visxaxis" type="text"/>
+            Y Axis:
+            <input value={activeVisLabel.y} onChange={(v)=>handleSelectVis(activeVisLabel, null, null, v.target.value)} style={{ width: "25%" }} id="visyaxis" name="visyaxis" type="text"/>
+          </div>
+        </div>
+        ) 
+      }
+      else {
+        visData = (
+        <div>
+          {visDataGeneric}
+        </div>
+        ) 
+      }
+    }
     if (textEdit || rgba) {
       return (
 			<div className="ui form">
@@ -92,17 +124,11 @@ class Controls extends Component {
             </div>
             <div className="width-100">
               <Select
-                onChange={handleSelectVis}
+                onChange={(v)=>handleSelectVis(v)}
                 value={activeVisLabel}
                 options={Array.from(visLabels.values())}
               />
-              <input ref={visDataPath} style={{ width: "75%" }} id="visdatapath" name="visdatapath" type="text" placeholder='csv file'/>
-              <button type="button" onClick={openVisDataBrowser} className="ui button">Browse</button>
-              <FileBrowserModal open={showVisDataBrowser} close={onVisDataSelected}
-                title="Select a csv file" 
-                onFileSelected={onVisDataSelected} 
-                filter={["csv"]}
-              />
+              {visData}
             </div>
 					</div>
 					<div className="col-1 p-0">

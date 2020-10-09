@@ -78,8 +78,6 @@ class Repo extends Component {
 			}];
     }));
     
-    console.log('imageName: ', props.imageName);
-
 		this.state = {
       error: null,
       warning: warning,
@@ -183,7 +181,6 @@ class Repo extends Component {
     };
 
     this.filePath = React.createRef();
-    this.visDataPath = React.createRef();
     // Bind
     this.dismissWarning = this.dismissWarning.bind(this);
     this.updateGroups = this.updateGroups.bind(this);
@@ -238,7 +235,6 @@ class Repo extends Component {
 
   labelRGBA() {
     const {rgba} = this.state;
-    console.log(rgba)
     if (rgba) {
       this.setState({
         activeGroup: 0,
@@ -631,13 +627,13 @@ class Repo extends Component {
     this.handleStoryChange(s.value);
   }
 
-  handleSelectVis(v, data='', x='', y='', clusters=new Map([])) {
+  handleSelectVis(v, data=null, x=null, y=null, clusters=new Map([])) {
     const newLabel = {
       clusters: clusters? new Map([...v.clusters, ...clusters]) : v.clusters,
       id: v.id, value: v.value, label: v.label,
-      data: data ? data : v.data,
-      x: x ? x : v.x,
-      y: y ? y : v.y
+      data: data != null ? data : v.data,
+      x: x != null ? x : v.x,
+      y: y != null ? y : v.y
     }
     this.setState({
       activeVisLabel: newLabel,
@@ -1261,7 +1257,6 @@ class Repo extends Component {
     if (minerva) {
       this.saveRenderingSettings(img.uuid, group_output).then(res => {
         Client.saveStory(story_definition).then(res => {
-          console.log(res);
           this.setState({saving: false, storyUuid: res.uuid });
         }).catch(err => {
           console.error(err);
@@ -1332,8 +1327,6 @@ class Repo extends Component {
   saveRenderingSettings(imageUuid, group_output) {
     return Client.createRenderingSettings(imageUuid, { groups: group_output }).then(json => {
       let groups = new Map(this.state.groups);
-      console.log('groups: ', groups);
-      console.log('Create rendering settings: ', json);
       json.groups.forEach((g,i) => {
         groups.get(i).id = g.id;
         groups.get(i).uuid = g.uuid;
@@ -1402,7 +1395,7 @@ class Repo extends Component {
       showVisDataBrowser: false
     });
     if (file && file.path) {
-      this.visDataPath.current.value = file.path;
+      this.handleSelectVis(this.state.activeVisLabel, file.path)
     }
   }
 
@@ -1426,7 +1419,6 @@ class Repo extends Component {
   }
 
   share() {
-    console.log(window.location.href);
     let url = window.location.href + `?story=${this.state.storyUuid}`;
     if (navigator.clipboard) {
       navigator.clipboard.writeText(url);
@@ -1445,7 +1437,6 @@ class Repo extends Component {
     if (!this.state.warning) {
       return null;
     }
-    console.log(this.state.warning);
     return (
       <div className="import-warning">
         <div className="ui icon message">
@@ -1750,7 +1741,6 @@ class Repo extends Component {
               handleSelectVis={this.handleSelectVis}
               activeVisLabel={activeVisLabel}
               visLabels={visLabels}
-              visDataPath={this.visDataPath}
               showVisDataBrowser={this.state.showVisDataBrowser}
               openVisDataBrowser={this.openVisDataBrowser}
               onVisDataSelected={this.onVisDataSelected}
