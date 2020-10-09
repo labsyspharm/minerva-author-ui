@@ -109,10 +109,11 @@ class Repo extends Component {
       viewport: null,
       activeStory: 0,
       activeVisLabel: {value: -1, id: -1, label: '',
-                       data: '', x: '', y: '', clusters: new Map([])
+                       data: '', x: '', y: '', cluster: -1, clusters: new Map([])
                       },
       deleteGroupModal: false,
       deleteStoryModal: false,
+      deleteClusterModal: false,
       saving: false,
       saved: false,
       publishing: false,
@@ -121,16 +122,16 @@ class Repo extends Component {
       saveProgressMax: 0,
       visLabels: new Map([
         [0, {value: 0, id: 0, label: 'VisScatterplot',
-            data: '', x: '', y: '', clusters: new Map([])
+            data: '', x: '', y: '', cluster: -1, clusters: new Map([])
             }],
         [1, {value: 1, id: 1, label: 'VisCanvasScatterplot',
-            data: '', x: '', y: '', clusters: new Map([])
+            data: '', x: '', y: '', cluster: -1, clusters: new Map([])
             }],
         [2, {value: 2, id: 2, label: 'VisMatrix',
-            data: '', x: '', y: '', clusters: new Map([])
+            data: '', x: '', y: '', cluster: -1, clusters: new Map([])
             }],
         [3, {value: 3, id: 3, label: 'VisBarChart',
-            data: '', x: '', y: '', clusters: new Map([])
+            data: '', x: '', y: '', cluster: -1, clusters: new Map([])
             }]
       ]),
       stories: new Map(waypoints.map((v,k) => {
@@ -208,10 +209,14 @@ class Repo extends Component {
     this.handleArrowHide = this.handleArrowHide.bind(this);
     this.handleArrowAngle = this.handleArrowAngle.bind(this);
     this.handleStoryChange = this.handleStoryChange.bind(this);
+    this.handleClusterChange = this.handleClusterChange.bind(this);
+    this.handleClusterInsert = this.handleClusterInsert.bind(this);
+    this.handleClusterRemove = this.handleClusterRemove.bind(this);
     this.handleStoryInsert = this.handleStoryInsert.bind(this);
     this.handleStoryRemove = this.handleStoryRemove.bind(this);
     this.handleAuthorName = this.handleAuthorName.bind(this);
     this.deleteStory = this.deleteStory.bind(this);
+    this.deleteCluster = this.deleteCluster.bind(this);
     this.handleSelectGroup = this.handleSelectGroup.bind(this);
     this.handleViewport = this.handleViewport.bind(this);
     this.toggleTextEdit = this.toggleTextEdit.bind(this);
@@ -338,6 +343,66 @@ class Repo extends Component {
       }
     }
   }
+
+  handleClusterRemove() {
+
+    const {activeVisLabel} = this.state;
+    const c = activeVisLabel.clusters.get(activeVisLabel.cluster);
+    if (c === undefined) {
+      this.deleteCluster();
+    }
+    else {
+      this.setState({deleteClusterModal: true})
+    }
+
+  }
+
+  deleteCluster() {
+
+    let newLabel = this.state.activeVisLabel;
+
+    const newClusters = new Map([...newLabel.clusters].filter(([k,v]) => {
+                                return k != newLabel.cluster;
+                              }).map(([k,v])=>{
+                                return [k < newLabel.cluster? k : k - 1, v]
+                              }))
+
+    newLabel.clusters = newClusters;
+    newLabel.cluster = Math.max(0, newLabel.cluster - 1);
+    if (newClusters.size == 0) {
+      newLabel.cluster = -1;
+    }
+
+    this.setState({
+      activeVisLabel: newLabel,
+      visLabels: new Map([...this.state.visLabels,
+        ...(new Map([[newLabel.id, newLabel]]))])
+    })
+    this.setState({deleteClusterModal: false})
+  }
+
+  handleClusterInsert() {
+    let newLabel = this.state.activeVisLabel;
+    newLabel.cluster = newLabel.cluster + 1;
+
+    const newCluster = {
+      name: (newLabel.cluster + 1),
+			color: hexToRgb("#FFFFFF"),
+    };
+
+    const newClusters = new Map([...[...newLabel.clusters].map(([k,v]) => {
+                                return [k <= newLabel.cluster? k: k+1, v];
+                              }),
+                              ...(new Map([[newLabel.cluster, newCluster]]))]);
+
+    newLabel.clusters = newClusters;
+
+    this.setState({
+      visLabels: new Map([...this.state.visLabels,
+        ...(new Map([[newLabel.id, newLabel]]))])
+    })
+  }
+
 
   handleStoryRemove() {
 
@@ -633,13 +698,27 @@ class Repo extends Component {
       id: v.id, value: v.value, label: v.label,
       data: data != null ? data : v.data,
       x: x != null ? x : v.x,
-      y: y != null ? y : v.y
+      y: y != null ? y : v.y,
+      cluster: v.cluster
     }
     this.setState({
       activeVisLabel: newLabel,
       visLabels: new Map([...this.state.visLabels,
         ...(new Map([[v.id, newLabel]]))])
     })
+  }
+
+  handleClusterChange(cluster) {
+    let newLabel = this.state.activeVisLabel;
+    if (newLabel.clusters.get(cluster)) {
+      newLabel.cluster = cluster;
+      this.setState({
+        activeVisLabel: newLabel,
+        visLabels: new Map([...this.state.visLabels, 
+          ...(new Map([[newLabel.id, newLabel]]))
+        ])
+      })
+    }
   }
 
   handleSelectGroup(g, action) {
@@ -1739,6 +1818,9 @@ class Repo extends Component {
               storyText={storyText}
               activeStory={activeStory}
               handleSelectVis={this.handleSelectVis}
+              handleClusterChange={this.handleClusterChange}
+              handleClusterInsert={this.handleClusterInsert}
+              handleClusterRemove={this.handleClusterRemove}
               activeVisLabel={activeVisLabel}
               visLabels={visLabels}
               showVisDataBrowser={this.state.showVisDataBrowser}
@@ -1762,6 +1844,15 @@ class Repo extends Component {
               open={this.state.deleteStoryModal}
               onCancel={() => { this.setState({deleteStoryModal: false})} }
               onConfirm={this.deleteStory}
+            />
+            <Confirm
+              header="Delete cluster"
+              content="Are you sure?"
+              confirmButton="Delete"
+              size="small"
+              open={this.state.deleteClusterModal}
+              onCancel={() => { this.setState({deleteClusterModal: false})} }
+              onConfirm={this.deleteCluster}
             />
           </div>
           { this.renderWarning() }
