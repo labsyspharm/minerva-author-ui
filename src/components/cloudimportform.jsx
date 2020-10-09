@@ -121,6 +121,7 @@ export default class CloudImportForm extends React.Component {
       this.props.onStoryLoaded(story);
       this.openMinervaImage(story.imageUuid);
     }).catch(err => {
+      this.setState({ loading: false, error: 'Error in opening story' });
       console.error(err);
     });
   }
@@ -195,7 +196,7 @@ export default class CloudImportForm extends React.Component {
             </label>
           </div>
           <br />
-          <button type="button" className="ui button" onClick={() => this.openMinervaImage(this.state.imageUuid)}>Import</button>
+          <button type="button" className="ui button" onClick={() => this.openMinervaImage(this.state.imageUuid)}>Import</button>          
           <Loader active={this.state.loading} />
         </div>
       </form>

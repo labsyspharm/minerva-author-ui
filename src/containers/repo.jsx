@@ -167,6 +167,9 @@ class Repo extends Component {
     if (this.state.groups.size > 0) {
       this.state.activeIds = this.state.groups.get(0).activeIds;
     }
+    if (props.story) {
+      this.state.authorName = props.story.author_name;
+    }
 
     this.filePath = React.createRef();
     // Bind
