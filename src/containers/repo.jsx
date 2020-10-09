@@ -112,6 +112,7 @@ class Repo extends Component {
       deleteGroupModal: false,
       deleteStoryModal: false,
       saving: false,
+      saved: false,
       publishing: false,
       showPublishStoryModal: false,
       rangeSliderComplete: true,
@@ -1334,6 +1335,11 @@ class Repo extends Component {
     fetch('http://127.0.0.1:2020/api/render/progress').then(response => {
       return response.json();
     }).then(progress => {
+      if (progress.progress >= progress.max && progress.max != 0) {
+        this.setState({
+          saved: true 
+        })
+      }
       this.setState({
         saveProgress: progress.progress,
         saveProgressMax: progress.max
@@ -1546,6 +1552,14 @@ class Repo extends Component {
       previewButton = null;
       shareButton = null;
       publishButton = null;
+      if (this.state.saved) {
+        previewButton = (
+          <button className="ui button teal" onClick={() => window.open("/story")} title="Preview story">
+            <FontAwesomeIcon icon={faEye} />&nbsp;
+             Preview
+          </button>
+        );
+      }
     }
 
     let editGroupsButton = this.state.textEdit ? "ui button" : "ui button active";
