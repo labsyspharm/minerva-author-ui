@@ -84,6 +84,7 @@ class Repo extends Component {
       error: null,
       warning: warning,
       showFileBrowser: false,
+      showVisDataBrowser: false,
       rotation: sample_info.rotation,
       sampleName: sample_info.name,
       sampleText: sample_info.text,
@@ -109,6 +110,9 @@ class Repo extends Component {
 			activeArrow: 0,
       viewport: null,
       activeStory: 0,
+      activeVisLabel: {value: -1, id: -1, label: '',
+                       data: '', x: '', y: '', clusters: new Map([])
+                      },
       deleteGroupModal: false,
       deleteStoryModal: false,
       saving: false,
@@ -117,6 +121,20 @@ class Repo extends Component {
       showPublishStoryModal: false,
       saveProgress: 0,
       saveProgressMax: 0,
+      visLabels: new Map([
+        [0, {value: 0, id: 0, label: 'VisScatterplot',
+            data: '', x: '', y: '', clusters: new Map([])
+            }],
+        [1, {value: 1, id: 1, label: 'VisCanvasScatterplot',
+            data: '', x: '', y: '', clusters: new Map([])
+            }],
+        [2, {value: 2, id: 2, label: 'VisMatrix',
+            data: '', x: '', y: '', clusters: new Map([])
+            }],
+        [3, {value: 3, id: 3, label: 'VisBarChart',
+            data: '', x: '', y: '', clusters: new Map([])
+            }]
+      ]),
       stories: new Map(waypoints.map((v,k) => {
 				return [k, {
 					'name': v.name,
@@ -165,11 +183,14 @@ class Repo extends Component {
     };
 
     this.filePath = React.createRef();
+    this.visDataPath = React.createRef();
     // Bind
     this.dismissWarning = this.dismissWarning.bind(this);
     this.updateGroups = this.updateGroups.bind(this);
     this.openFileBrowser = this.openFileBrowser.bind(this);
     this.onFileSelected = this.onFileSelected.bind(this);
+    this.openVisDataBrowser = this.openVisDataBrowser.bind(this);
+    this.onVisDataSelected = this.onVisDataSelected.bind(this);
     this.interactor = this.interactor.bind(this);
     this.arrowClick = this.arrowClick.bind(this);
     this.lassoClick = this.lassoClick.bind(this);
@@ -180,6 +201,7 @@ class Repo extends Component {
     this.handleChange = this.handleChange.bind(this);
     this.handleSelect = this.handleSelect.bind(this);
     this.handleSelectStory = this.handleSelectStory.bind(this);
+    this.handleSelectVis = this.handleSelectVis.bind(this);
     this.handleStoryName = this.handleStoryName.bind(this);
     this.handleStoryText = this.handleStoryText.bind(this);
     this.handleArrowText = this.handleArrowText.bind(this);
@@ -609,6 +631,20 @@ class Repo extends Component {
     this.handleStoryChange(s.value);
   }
 
+  handleSelectVis(v, data='', x='', y='', clusters=new Map([])) {
+    const newLabel = {
+      clusters: clusters? new Map([...v.clusters, ...clusters]) : v.clusters,
+      id: v.id, value: v.value, label: v.label,
+      data: data ? data : v.data,
+      x: x ? x : v.x,
+      y: y ? y : v.y
+    }
+    this.setState({
+      activeVisLabel: newLabel,
+      visLabels: new Map([...this.state.visLabels,
+        ...(new Map([[v.id, newLabel]]))])
+    })
+  }
 
   handleSelectGroup(g, action) {
     if (action.action === 'clear') {
@@ -1356,6 +1392,20 @@ class Repo extends Component {
       this.filePath.current.value = file.path;
     }
   }
+
+  openVisDataBrowser() {
+    this.setState({ showVisDataBrowser: true});
+  }
+
+  onVisDataSelected(file) {
+    this.setState({ 
+      showVisDataBrowser: false
+    });
+    if (file && file.path) {
+      this.visDataPath.current.value = file.path;
+    }
+  }
+
   dismissWarning() {
     this.setState({warning: ''});
   }
@@ -1428,6 +1478,7 @@ class Repo extends Component {
   render() {
     const { rgba, token } = this.state;
     let minerva = this.props.env === 'cloud';
+    const { visLabels, activeVisLabel } = this.state;
     const { img, groups, chanLabel, textEdit } = this.state;
     const { chanRender, activeIds, activeGroup } = this.state;
     const group = groups.get(activeGroup);
@@ -1696,6 +1747,13 @@ class Repo extends Component {
               storyName={storyName}
               storyText={storyText}
               activeStory={activeStory}
+              handleSelectVis={this.handleSelectVis}
+              activeVisLabel={activeVisLabel}
+              visLabels={visLabels}
+              visDataPath={this.visDataPath}
+              showVisDataBrowser={this.state.showVisDataBrowser}
+              openVisDataBrowser={this.openVisDataBrowser}
+              onVisDataSelected={this.onVisDataSelected}
             />
             <Confirm
               header="Delete channel group" 

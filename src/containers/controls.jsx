@@ -3,6 +3,7 @@ import React, { Component } from "react";
 import Select from 'react-select';
 
 import ChannelControls from "./channelcontrols";
+import FileBrowserModal from "../components/filebrowsermodal";
 import Overlays from "./overlays";
 import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
 import { faArrowLeft } from "@fortawesome/free-solid-svg-icons";
@@ -24,6 +25,9 @@ class Controls extends Component {
     const {addArrowText, rgba} = this.props;
     const {deleteOverlay, deleteArrow} = this.props;
     const {activeStory, handleSelectStory} = this.props;
+    const {visDataPath, showVisDataBrowser} = this.props;
+    const {openVisDataBrowser, onVisDataSelected} = this.props;
+    const {visLabels, activeVisLabel, handleSelectVis} = this.props;
     const {stories, storyName, storyText, textEdit} = this.props;
     const {handleStoryInsert, handleStoryName, handleStoryText} = this.props;
     const {handleStoryRemove, handleStoryChange, overlays, arrows} = this.props;
@@ -83,6 +87,23 @@ class Controls extends Component {
 						</div>
 						<input className="width-100" type="text" placeholder="Waypoint Name" value={storyName} onChange={handleStoryName}></input>
             <textarea className="width-100 height-20vh" placeholder="Waypoint Description" value={storyText} onChange={handleStoryText}></textarea>
+            <div className="font-white">
+              Visualization:
+            </div>
+            <div className="width-100">
+              <Select
+                onChange={handleSelectVis}
+                value={activeVisLabel}
+                options={Array.from(visLabels.values())}
+              />
+              <input ref={visDataPath} style={{ width: "75%" }} id="visdatapath" name="visdatapath" type="text" placeholder='csv file'/>
+              <button type="button" onClick={openVisDataBrowser} className="ui button">Browse</button>
+              <FileBrowserModal open={showVisDataBrowser} close={onVisDataSelected}
+                title="Select a csv file" 
+                onFileSelected={onVisDataSelected} 
+                filter={["csv"]}
+              />
+            </div>
 					</div>
 					<div className="col-1 p-0">
 						<div className="btn-group-vertical bg-trans">
