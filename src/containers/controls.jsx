@@ -43,7 +43,16 @@ class Controls extends Component {
                                   }]
                                 }))
 
-    const activeCluster = activeClusters.get(activeVisLabel.cluster)
+    let activeCluster = activeClusters.get(activeVisLabel.cluster)
+    if (activeCluster === undefined) {
+      activeCluster = {
+        color: [255, 255, 255],
+        id: 0,
+        label: "",
+        name: "",
+        value: 0
+      }
+    }
 
     const storyLabels = new Map([...stories].map(([k,v])=>{
                                   return [k, {
