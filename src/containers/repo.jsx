@@ -150,17 +150,20 @@ class Repo extends Component {
 				};
         ['VisScatterplot', 'VisCanvasScatterplot', 'VisMatrix', 'VisBarChart'].forEach((label, index) => {
           if (v[label]) {
-            let clusters = v[label].clusters;
             if (index < 2) {
+              let clusters = v[label].clusters;
               wp.visLabels.get(index).data = v[label].data;
               wp.visLabels.get(index).x = v[label].axes.x;
               wp.visLabels.get(index).y = v[label].axes.y;
-              wp.visLabels.clusters = new Map(clusters.labels.split(',').map((l, i) => {
+              wp.visLabels.get(index).clusters = new Map(clusters.labels.split(',').map((l, i) => {
                 return [i, {
                   name: l,
                   color: hexToRgb(clusters.colors.split(',')[i])
                 }]
               }))
+              if (wp.visLabels.get(index).clusters.size) {
+                wp.visLabels.get(index).cluster = 0;
+              }
             }
             else {
               wp.visLabels.get(index).data = v[label];
@@ -739,7 +742,7 @@ class Repo extends Component {
     let newStory = this.state.stories.get(this.state.activeStory) || this.defaultStory();
     const newLabel = {
       clusters: clusters? new Map([...v.clusters, ...clusters]) : v.clusters,
-      cluster: clusters? clusters.keys().next().value : v.cluster,
+      cluster: clusters.size ? clusters.keys().next().value : v.cluster,
       id: v.id, value: v.value, label: v.label,
       data: data != null ? data : v.data,
       x: x != null ? x : v.x,
