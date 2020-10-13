@@ -122,7 +122,7 @@ class Repo extends Component {
       saveProgress: 0,
       saveProgressMax: 0,
       stories: new Map(waypoints.map((v,k) => {
-				return [k, {
+				let wp = {
 					'name': v.name,
         	'text': v.text,
         	'pan': v.pan,
@@ -133,7 +133,7 @@ class Repo extends Component {
 						return g.label == v.group;
 					}),
           'visLabels': new Map([
-            [0, {value: 0, id: 0, label: 'VisScatterplot',
+          [0, {value: 0, id: 0, label: 'VisScatterplot',
                 data: '', x: '', y: '', cluster: -1, clusters: new Map([])
                 }],
             [1, {value: 1, id: 1, label: 'VisCanvasScatterplot',
@@ -146,10 +146,30 @@ class Repo extends Component {
                 data: '', x: '', y: '', cluster: -1, clusters: new Map([])
                 }]
           ])
-				}]
+				};
+        ['VisScatterplot', 'VisCanvasScatterplot', 'VisMatrix', 'VisBarChart'].forEach((label, index) => {
+          if (v[label]) {
+            let clusters = v[label].clusters;
+            if (index < 2) {
+              wp.visLabels.get(index).data = v[label].data;
+              wp.visLabels.get(index).x = v[label].axes.x;
+              wp.visLabels.get(index).y = v[label].axes.y;
+              wp.visLabels.clusters = new Map(clusters.labels.split(',').map((l, i) => {
+                return [i, {
+                  name: l,
+                  color: hexToRgb(clusters.colors.split(',')[i])
+                }]
+              }))
+            }
+            else {
+              wp.visLabels.get(index).data = v[label];
+            }
+          }
+        });
+        return [k, wp]
       })),
       storyUuid: props.storyUuid,
-      activeGroup: groups.length > 0 ? 0 : null,
+      activeGroup: 0,
       groups: new Map(groups.map((v,k) => {
 				return [k, {
 					activeIds: v.channels.map(chan => {
@@ -1215,7 +1235,7 @@ class Repo extends Component {
 
   createWaypoints(waypoints) {
     return Array.from(waypoints.values()).map(v => {
-      return {
+      let wp = {
         'name': v.name,
         'text': v.text,
         'pan': v.pan,
@@ -1224,6 +1244,36 @@ class Repo extends Component {
         'overlays': v.overlays,
         'group': this.state.groups.get(v.group).label
       }
+      Array.from(v.visLabels.values()).forEach(visLabel => {
+        if (visLabel.value < 2) {
+          if (visLabel.data != '') {
+            wp[visLabel.label] = {
+              data: visLabel.data,
+              axes: {
+                x: visLabel.x,
+                y: visLabel.y
+              },
+              clusters: {
+                labels: Array.from(visLabel.clusters.values()).map(c => {
+                  return c.name;
+                }).join(','),
+                reorder: Array.from(visLabel.clusters.values()).map(c => {
+                  return c.name;
+                }).join(','),
+                colors: Array.from(visLabel.clusters.values()).map(c => {
+                  return rgbToHex(c.color);
+                }).join(','),
+              }
+            }
+          }
+        }
+        else {
+          if (visLabel.data != '') {
+            wp[visLabel.label] = visLabel.data
+          }
+        }
+      })
+      return wp;
     });
   }
 
@@ -1269,6 +1319,7 @@ class Repo extends Component {
         method: 'POST',
         body: JSON.stringify({
           'groups': group_output,
+          'waypoints': story_output,
           'header': this.state.sampleText,
           'rotation': this.state.rotation,
           'image': {

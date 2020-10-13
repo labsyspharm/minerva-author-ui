@@ -82,7 +82,6 @@ class AuthorApp extends Component {
               rgba: import_result.rgba,
               warning: import_result.warning
             });
-
           }
         }, 3000);
       } catch(e) {
