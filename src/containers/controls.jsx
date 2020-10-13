@@ -51,7 +51,7 @@ class Controls extends Component {
         label: "",
         name: "",
         value: 0
-      }
+      };
     }
 
     const storyLabels = new Map([...stories].map(([k,v])=>{
@@ -88,12 +88,12 @@ class Controls extends Component {
               Cluster Color:
               <HuePicker
                   color={ activeCluster.color}
-                handleChange={ (color) =>handleSelectVis(activeVisLabel, null, null, null, new Map([[activeVisLabel.cluster, { name: activeCluster.name, color: color}]]))}
+                handleChange={ (color) =>handleSelectVis(activeVisLabel, null, null, null, new Map([[activeCluster.id, { name: activeCluster.name, color: color}]]))}
               />
             </div>
             <div className="col-8">
                 Cluster Name:
-                <input value={activeCluster.name} onChange={(v)=>handleSelectVis(activeVisLabel, null, null, null, new Map([[activeVisLabel.cluster, { name: v.target.value, color: activeCluster.color }]]))} style={{ width: "50%" }} id="clustername" name="clustername" type="text"/>
+                <input value={activeCluster.name} onChange={(v)=>handleSelectVis(activeVisLabel, null, null, null, new Map([[activeCluster.id, { name: v.target.value, color: activeCluster.color }]]))} style={{ width: "50%" }} id="clustername" name="clustername" type="text"/>
               </div>
           </div>
           )
