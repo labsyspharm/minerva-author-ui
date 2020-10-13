@@ -739,11 +739,11 @@ class Repo extends Component {
     let newStory = this.state.stories.get(this.state.activeStory) || this.defaultStory();
     const newLabel = {
       clusters: clusters? new Map([...v.clusters, ...clusters]) : v.clusters,
+      cluster: clusters? clusters.keys().next().value : v.cluster,
       id: v.id, value: v.value, label: v.label,
       data: data != null ? data : v.data,
       x: x != null ? x : v.x,
-      y: y != null ? y : v.y,
-      cluster: v.cluster
+      y: y != null ? y : v.y
     }
     newStory.visLabels = new Map([...newStory.visLabels,
                     ...(new Map([[newLabel.id, newLabel]]))]);
