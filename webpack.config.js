@@ -1,9 +1,10 @@
 const path = require("path");
 const webpack = require("webpack");
 const CopyWebpackPlugin = require("copy-webpack-plugin");
+const HtmlWebpackPlugin = require('html-webpack-plugin')
 
 
-module.exports = {
+var webpackConfig = {
   entry: [
     "./src/demo.jsx",
     "react-hot-loader/patch",
@@ -47,7 +48,7 @@ module.exports = {
   output: {
     path: path.join(__dirname, "/docs"),
     publicPath: "/",
-    filename: "bundle.js"
+    filename: "bundle.[hash].js"
   },
   plugins: [
     new webpack.HotModuleReplacementPlugin(),
@@ -57,10 +58,30 @@ module.exports = {
     new CopyWebpackPlugin([{
         from: "static",
         to: "."
-    }])
+    }]),
+    new HtmlWebpackPlugin({
+      template: './static/index.html',
+      publicPath: '/',
+    })
   ],
   devServer: {
     contentBase: "./docs",
-    hot: true
+    hot: true,
+    proxy: {
+      "/dev/**": {
+        "target": "https://nldzj7hd69.execute-api.us-east-1.amazonaws.com",
+        "changeOrigin": true
+      }
+    }
   }
+};
+
+module.exports = (env, argv) => {
+  if (argv.mode === 'production') {
+    console.log('Production mode');
+    delete webpackConfig.devServer;
+    webpackConfig.entry = ['./src/demo.jsx'];
+  }
+
+  return webpackConfig;
 };

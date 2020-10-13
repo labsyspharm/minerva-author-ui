@@ -24,6 +24,7 @@ class AuthorApp extends Component {
       url: 'http://localhost:2020/api/u16',
       uuid: null,
       storyUuid: null,
+      story: null,
       imageName: null,
       sample_info: {
         'name': '',
@@ -59,12 +60,12 @@ class AuthorApp extends Component {
   }
 
   async componentDidMount() {
-    const {minerva, url, uuid} = this.state;
+    const { minerva, url, uuid } = this.state;
 
     if (this.props.env === 'local') {
       try {
         setInterval(async () => {
-          const {loaded} = this.state;
+          const { loaded } = this.state;
           if (loaded === false) {
             const import_result = await this.getImportResult();
             const sample_info = import_result.sample_info;
@@ -84,7 +85,7 @@ class AuthorApp extends Component {
             });
           }
         }, 3000);
-      } catch(e) {
+      } catch (e) {
         console.log(e);
       }
     }
@@ -93,7 +94,7 @@ class AuthorApp extends Component {
   onToken(data) {
     this.setState({token: data.token });
     Client.guest = false;
-    Client.warmupRenderTile();
+    Client.warmupRenderTile(4);
   }
 
   onStoryLoaded(story) {
@@ -119,7 +120,6 @@ class AuthorApp extends Component {
         channels.push(channel.Name);
       }
     }
-    console.log(image);
     this.setState({
       loaded: true,
       tilesize: image.tile_size,
@@ -144,11 +144,12 @@ class AuthorApp extends Component {
   }
 
   render() {
-    const {token, loaded, width, height, tilesize, maxLevel, rgba, url, uuid, storyUuid, imageName} = this.state;
+    const {token, loaded, width, height, tilesize, maxLevel, rgba, url, uuid, storyUuid, story, imageName} = this.state;
     const {channels, sample_info, waypoints, groups, warning} = this.state;
 
     if (loaded) {
       let repoClass = this.state.preview ? "repo-div" : "repo-div show";
+      let previewClass = !this.state.preview ? "preview-div" : "preview-div show";
         return (
           <div>
             <div className={repoClass}>
@@ -157,15 +158,18 @@ class AuthorApp extends Component {
                     groups={groups} url={url} uuid={uuid} maxLevel={maxLevel}
                     width={width} height={height} tilesize={tilesize}
                     sample_info={sample_info} warning={warning} storyUuid={storyUuid}
-                    imageName={imageName}
-                    onPreview={() => this.onPreview(true)}
+                    imageName={imageName} story={story}
+                    onPreview={this.onPreview}
               />
             </div>
+            
+            <div className={previewClass}>
             { this.state.preview ? 
               <Preview onBack={() => this.onPreview(false)} 
                 story={this.state.story}
                 image={this.state.image} />
               : null }
+            </div>
            </div>
         )
 

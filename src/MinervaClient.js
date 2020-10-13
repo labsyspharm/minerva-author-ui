@@ -1,5 +1,3 @@
-//import MinervaConfig from './config';
-
 class MinervaClient {
 
     constructor() {
@@ -8,10 +6,16 @@ class MinervaClient {
         this.GRANTS = ['Admin', 'Read', 'Write'];
         this.guest = true;
         this.config = {};
+        this.credentials = {};
     }
 
     configure(config) {
-        this.baseUrl = config.minervaBaseUrl + '/' + config.minervaStage;
+        if (config.minervaStage) {
+            this.baseUrl = config.minervaBaseUrl + '/' + config.minervaStage;
+        } else {
+            this.baseUrl = config.minervaBaseUrl;
+        }
+        
     }
 
 
@@ -127,11 +131,18 @@ class MinervaClient {
         })
     }
 
-    warmupRenderTile() {
-        return this.apiFetch(
-            'GET',
-            '/image/00000000-0000-0000-0000-000000000000/render-tile/0/0/0/0/0/0,FFFFFF,0,1?warmup=1', 
-            { binary: true, headers: { "Accept": "image/jpeg" } });
+    warmupRenderTile(count) {
+        count = count <= 10 ? count : 10;
+        for (let i=0; i<count; i++) {
+            this.apiFetch(
+                'GET',
+                '/image/00000000-0000-0000-0000-000000000000/render-tile/0/0/0/0/0/0,FFFFFF,0,1?warmup=1', 
+                { binary: true, headers: { "Accept": "image/jpeg" } });
+        }
+    }
+
+    getImageCredentials(uuid) {
+        return this.apiFetch('GET', `/image/${uuid}/credentials`);
     }
 
     getImageTile(uuid, level, x, y, z = 0, t = 0) {
@@ -237,7 +248,6 @@ class MinervaClient {
             method,
             headers,
             mode: 'cors'
-            //cache: 'no-cache'
         };
 
         if (body !== null) {
@@ -295,7 +305,6 @@ class MinervaClient {
 
 }
 
-//var Client = new MinervaClient(MinervaConfig.minervaBaseUrl + '/' + MinervaConfig.minervaStage);
 var Client = new MinervaClient();
 
 export default Client;
