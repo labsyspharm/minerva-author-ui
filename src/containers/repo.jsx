@@ -131,8 +131,8 @@ class Repo extends Component {
 					})
 				}]
       })),
+      activeGroup: 0,
       storyUuid: props.storyUuid,
-      activeGroup: groups.length > 0 ? 0 : null,
       groups: new Map(groups.map((v,k) => {
 				return [k, {
 					activeIds: v.channels.map(chan => {
