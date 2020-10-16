@@ -88,12 +88,12 @@ class Controls extends Component {
               Cluster Color:
               <HuePicker
                   color={ activeCluster.color}
-                handleChange={ (color) =>handleSelectVis(activeVisLabel, null, null, null, new Map([[activeCluster.id, { name: activeCluster.name, color: color}]]))}
+                handleChange={ (color) =>handleSelectVis(activeVisLabel, null, null, null, null, new Map([[activeCluster.id, { name: activeCluster.name, color: color}]]))}
               />
             </div>
             <div className="col-8">
                 Cluster Name:
-                <input value={activeCluster.name} onChange={(v)=>handleSelectVis(activeVisLabel, null, null, null, new Map([[activeCluster.id, { name: v.target.value, color: activeCluster.color }]]))} style={{ width: "50%" }} id="clustername" name="clustername" type="text"/>
+                <input value={activeCluster.name} onChange={(v)=>handleSelectVis(activeVisLabel, null, null, null, null, new Map([[activeCluster.id, { name: v.target.value, color: activeCluster.color }]]))} style={{ width: "50%" }} id="clustername" name="clustername" type="text"/>
               </div>
           </div>
           )
@@ -144,6 +144,35 @@ class Controls extends Component {
           {clusterData}
         </div>
         ) 
+      }
+      else if (activeVisLabel.id == 2) {
+        const colormapInvertOptions = [
+          {
+            value: false, id: 0,
+            label: 'False'
+          },
+          {
+            value: true, id: 1,
+            label: 'True'
+          }
+        ];
+        const colormapInvert = colormapInvertOptions[activeVisLabel.colormapInvert? 1 : 0];
+
+        visData = (
+        <div>
+          {visDataGeneric}
+          <div className="font-white">
+            Invert colormap:
+          </div>
+          <div className="width-100">
+            <Select
+              value={colormapInvert}
+              onChange={(c)=>handleSelectVis(activeVisLabel, null, null, null, c.value)}
+              options={colormapInvertOptions}
+            />
+          </div>
+        </div>
+        )
       }
       else {
         visData = (

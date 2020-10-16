@@ -109,7 +109,7 @@ class Repo extends Component {
       viewport: null,
       activeStory: 0,
       activeVisLabel: {
-        value: -1, id: -1, label: '',
+        value: -1, id: -1, label: '', colormapInvert: false,
         data: '', x: '', y: '', cluster: -1, clusters: new Map([])
       },
       deleteGroupModal: false,
@@ -134,16 +134,16 @@ class Repo extends Component {
 						return g.label == v.group;
 					}),
           'visLabels': new Map([
-          [0, {value: 0, id: 0, label: 'VisScatterplot',
+          [0, {value: 0, id: 0, label: 'VisScatterplot', colormapInvert: false,
                 data: '', x: '', y: '', cluster: -1, clusters: new Map([])
                 }],
-            [1, {value: 1, id: 1, label: 'VisCanvasScatterplot',
+            [1, {value: 1, id: 1, label: 'VisCanvasScatterplot', colormapInvert: false,
                 data: '', x: '', y: '', cluster: -1, clusters: new Map([])
                 }],
-            [2, {value: 2, id: 2, label: 'VisMatrix',
+            [2, {value: 2, id: 2, label: 'VisMatrix', colormapInvert: false,
                 data: '', x: '', y: '', cluster: -1, clusters: new Map([])
                 }],
-            [3, {value: 3, id: 3, label: 'VisBarChart',
+            [3, {value: 3, id: 3, label: 'VisBarChart', colormapInvert: false,
                 data: '', x: '', y: '', cluster: -1, clusters: new Map([])
                 }]
           ])
@@ -164,6 +164,10 @@ class Repo extends Component {
               if (wp.visLabels.get(index).clusters.size) {
                 wp.visLabels.get(index).cluster = 0;
               }
+            }
+            else if (index == 2) {
+              wp.visLabels.get(index).data = v[label].data;
+              wp.visLabels.get(index).colormapInvert = v[label].colormapInvert;
             }
             else {
               wp.visLabels.get(index).data = v[label];
@@ -287,16 +291,16 @@ class Repo extends Component {
       ],
       zoom: viewport? viewport.getZoom(): 1.0,
       visLabels: new Map([
-        [0, {value: 0, id: 0, label: 'VisScatterplot',
+        [0, {value: 0, id: 0, label: 'VisScatterplot', colormapInvert: false,
             data: '', x: '', y: '', cluster: -1, clusters: new Map([])
             }],
-        [1, {value: 1, id: 1, label: 'VisCanvasScatterplot',
+        [1, {value: 1, id: 1, label: 'VisCanvasScatterplot', colormapInvert: false,
             data: '', x: '', y: '', cluster: -1, clusters: new Map([])
             }],
-        [2, {value: 2, id: 2, label: 'VisMatrix',
+        [2, {value: 2, id: 2, label: 'VisMatrix', colormapInvert: false,
             data: '', x: '', y: '', cluster: -1, clusters: new Map([])
             }],
-        [3, {value: 3, id: 3, label: 'VisBarChart',
+        [3, {value: 3, id: 3, label: 'VisBarChart', colormapInvert: false,
             data: '', x: '', y: '', cluster: -1, clusters: new Map([])
             }]
       ])
@@ -390,7 +394,7 @@ class Repo extends Component {
     this.setState({
       activeStory: newActiveStory,
       activeVisLabel: {
-        value: -1, id: -1, label: '',
+        value: -1, id: -1, label: '', colormapInvert: false,
         data: '', x: '', y: '', cluster: -1, clusters: new Map([])
       }
     })
@@ -504,7 +508,7 @@ class Repo extends Component {
       stories: newStories,
       activeStory: newActiveStory,
       activeVisLabel: {
-        value: -1, id: -1, label: '',
+        value: -1, id: -1, label: '', colormapInvert: false,
         data: '', x: '', y: '', cluster: -1, clusters: new Map([])
       }
     });
@@ -524,7 +528,7 @@ class Repo extends Component {
       stories: newStories,
       activeStory: activeStory + 1,
       activeVisLabel: {
-        value: -1, id: -1, label: '',
+        value: -1, id: -1, label: '', colormapInvert: false,
         data: '', x: '', y: '', cluster: -1, clusters: new Map([])
       }
     });
@@ -738,9 +742,10 @@ class Repo extends Component {
     this.handleStoryChange(s.value);
   }
 
-  handleSelectVis(v, data=null, x=null, y=null, clusters=new Map([])) {
+  handleSelectVis(v, data=null, x=null, y=null, colormapInvert=null, clusters=new Map([])) {
     let newStory = this.state.stories.get(this.state.activeStory) || this.defaultStory();
     const newLabel = {
+      colormapInvert: colormapInvert != null ? colormapInvert : v.colormapInvert,
       clusters: clusters? new Map([...v.clusters, ...clusters]) : v.clusters,
       cluster: clusters.size ? clusters.keys().next().value : v.cluster,
       id: v.id, value: v.value, label: v.label,
@@ -1276,6 +1281,14 @@ class Repo extends Component {
                   return rgbToHex(c.color);
                 }).join(','),
               }
+            }
+          }
+        }
+        else if (visLabel.value == 2) {
+          if (visLabel.data != '') {
+            wp[visLabel.label] = {
+              data: visLabel.data,
+              colormapInvert: visLabel.colormapInvert
             }
           }
         }
