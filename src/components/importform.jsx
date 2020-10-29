@@ -5,6 +5,8 @@ import "regenerator-runtime/runtime";
 import 'semantic-ui-css/semantic.min.css';
 import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
 import { faExclamationCircle, faCheckCircle, faAngleLeft, faFileAlt} from "@fortawesome/free-solid-svg-icons";
+import Loader from "../components/loader";
+import ErrorFooter from "../components/errorfooter";
 
 class ImportForm extends Component {
   constructor() {
@@ -107,13 +109,12 @@ class ImportForm extends Component {
     return (
       <div>
         { this.renderLocalFields() }
-        {this.renderErrors() }
+        <ErrorFooter message={this.state.error} />
       </div>
     )
   }
 
   renderLocalFields() {
-    const {loading} = this.state;
     let imageHome = this.state.currentFileFolder ? this.state.currentFileFolder : this.state.currentMarkerFolder;
     let markerHome = this.state.currentMarkerFolder ? this.state.currentMarkerFolder : this.state.currentFileFolder;
     return (
@@ -149,28 +150,11 @@ class ImportForm extends Component {
           <input id="dataset" name="dataset" type="text" value={this.state.output} onChange={this.outputChanged} />
           </div>
           <button className="ui button"> Import </button>
-          <ClipLoader animation="border"
-            size={15} color={"#FFFFFF"}
-            loading={loading}/>
+          <Loader active={this.state.loading} />
         </form>
     );
   }
 
-  renderErrors() {
-    if (!this.state.error) {
-      return null;
-    }
-    return (
-      <div className="import-errors">
-        <div className="ui icon message">
-          <FontAwesomeIcon className="icon" icon={faExclamationCircle} />
-          <div className="content">
-            <div className="header">{this.state.error}</div>
-          </div>
-        </div>
-      </div>
-    );
-  }
 }
 
 export default ImportForm;
