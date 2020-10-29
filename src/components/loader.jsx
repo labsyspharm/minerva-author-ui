@@ -12,7 +12,7 @@ export default class Loader extends React.Component {
         }
         return (
            <div id="minerva-spinner" className="ui inline text small">
-               <img className={clazz} src="images/Minerva_FinalLogo_NoText_RGB.svg" />
+               <img className={clazz} src="image/Minerva_FinalLogo_NoText_RGB.svg" />
                {this.props.text}
             </div>
         );
