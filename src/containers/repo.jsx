@@ -1777,6 +1777,7 @@ class Repo extends Component {
             {this.renderProgressBar()}
             {groupBar}
             <Controls 
+              minerva={minerva}
               rgba={this.state.rgba}
               stories={this.state.stories}
 							addArrowText={this.addArrowText}

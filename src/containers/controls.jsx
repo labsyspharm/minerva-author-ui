@@ -23,7 +23,7 @@ class Controls extends Component {
 
   render() {
 
-    const {addArrowText, rgba} = this.props;
+    const {addArrowText, rgba, minerva} = this.props;
     const {deleteOverlay, deleteArrow} = this.props;
     const {activeStory, handleSelectStory} = this.props;
     const {handleClusterChange, handleClusterInsert, handleClusterRemove} = this.props;
@@ -182,6 +182,24 @@ class Controls extends Component {
         ) 
       }
     }
+    let visControls = ''
+    if (!minerva) {
+      visControls = (
+        <div>
+          <div className="font-white">
+            Visualization:
+          </div>
+          <div className="width-100">
+            <Select
+              onChange={(v)=>handleSelectVis(v)}
+              value={activeVisLabel}
+              options={Array.from(visLabels.values())}
+            />
+            {visData}
+          </div>
+        </div>
+      )
+    }
     if (textEdit || rgba) {
       return (
 			<div className="ui form">
@@ -223,17 +241,7 @@ class Controls extends Component {
 						</div>
 						<input className="width-100" type="text" placeholder="Waypoint Name" value={storyName} onChange={handleStoryName}></input>
             <textarea className="width-100 height-20vh" placeholder="Waypoint Description" value={storyText} onChange={handleStoryText}></textarea>
-            <div className="font-white">
-              Visualization:
-            </div>
-            <div className="width-100">
-              <Select
-                onChange={(v)=>handleSelectVis(v)}
-                value={activeVisLabel}
-                options={Array.from(visLabels.values())}
-              />
-              {visData}
-            </div>
+            {visControls}
 					</div>
 					<div className="col-1 p-0">
 						<div className="btn-group-vertical bg-trans">
