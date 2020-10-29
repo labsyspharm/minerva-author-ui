@@ -78,12 +78,11 @@ class Repo extends Component {
 			}];
     }));
     
-    console.log('imageName: ', props.imageName);
-
 		this.state = {
       error: null,
       warning: warning,
       showFileBrowser: false,
+      showVisDataBrowser: false,
       rotation: sample_info.rotation,
       sampleName: sample_info.name,
       sampleText: sample_info.text,
@@ -109,8 +108,13 @@ class Repo extends Component {
 			activeArrow: 0,
       viewport: null,
       activeStory: 0,
+      activeVisLabel: {
+        value: -1, id: -1, label: '', colormapInvert: false,
+        data: '', x: '', y: '', cluster: -1, clusters: new Map([])
+      },
       deleteGroupModal: false,
       deleteStoryModal: false,
+      deleteClusterModal: false,
       saving: false,
       saved: false,
       publishing: false,
@@ -119,7 +123,7 @@ class Repo extends Component {
       saveProgress: 0,
       saveProgressMax: 0,
       stories: new Map(waypoints.map((v,k) => {
-				return [k, {
+				let wp = {
 					'name': v.name,
         	'text': v.text,
         	'pan': v.pan,
@@ -128,11 +132,53 @@ class Repo extends Component {
         	'overlays': v.overlays,
         	'group': groups.findIndex(g => {
 						return g.label == v.group;
-					})
-				}]
+					}),
+          'visLabels': new Map([
+          [0, {value: 0, id: 0, label: 'VisScatterplot', colormapInvert: false,
+                data: '', x: '', y: '', cluster: -1, clusters: new Map([])
+                }],
+            [1, {value: 1, id: 1, label: 'VisCanvasScatterplot', colormapInvert: false,
+                data: '', x: '', y: '', cluster: -1, clusters: new Map([])
+                }],
+            [2, {value: 2, id: 2, label: 'VisMatrix', colormapInvert: false,
+                data: '', x: '', y: '', cluster: -1, clusters: new Map([])
+                }],
+            [3, {value: 3, id: 3, label: 'VisBarChart', colormapInvert: false,
+                data: '', x: '', y: '', cluster: -1, clusters: new Map([])
+                }]
+          ])
+				};
+        ['VisScatterplot', 'VisCanvasScatterplot', 'VisMatrix', 'VisBarChart'].forEach((label, index) => {
+          if (v[label]) {
+            if (index < 2) {
+              let clusters = v[label].clusters;
+              wp.visLabels.get(index).data = v[label].data;
+              wp.visLabels.get(index).x = v[label].axes.x;
+              wp.visLabels.get(index).y = v[label].axes.y;
+              wp.visLabels.get(index).clusters = new Map(clusters.labels.split(',').map((l, i) => {
+                return [i, {
+                  name: l,
+                  color: hexToRgb(clusters.colors.split(',')[i])
+                }]
+              }))
+              if (wp.visLabels.get(index).clusters.size) {
+                wp.visLabels.get(index).cluster = 0;
+              }
+            }
+            else if (index == 2) {
+              wp.visLabels.get(index).data = v[label].data;
+              wp.visLabels.get(index).colormapInvert = v[label].colormapInvert;
+            }
+            else {
+              wp.visLabels.get(index).data = v[label];
+            }
+          }
+        });
+        return [k, wp]
       })),
       activeGroup: 0,
       storyUuid: props.storyUuid,
+      activeGroup: 0,
       groups: new Map(groups.map((v,k) => {
 				return [k, {
 					activeIds: v.channels.map(chan => {
@@ -165,6 +211,11 @@ class Repo extends Component {
       chanRender: defaultChanRender
     };
 
+    if (this.state.stories.size == 0) {
+      this.state.stories = new Map([
+        [0, this.defaultStory()]
+      ])
+    }
     if (this.state.groups.size > 0) {
       this.state.activeIds = this.state.groups.get(0).activeIds;
     }
@@ -178,6 +229,8 @@ class Repo extends Component {
     this.updateGroups = this.updateGroups.bind(this);
     this.openFileBrowser = this.openFileBrowser.bind(this);
     this.onFileSelected = this.onFileSelected.bind(this);
+    this.openVisDataBrowser = this.openVisDataBrowser.bind(this);
+    this.onVisDataSelected = this.onVisDataSelected.bind(this);
     this.interactor = this.interactor.bind(this);
     this.arrowClick = this.arrowClick.bind(this);
     this.lassoClick = this.lassoClick.bind(this);
@@ -188,6 +241,7 @@ class Repo extends Component {
     this.handleChange = this.handleChange.bind(this);
     this.handleSelect = this.handleSelect.bind(this);
     this.handleSelectStory = this.handleSelectStory.bind(this);
+    this.handleSelectVis = this.handleSelectVis.bind(this);
     this.handleStoryName = this.handleStoryName.bind(this);
     this.handleStoryText = this.handleStoryText.bind(this);
     this.handleArrowText = this.handleArrowText.bind(this);
@@ -197,10 +251,14 @@ class Repo extends Component {
     this.handleArrowHide = this.handleArrowHide.bind(this);
     this.handleArrowAngle = this.handleArrowAngle.bind(this);
     this.handleStoryChange = this.handleStoryChange.bind(this);
+    this.handleClusterChange = this.handleClusterChange.bind(this);
+    this.handleClusterInsert = this.handleClusterInsert.bind(this);
+    this.handleClusterRemove = this.handleClusterRemove.bind(this);
     this.handleStoryInsert = this.handleStoryInsert.bind(this);
     this.handleStoryRemove = this.handleStoryRemove.bind(this);
     this.handleAuthorName = this.handleAuthorName.bind(this);
     this.deleteStory = this.deleteStory.bind(this);
+    this.deleteCluster = this.deleteCluster.bind(this);
     this.handleSelectGroup = this.handleSelectGroup.bind(this);
     this.handleViewport = this.handleViewport.bind(this);
     this.toggleTextEdit = this.toggleTextEdit.bind(this);
@@ -216,6 +274,38 @@ class Repo extends Component {
     this.handleAddGroup = this.handleAddGroup.bind(this);
     this.getCreateLabel = this.getCreateLabel.bind(this);
     this.labelRGBA = this.labelRGBA.bind(this);
+    this.defaultStory = this.defaultStory.bind(this);
+  }
+
+  defaultStory() {
+    const {stories, activeStory, activeGroup, viewport} = this.state;
+
+    return {
+      text: '',
+      name: '',
+      arrows: [],
+      overlays: [],
+      group: activeGroup,
+      pan: [
+        viewport? viewport.getCenter().x: 0.5,
+        viewport? viewport.getCenter().y: 0.5,
+      ],
+      zoom: viewport? viewport.getZoom(): 1.0,
+      visLabels: new Map([
+        [0, {value: 0, id: 0, label: 'VisScatterplot', colormapInvert: false,
+            data: '', x: '', y: '', cluster: -1, clusters: new Map([])
+            }],
+        [1, {value: 1, id: 1, label: 'VisCanvasScatterplot', colormapInvert: false,
+            data: '', x: '', y: '', cluster: -1, clusters: new Map([])
+            }],
+        [2, {value: 2, id: 2, label: 'VisMatrix', colormapInvert: false,
+            data: '', x: '', y: '', cluster: -1, clusters: new Map([])
+            }],
+        [3, {value: 3, id: 3, label: 'VisBarChart', colormapInvert: false,
+            data: '', x: '', y: '', cluster: -1, clusters: new Map([])
+            }]
+      ])
+    };
   }
 
   componentDidMount() {
@@ -224,7 +314,6 @@ class Repo extends Component {
 
   labelRGBA() {
     const {rgba} = this.state;
-    console.log(rgba)
     if (rgba) {
       this.setState({
         activeGroup: 0,
@@ -278,25 +367,13 @@ class Repo extends Component {
   
   handleViewport(viewport) {
     const {stories, activeStory, activeGroup} = this.state;
-    const story = stories.get(activeStory);
-    const storyName = story ? story.name : '';
-    const storyText = story ? story.text : '';
-    const storyGroup = story ? story.group : activeGroup;
-    const overlays = story ? story.overlays : [];
-    const arrows = story ? story.arrows : [];
+    let newStory = stories.get(activeStory) || this.defaultStory();
 
-    const newStory = {
-      'text': storyText,
-      'name': storyName,
-      'group': storyGroup,
-      'arrows': arrows,
-      'overlays': overlays,
-      'zoom': viewport.getZoom(),
-      'pan': [
+    newStory.zoom = viewport.getZoom();
+    newStory.pan = [
         viewport.getCenter().x,
         viewport.getCenter().y
-      ]
-    }
+    ];
 
     const newStories = new Map([...stories,
                               ...(new Map([[activeStory, newStory]]))]);
@@ -309,25 +386,97 @@ class Repo extends Component {
 
   handleStoryChange(newActiveStory) {
     const {groups, stories, viewport} = this.state;
-    const story = stories.get(newActiveStory);
-    if (story && viewport) {
-        const pan = new OpenSeadragon.Point(...story.pan);
-        viewport.zoomTo(story.zoom); 
+    const newStory = stories.get(newActiveStory) || this.defaultStory();
+    if (newStory && viewport) {
+        const pan = new OpenSeadragon.Point(...newStory.pan);
+        viewport.zoomTo(newStory.zoom); 
         viewport.panTo(pan); 
     }
     this.setState({
-      activeStory: newActiveStory
+      activeStory: newActiveStory,
+      activeVisLabel: {
+        value: -1, id: -1, label: '', colormapInvert: false,
+        data: '', x: '', y: '', cluster: -1, clusters: new Map([])
+      }
     })
-    if (story) {
-      const group = groups.get(story.group)
+    if (newStory) {
+      const group = groups.get(newStory.group)
       if (group) {
         this.setState({
-          activeGroup: story.group,
+          activeGroup: newStory.group,
           activeIds: group.activeIds
         })
       }
     }
   }
+
+  handleClusterRemove() {
+
+    const {activeVisLabel} = this.state;
+    const c = activeVisLabel.clusters.get(activeVisLabel.cluster);
+    if (c === undefined) {
+      this.deleteCluster();
+    }
+    else {
+      this.setState({deleteClusterModal: true})
+    }
+
+  }
+
+  deleteCluster() {
+
+    let newLabel = this.state.activeVisLabel;
+    let newStory = this.state.stories.get(this.state.activeStory) || this.defaultStory();
+
+    const newClusters = new Map([...newLabel.clusters].filter(([k,v]) => {
+                                return k != newLabel.cluster;
+                              }).map(([k,v])=>{
+                                return [k < newLabel.cluster? k : k - 1, v]
+                              }))
+
+    newLabel.clusters = newClusters;
+    newLabel.cluster = Math.max(0, newLabel.cluster - 1);
+    if (newClusters.size == 0) {
+      newLabel.cluster = -1;
+    }
+
+    newStory.visLabels = new Map([...newStory.visLabels,
+                    ...(new Map([[newLabel.id, newLabel]]))]);
+
+    this.setState({
+      activeVisLabel: newLabel,
+      stories: new Map([...this.state.stories,
+        ...(new Map([[this.state.activeStory, newStory]]))])
+    });
+    this.setState({deleteClusterModal: false});
+  }
+
+  handleClusterInsert() {
+    let newLabel = this.state.activeVisLabel;
+    let newStory = this.state.stories.get(this.state.activeStory) || this.defaultStory();
+    newLabel.cluster = newLabel.cluster + 1;
+
+    const newCluster = {
+      name: (newLabel.cluster + 1),
+			color: hexToRgb("#FFFFFF"),
+    };
+
+    const newClusters = new Map([...[...newLabel.clusters].map(([k,v]) => {
+                                return [k <= newLabel.cluster? k: k+1, v];
+                              }),
+                              ...(new Map([[newLabel.cluster, newCluster]]))]);
+
+    newLabel.clusters = newClusters;
+    newStory.visLabels = new Map([...newStory.visLabels,
+                    ...(new Map([[newLabel.id, newLabel]]))]);
+
+    this.setState({
+      activeVisLabel: newLabel,
+      stories: new Map([...this.state.stories,
+        ...(new Map([[this.state.activeStory, newStory]]))])
+    })
+  }
+
 
   handleStoryRemove() {
 
@@ -346,57 +495,50 @@ class Repo extends Component {
 
     const {stories, activeStory} = this.state;
 
-    const newStories = new Map([...stories].filter(([k,v]) => {
+    let newStories = new Map([...stories].filter(([k,v]) => {
                                 return k != activeStory;
                               }).map(([k,v])=>{
                                 return [k < activeStory? k : k - 1, v]
                               }))
 
-    this.setState({stories: newStories, activeStory: Math.max(0, activeStory - 1)});
+    let newActiveStory = Math.max(0, activeStory - 1);
+    if (newStories.size == 0) {
+      newStories.set(0, this.defaultStory())
+    }
+    this.setState({
+      stories: newStories,
+      activeStory: newActiveStory,
+      activeVisLabel: {
+        value: -1, id: -1, label: '', colormapInvert: false,
+        data: '', x: '', y: '', cluster: -1, clusters: new Map([])
+      }
+    });
     this.setState({deleteStoryModal: false})
   }
 
   handleStoryInsert() {
     const {stories, activeStory, activeGroup, viewport} = this.state;
-
-     const newStory = {
-      text: '',
-      name: '',
-      arrows: [],
-      overlays: [],
-      group: activeGroup,
-      pan: [viewport.getCenter().x, viewport.getCenter().y],
-      zoom: viewport.getZoom()
-    };
+    const newStory = this.defaultStory();
 
     const newStories = new Map([...[...stories].map(([k,v]) => {
                                 return [k <= activeStory? k: k+1, v];
                               }),
                               ...(new Map([[activeStory + 1, newStory]]))]);
 
-    this.setState({stories: newStories, activeStory: activeStory + 1});
+    this.setState({
+      stories: newStories,
+      activeStory: activeStory + 1,
+      activeVisLabel: {
+        value: -1, id: -1, label: '', colormapInvert: false,
+        data: '', x: '', y: '', cluster: -1, clusters: new Map([])
+      }
+    });
   }
 
   handleStoryName(event) {
     const {stories, activeStory, activeGroup, viewport} = this.state;
-    const story = stories.get(activeStory);
-    const overlays = story ? story.overlays : [];
-    const arrows = story ? story.arrows : [];
-    const group = story ? story.group : activeGroup;
-    const text = story ? story.text : '';
-    const pan = story ? story.pan : [viewport.getCenter().x, viewport.getCenter().y]
-    const zoom = story ? story.zoom : viewport.getZoom();
-    const name = event.target.value;
-
-    const newStory = {
-      text: text,
-      name: name,
-      arrows: arrows,
-      overlays: overlays,
-      group: group,
-      pan: pan,
-      zoom: zoom
-    };
+    let newStory = stories.get(activeStory) || this.defaultStory();
+    newStory.name = event.target.value;
 
     const newStories = new Map([...stories,
                               ...(new Map([[activeStory, newStory]]))]);
@@ -406,24 +548,8 @@ class Repo extends Component {
 
   handleStoryText(event) {
     const {stories, activeStory, activeGroup, viewport} = this.state;
-    const story = stories.get(activeStory);
-    const overlays = story ? story.overlays : [];
-    const arrows = story ? story.arrows : [];
-    const group = story ? story.group : activeGroup;
-    const pan = story ? story.pan : [viewport.getCenter().x, viewport.getCenter().y]
-    const zoom = story ? story.zoom : viewport.getZoom();
-    const name = story ? story.name : '';
-    const text = event.target.value;
-
-    const newStory = {
-      text: text,
-      name: name,
-      arrows: arrows,
-      overlays: overlays,
-      group: group,
-      pan: pan,
-      zoom: zoom
-    };
+    let newStory = stories.get(activeStory) || this.defaultStory();
+    newStory.text = event.target.value;
 
     const newStories = new Map([...stories,
                               ...(new Map([[activeStory, newStory]]))]);
@@ -617,6 +743,40 @@ class Repo extends Component {
     this.handleStoryChange(s.value);
   }
 
+  handleSelectVis(v, data=null, x=null, y=null, colormapInvert=null, clusters=new Map([])) {
+    let newStory = this.state.stories.get(this.state.activeStory) || this.defaultStory();
+    const newLabel = {
+      colormapInvert: colormapInvert != null ? colormapInvert : v.colormapInvert,
+      clusters: clusters? new Map([...v.clusters, ...clusters]) : v.clusters,
+      cluster: clusters.size ? clusters.keys().next().value : v.cluster,
+      id: v.id, value: v.value, label: v.label,
+      data: data != null ? data : v.data,
+      x: x != null ? x : v.x,
+      y: y != null ? y : v.y
+    }
+    newStory.visLabels = new Map([...newStory.visLabels,
+                    ...(new Map([[newLabel.id, newLabel]]))]);
+    this.setState({
+      activeVisLabel: newLabel,
+      stories: new Map([...this.state.stories,
+        ...(new Map([[this.state.activeStory, newStory]]))])
+    })
+  }
+
+  handleClusterChange(cluster) {
+    let newStory = this.state.stories.get(this.state.activeStory) || this.defaultStory();
+    let newLabel = this.state.activeVisLabel;
+    if (newLabel.clusters.get(cluster)) {
+      newLabel.cluster = cluster;
+      newStory.visLabels = new Map([...newStory.visLabels,
+                      ...(new Map([[newLabel.id, newLabel]]))]);
+      this.setState({
+        activeVisLabel: newLabel,
+        stories: new Map([...this.state.stories,
+          ...(new Map([[this.state.activeStory, newStory]]))])
+      })
+    }
+  }
 
   handleSelectGroup(g, action) {
     if (action.action === 'clear') {
@@ -630,25 +790,10 @@ class Repo extends Component {
 
   _handleSelectGroupForWaypoint(id) {
     const {activeStory, textEdit, viewport} = this.state;
-    const story = this.state.stories.get(activeStory);
+    let newStory = this.state.stories.get(activeStory) || this.defaultStory();
     if ((id !== undefined) && textEdit) {
 
-      const overlays = story ? story.overlays : [];
-      const arrows = story ? story.arrows : [];
-      const text = story ? story.text : '';
-      const pan = story ? story.pan : [viewport.getCenter().x, viewport.getCenter().y]
-      const zoom = story ? story.zoom : viewport.getZoom();
-      const name = story ? story.name : '';
-
-      const newStory = {
-        text: text,
-        name: name,
-        arrows: arrows,
-        overlays: overlays,
-        group: id,
-        pan: pan,
-        zoom: zoom
-      };
+      newStory.group = id;
 
       const newStories = new Map([...this.state.stories,
         ...(new Map([[activeStory, newStory]]))]);
@@ -737,33 +882,15 @@ class Repo extends Component {
   handleArrowAngle(event) {
 
     const {stories, activeStory, activeGroup, viewport} = this.state;
-    const story = stories.get(activeStory);
-    const group = story ? story.group : activeGroup;
-    const overlays = story ? story.overlays : [];
-    const arrows = story ? story.arrows : [];
-    const text = story ? story.text : '';
-    const name = story ? story.name : '';
-    const pan = story ? story.pan : [viewport.getCenter().x, viewport.getCenter().y]
-    const zoom = story ? story.zoom : viewport.getZoom();
-		
+    let newStory = stories.get(activeStory) || this.defaultStory();
 		const activeArrow = this.state.activeArrow;
 
-		if (arrows.length - 1 < activeArrow) {
+		if (newStory.arrows.length - 1 < activeArrow) {
 			return;
 		}
 	
     let angle = parseInt(event.target.value)
-    arrows[activeArrow].angle = isNaN(angle) ? '' : angle; 
-
-    const newStory = {
-      text: text,
-      name: name,
-      overlays: overlays,
-      arrows: arrows,
-      group: group,
-      pan: pan,
-      zoom: zoom
-    };
+    newStory.arrows[activeArrow].angle = isNaN(angle) ? '' : angle; 
 
     const newStories = new Map([...stories,
                               ...(new Map([[activeStory, newStory]]))]);
@@ -776,32 +903,14 @@ class Repo extends Component {
   handleArrowHide() {
 
     const {stories, activeStory, activeGroup, viewport} = this.state;
-    const story = stories.get(activeStory);
-    const group = story ? story.group : activeGroup;
-    const overlays = story ? story.overlays : [];
-    const arrows = story ? story.arrows : [];
-    const text = story ? story.text : '';
-    const name = story ? story.name : '';
-    const pan = story ? story.pan : [viewport.getCenter().x, viewport.getCenter().y]
-    const zoom = story ? story.zoom : viewport.getZoom();
-		
+    let newStory = stories.get(activeStory) || this.defaultStory();
 		const activeArrow = this.state.activeArrow;
 
-		if (arrows.length - 1 < activeArrow) {
+		if (newStory.arrows.length - 1 < activeArrow) {
 			return;
 		}
 	
-		arrows[activeArrow].hide = !arrows[activeArrow].hide;
-
-    const newStory = {
-      text: text,
-      name: name,
-      overlays: overlays,
-      arrows: arrows,
-      group: group,
-      pan: pan,
-      zoom: zoom
-    };
+		newStory.arrows[activeArrow].hide = !arrows[activeArrow].hide;
 
     const newStories = new Map([...stories,
                               ...(new Map([[activeStory, newStory]]))]);
@@ -841,32 +950,14 @@ class Repo extends Component {
   handleArrowText(event) {
 
     const {stories, activeStory, activeGroup, viewport} = this.state;
-    const story = stories.get(activeStory);
-    const group = story ? story.group : activeGroup;
-    const overlays = story ? story.overlays : [];
-    const arrows = story ? story.arrows : [];
-    const text = story ? story.text : '';
-    const name = story ? story.name : '';
-    const pan = story ? story.pan : [viewport.getCenter().x, viewport.getCenter().y]
-    const zoom = story ? story.zoom : viewport.getZoom();
-		
+    let newStory = stories.get(activeStory) || this.defaultStory();
 		const activeArrow = this.state.activeArrow;
 
-		if (arrows.length - 1 < activeArrow) {
+		if (newStory.arrows.length - 1 < activeArrow) {
 			return;
 		}
 	
-		arrows[activeArrow].text = event.target.value;
-
-    const newStory = {
-      text: text,
-      name: name,
-      overlays: overlays,
-      arrows: arrows,
-      group: group,
-      pan: pan,
-      zoom: zoom
-    };
+		newStory.arrows[activeArrow].text = event.target.value;
 
     const newStories = new Map([...stories,
                               ...(new Map([[activeStory, newStory]]))]);
@@ -882,29 +973,14 @@ class Repo extends Component {
     ];
 
     const {stories, activeStory, activeGroup, viewport} = this.state;
-    const story = stories.get(activeStory);
-    const group = story ? story.group : activeGroup;
-    const overlays = story ? story.overlays : [];
-    const arrows = story ? story.arrows : [];
-    const text = story ? story.text : '';
-    const name = story ? story.name : '';
-    const pan = story ? story.pan : [viewport.getCenter().x, viewport.getCenter().y]
-    const zoom = story ? story.zoom : viewport.getZoom();
+    let newStory = stories.get(activeStory) || this.defaultStory();
 
-    const newStory = {
-      text: text,
-      name: name,
-      overlays: overlays,
-      arrows: arrows.concat([{
+    newStory.arrows = arrows.concat([{
 				position: new_xy,
         hide: false,
         angle: '',
 				text: ''
-			}]),
-      group: group,
-      pan: pan,
-      zoom: zoom
-    };
+		}]);
 
     const newStories = new Map([...stories,
                               ...(new Map([[activeStory, newStory]]))]);
@@ -923,24 +999,9 @@ class Repo extends Component {
     const newOverlay = new_xy.concat(wh);
 
     const {stories, activeStory, activeGroup, viewport} = this.state;
-    const story = stories.get(activeStory);
-    const group = story ? story.group : activeGroup;
-    const text = story ? story.text : '';
-    const name = story ? story.name : '';
-    const pan = story ? story.pan : [viewport.getCenter().x, viewport.getCenter().y]
-    const zoom = story ? story.zoom : viewport.getZoom();
-    const arrows = story ? story.arrows : [];
-    const overlays = story ? story.overlays : [];
+    let newStory = stories.get(activeStory) || this.defaultStory();
 
-    const newStory = {
-      text: text,
-      name: name,
-      arrows: arrows,
-      overlays: overlays.concat([newOverlay]),
-      group: group,
-      pan: pan,
-      zoom: zoom
-    };
+    newStory.overlays = newStory.overlays.concat([newOverlay])
 
     const newStories = new Map([...stories,
                               ...(new Map([[activeStory, newStory]]))]);
@@ -952,8 +1013,8 @@ class Repo extends Component {
 
   drawUpperBounds(position) {
     const {stories, activeStory, activeGroup, viewport} = this.state;
-    const story = stories.get(activeStory);
-    const overlays = story ? story.overlays: [];
+    let newStory = stories.get(activeStory) || this.defaultStory();
+    const overlays = newStory.overlays;
 		const overlay = overlays.pop();
 
     const xy = overlay.slice(0, 2);
@@ -965,22 +1026,7 @@ class Repo extends Component {
 
     const newOverlay = [x.start, y.start, x.range, y.range];
 
-    const group = story ? story.group : activeGroup;
-    const text = story ? story.text : '';
-    const name = story ? story.name : '';
-    const pan = story ? story.pan : [viewport.getCenter().x, viewport.getCenter().y]
-    const zoom = story ? story.zoom : viewport.getZoom();
-    const arrows = story ? story.arrows : [];
-
-    const newStory = {
-      text: text,
-      name: name,
-      arrows: arrows,
-      overlays: overlays.concat([newOverlay]),
-      group: group,
-      pan: pan,
-      zoom: zoom
-    };
+    newStory.overlays = overlays.concat([newOverlay]);
 
     const newStories = new Map([...stories,
                               ...(new Map([[activeStory, newStory]]))]);
@@ -999,7 +1045,7 @@ class Repo extends Component {
 
 	deleteArrow(i) {
     const {stories, activeStory, activeArrow} = this.state;
-    let newStory = stories.get(activeStory);
+    let newStory = stories.get(activeStory) || this.defaultStory();
 
 		newStory.arrows.splice(i, 1);
 
@@ -1019,7 +1065,7 @@ class Repo extends Component {
 
 	deleteOverlay(i) {
     const {stories, activeStory} = this.state;
-    let newStory = stories.get(activeStory);
+    let newStory = stories.get(activeStory) || this.defaultStory();
 
 		newStory.overlays.splice(i, 1);
 
@@ -1207,7 +1253,7 @@ class Repo extends Component {
 
   createWaypoints(waypoints) {
     return Array.from(waypoints.values()).map(v => {
-      return {
+      let wp = {
         'name': v.name,
         'text': v.text,
         'pan': v.pan,
@@ -1216,6 +1262,44 @@ class Repo extends Component {
         'overlays': v.overlays,
         'group': this.state.groups.get(v.group).label
       }
+      Array.from(v.visLabels.values()).forEach(visLabel => {
+        if (visLabel.value < 2) {
+          if (visLabel.data != '') {
+            wp[visLabel.label] = {
+              data: visLabel.data,
+              axes: {
+                x: visLabel.x,
+                y: visLabel.y
+              },
+              clusters: {
+                labels: Array.from(visLabel.clusters.values()).map(c => {
+                  return c.name;
+                }).join(','),
+                reorder: Array.from(visLabel.clusters.values()).map(c => {
+                  return c.name;
+                }).join(','),
+                colors: Array.from(visLabel.clusters.values()).map(c => {
+                  return rgbToHex(c.color);
+                }).join(','),
+              }
+            }
+          }
+        }
+        else if (visLabel.value == 2) {
+          if (visLabel.data != '') {
+            wp[visLabel.label] = {
+              data: visLabel.data,
+              colormapInvert: visLabel.colormapInvert
+            }
+          }
+        }
+        else {
+          if (visLabel.data != '') {
+            wp[visLabel.label] = visLabel.data
+          }
+        }
+      })
+      return wp;
     });
   }
 
@@ -1235,7 +1319,6 @@ class Repo extends Component {
     if (minerva) {
       this.saveRenderingSettings(img.uuid, group_output).then(res => {
         Client.saveStory(story_definition).then(res => {
-          console.log(res);
           this.setState({saving: false, storyUuid: res.uuid });
         }).catch(err => {
           console.error(err);
@@ -1262,6 +1345,7 @@ class Repo extends Component {
         method: 'POST',
         body: JSON.stringify({
           'groups': group_output,
+          'waypoints': story_output,
           'header': this.state.sampleText,
           'rotation': this.state.rotation,
           'image': {
@@ -1306,8 +1390,6 @@ class Repo extends Component {
   saveRenderingSettings(imageUuid, group_output) {
     return Client.createRenderingSettings(imageUuid, { groups: group_output }).then(json => {
       let groups = new Map(this.state.groups);
-      console.log('groups: ', groups);
-      console.log('Create rendering settings: ', json);
       json.groups.forEach((g,i) => {
         groups.get(i).id = g.id;
         groups.get(i).uuid = g.uuid;
@@ -1366,6 +1448,20 @@ class Repo extends Component {
       this.filePath.current.value = file.path;
     }
   }
+
+  openVisDataBrowser() {
+    this.setState({ showVisDataBrowser: true});
+  }
+
+  onVisDataSelected(file) {
+    this.setState({ 
+      showVisDataBrowser: false
+    });
+    if (file && file.path) {
+      this.handleSelectVis(this.state.activeVisLabel, file.path)
+    }
+  }
+
   dismissWarning() {
     this.setState({warning: ''});
   }
@@ -1386,7 +1482,6 @@ class Repo extends Component {
   }
 
   share() {
-    console.log(window.location.href);
     let url = window.location.href + `?story=${this.state.storyUuid}`;
     if (navigator.clipboard) {
       navigator.clipboard.writeText(url);
@@ -1405,7 +1500,6 @@ class Repo extends Component {
     if (!this.state.warning) {
       return null;
     }
-    console.log(this.state.warning);
     return (
       <div className="import-warning">
         <div className="ui icon message">
@@ -1438,6 +1532,7 @@ class Repo extends Component {
   render() {
     const { rgba, token } = this.state;
     let minerva = this.props.env === 'cloud';
+    const { activeVisLabel } = this.state;
     const { img, groups, chanLabel, textEdit } = this.state;
     const { chanRender, activeIds, activeGroup } = this.state;
     const group = groups.get(activeGroup);
@@ -1454,11 +1549,12 @@ class Repo extends Component {
     );
 
     const {stories, activeStory} = this.state;
-    const story = stories.get(activeStory);
-    const storyName = story ? story.name : '';
-    const storyText = story ? story.text : '';
-    const overlays = story ? story.overlays : [];
-    const arrows = story ? story.arrows : [];
+    const story = stories.get(activeStory) || this.defaultStory();
+    const visLabels =  story.visLabels;
+    const storyName = story.name;
+    const storyText = story.text;
+    const overlays = story.overlays;
+    const arrows = story.arrows;
 		const activeArrow = this.state.activeArrow;
 		let arrowText = '';
 		if (arrows.length > 0) {
@@ -1707,6 +1803,15 @@ class Repo extends Component {
               storyName={storyName}
               storyText={storyText}
               activeStory={activeStory}
+              handleSelectVis={this.handleSelectVis}
+              handleClusterChange={this.handleClusterChange}
+              handleClusterInsert={this.handleClusterInsert}
+              handleClusterRemove={this.handleClusterRemove}
+              activeVisLabel={activeVisLabel}
+              visLabels={visLabels}
+              showVisDataBrowser={this.state.showVisDataBrowser}
+              openVisDataBrowser={this.openVisDataBrowser}
+              onVisDataSelected={this.onVisDataSelected}
             />
             <Confirm
               header="Delete channel group" 
@@ -1725,6 +1830,15 @@ class Repo extends Component {
               open={this.state.deleteStoryModal}
               onCancel={() => { this.setState({deleteStoryModal: false})} }
               onConfirm={this.deleteStory}
+            />
+            <Confirm
+              header="Delete cluster"
+              content="Are you sure?"
+              confirmButton="Delete"
+              size="small"
+              open={this.state.deleteClusterModal}
+              onCancel={() => { this.setState({deleteClusterModal: false})} }
+              onConfirm={this.deleteCluster}
             />
           </div>
           { this.renderWarning() }
