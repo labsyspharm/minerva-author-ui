@@ -1,0 +1,28 @@
+.minerva-spinner-image {
+    width: 35px;
+    height: 35px;
+  
+    animation-name: ckw;
+    animation-duration: 1.5s;
+    animation-iteration-count: infinite;
+    animation-timing-function: linear;
+    transform-origin: 50% 50%;
+  }
+
+  .minerva-spinner-image.small {
+      width: 20px;
+      height: 20px;
+  }
+  
+  #minerva-spinner {
+    display: inline;
+  }
+  
+  @keyframes ckw {
+      0% {
+          transform: rotate(0deg);
+      }
+      100% {
+          transform: rotate(360deg);
+      }
+  }

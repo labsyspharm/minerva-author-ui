@@ -31,14 +31,14 @@ const ChannelControl = ({ id, color, range, minRange, maxRange,
   }
   return (
     <div className="ChannelControl row">
-      <div className="col-1">
+      <div className="col-1 mt-2">
         <HuePicker
           color={ color }
           handleChange={ color => handleChange(id, color, null, null, visible) }
         />
       </div>
       <div className="col">
-        <div className="ui input mini width-75px">
+        <div className="ui input mini width-100px">
           <input type="text" value={label} 
             onChange={ e => handleChange(id, null, null, e.target.value, visible) }
           />

@@ -9,14 +9,14 @@ import { faTimes } from '@fortawesome/free-solid-svg-icons'
 export default class CloudBrowserModal extends React.Component {
     render() {
         return (
-            <Modal open={this.props.open}>
+            <Modal open={this.props.open} centered={false}>
                 <Modal.Header>
                     {this.props.title}
                     <button type="button" className="ui button filebrowser-modal-close" onClick={this.props.close}>
                         <FontAwesomeIcon icon={faTimes} size="lg"/>
                     </button>
                 </Modal.Header>
-                <Modal.Content>
+                <Modal.Content scrolling>
                     <CloudBrowser onMinervaCloudUuid={this.props.onMinervaCloudUuid} />
                 </Modal.Content>
             </Modal>

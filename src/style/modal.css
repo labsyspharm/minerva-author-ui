@@ -36,3 +36,9 @@
   cursor: pointer;
 }
 
+.modal {
+  left: initial;
+  right: initial;
+  top: initial;
+  bottom: initial;
+}
