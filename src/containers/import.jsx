@@ -15,7 +15,11 @@ class Import extends Component {
           { this.props.env === 'local' ?
             <ImportForm />
           : 
-            <CloudImportForm onToken={this.props.onToken} onMinervaImage={this.props.onMinervaImage} onStoryLoaded={this.props.onStoryLoaded} /> }
+            <CloudImportForm onToken={this.props.onToken} 
+              onMinervaImage={this.props.onMinervaImage} 
+              onStoryLoaded={this.props.onStoryLoaded}
+              onSignout={this.props.onSignout}
+              username={this.props.username} /> }
         </div>
       </div>
     );

@@ -65,7 +65,7 @@ class Repo extends Component {
     super();
 
     const { width, height, maxLevel, tilesize,
-      token, rgba, uuid, url, warning} = props;
+      rgba, uuid, url, warning} = props;
     const { channels, sample_info, waypoints, groups } = props;
 
 		const defaultChanRender = new Map(channels.map((v,k) => {
@@ -99,7 +99,6 @@ class Repo extends Component {
       },
       imageName: props.imageName,
       rgba: rgba,
-      token: token,
       textEdit: false,
       showModal: false,
       sampleInfo: false,
@@ -1222,7 +1221,7 @@ class Repo extends Component {
 
     let {groups} = this.state;
     const {stories, chanLabel} = this.state;
-    const {token, img} = this.state;
+    const {img} = this.state;
     let minerva = this.props.env === 'cloud';
 
     const group_output = this.createGroupOutput(groups, chanLabel);
@@ -1430,7 +1429,7 @@ class Repo extends Component {
   }
 
   render() {
-    const { rgba, token } = this.state;
+    const { rgba } = this.state;
     let minerva = this.props.env === 'cloud';
     const { img, groups, chanLabel, textEdit } = this.state;
     const { chanRender, activeIds, activeGroup } = this.state;
@@ -1470,7 +1469,7 @@ class Repo extends Component {
     let viewer;
     if (minerva) {
       viewer = <MinervaImageView className="ImageView"
-        img={ img } token={ token }
+        img={ img }
         channels={ visibleChannels }
         overlays={ overlays } arrows={ arrows }
         handleViewport={ this.handleViewport }
@@ -1481,7 +1480,7 @@ class Repo extends Component {
     }
     else if (rgba) {
       viewer = <SimpleImageView className="ImageView"
-        img={ img } token={ token }
+        img={ img }
         channels={ visibleChannels }
         overlays={ overlays } arrows={ arrows }
         handleViewport={ this.handleViewport }
@@ -1547,6 +1546,10 @@ class Repo extends Component {
       shareButton = null;
       publishButton = null;
     }
+    if (!this.state.storyUuid) {
+      shareButton = null;
+      publishButton = null;
+    }
 
     let editGroupsButton = this.state.textEdit ? "ui button" : "ui button active";
     let editStoryButton = this.state.textEdit ? "ui button active" : "ui button";
@@ -1586,7 +1589,7 @@ class Repo extends Component {
     let groupBar = ''
     if (!rgba) {
       groupBar = (
-      <div className="row bg-trans">
+      <div className="row">
         <div className="col pr-0">
             <div className="font-white mt-2">
               Channel Groups:
@@ -1661,11 +1664,13 @@ class Repo extends Component {
 				</Modal>
 
         <div className="row justify-content-between">
-          <div className="col-md-6 col-lg-6 col-xl-4">
+          <div className="col-md-6 col-lg-6 col-xl-4 bg-trans">
 
             {tabBar}
             {this.renderProgressBar()}
-            {groupBar}
+            <div className="pb-2">
+              {groupBar}
+            </div>
             <Controls 
               rgba={this.state.rgba}
               stories={this.state.stories}

@@ -1,13 +1,20 @@
 import React from "react";
+import '../style/loader.css';
 
 export default class Loader extends React.Component {
     render() {
-        let clazz = "ui inline text loader small";
-        if (this.props.active) {
-            clazz += " active";
+        if (!this.props.active) {
+            return null;
+        }
+        let clazz = "minerva-spinner-image";
+        if (this.props.size === "small") {
+            clazz += ' small';
         }
         return (
-           <div className={clazz}>{this.props.text}</div>
+           <div id="minerva-spinner" className="ui inline text small">
+               <img className={clazz} src="images/Minerva_FinalLogo_NoText_RGB.svg" />
+               {this.props.text}
+            </div>
         );
     }
 }

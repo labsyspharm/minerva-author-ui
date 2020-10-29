@@ -38,6 +38,7 @@ export default class CloudBrowser extends React.Component {
         Client.getRepositories().then(response => {
             let repositories = response.included.repositories;
             let root = new Directory();
+            root.isRoot = true;
             root.entries = this.sortEntries(repositories);
             for (let entry of root.entries) {
                 entry.isDir = true;
@@ -51,7 +52,8 @@ export default class CloudBrowser extends React.Component {
         this.setState({loading: true});
         this.showDimmer();
         return Client.listImagesInRepository(repositoryUuid).then(response => {
-            this.setState({loading: false, dimmer: false});
+            this.setState({loading: false, 
+                dimmer: false});
             return response;
         });
     }
@@ -71,7 +73,7 @@ export default class CloudBrowser extends React.Component {
 
                 let activeFolder = new Directory();
                 activeFolder.entries = this.sortEntries(response.data);
-                activeFolder.path = response.path;
+                activeFolder.path = item.name;
 
                 this.setState({activeFolder: activeFolder});
                 this.forceUpdate();
@@ -158,7 +160,7 @@ export default class CloudBrowser extends React.Component {
                     <button type="button" onClick={this.navigateBack} className="ui button basic" disabled={this.state.activeFolder.isRoot}>
                         <FontAwesomeIcon icon={faAngleLeft} size="lg"/>
                     </button>
-                    <span>{this.state.activeFolder.path}</span>
+                    <span><strong>{this.state.activeFolder.path}</strong></span>
                 </div>
                 <div>
                     {this.renderDir(this.state.activeFolder)}

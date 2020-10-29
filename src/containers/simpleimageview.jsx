@@ -60,7 +60,7 @@ class MinervaImageView extends Component {
   addChannels(pan, zoom) {
     const {viewer} = this;
     const makeTileSource = this.makeTileSource.bind(this);
-    const {img, token, channels} = this.props;
+    const {img, channels} = this.props;
     console.log('Add image at index ', this.state.index);
     viewer.addTiledImage({
       tileSource: makeTileSource(),

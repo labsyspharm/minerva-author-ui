@@ -50,3 +50,8 @@
     right: 10px;
     top: 10px;
 }
+
+.cloud-browser-fixed-height {
+    height: 80%;
+    min-height: 80%;
+}

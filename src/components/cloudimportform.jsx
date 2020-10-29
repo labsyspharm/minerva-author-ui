@@ -1,11 +1,11 @@
 import React from 'react';
 import CloudBrowserModal from "./cloudbrowsermodal";
-import SignIn from '../components/signin';
 import Client from '../MinervaClient';
 import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
-import { faExclamationCircle, faCheckCircle, faAngleLeft, faFileAlt} from "@fortawesome/free-solid-svg-icons";
+import { faSignOutAlt, faCheckCircle, faFileAlt} from "@fortawesome/free-solid-svg-icons";
 import MarkerCsvParser from "../util/markercsvparser";
 import Loader from "../components/loader";
+import ErrorFooter from "../components/errorfooter";
 
 export default class CloudImportForm extends React.Component {
 
@@ -18,32 +18,49 @@ export default class CloudImportForm extends React.Component {
       imageUuid: ''
     }
 
-    this.onToken = this.onToken.bind(this);
     this.imageUuidChanged = this.imageUuidChanged.bind(this);
-    this.onSignout = this.onSignout.bind(this);
     this.openCloudBrowser = this.openCloudBrowser.bind(this);
     this.onMinervaCloudUuid = this.onMinervaCloudUuid.bind(this);
+    this.readMarkerFile = this.readMarkerFile.bind(this);
   }
 
   componentDidMount() {
-    this.loadStoryList();
+    const urlParams = new URLSearchParams(window.location.search);
+    const storyUuid = urlParams.get('story');
+    if (storyUuid) {
+      this.loadCloudStory(storyUuid);
+    }
+    const imageUuid = urlParams.get('image');
+    if (imageUuid) {
+      this.openMinervaImage(imageUuid);
+    } else {
+      this.loadStoryList();
+    }
   }
 
   readMarkerFile(evt) {
     let file = evt.target.files[0];
     let parser = new MarkerCsvParser();
-    let onChannels = (channelNames) => {
-      this.setState({
-        loadedChannelNames: channelNames,
-        markerFilename: file.name,
-        error: null
-      });
-    };
-    let onError = (err) => {
+    let onError = function(err) {
       console.error(err);
       this.setState({ error: 'Invalid marker csv file format.' });
     };
+    onError = onError.bind(this);
+
+    let onChannels = function(channelNames) {
+      this.setState({
+        loadedChannelNames: channelNames,
+        markerFilename: file.name,
+        error: ''
+      });
+    };
+    onChannels = onChannels.bind(this);
+
     parser.readMarkerFile(file, onChannels, onError);
+  }
+
+  onChannels() {
+    
   }
 
   openCloudBrowser() {
@@ -74,6 +91,7 @@ export default class CloudImportForm extends React.Component {
       this.setState({ error: "Image uuid is missing" });
       return;
     }
+    imageUuid = imageUuid.trim();
     let uuidRegex = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-5][0-9a-f]{3}-[089ab][0-9a-f]{3}-[0-9a-f]{12}$/i;
     if (!imageUuid.match(uuidRegex)) {
       this.setState({ error: "Image uuid is invalid" });
@@ -89,9 +107,15 @@ export default class CloudImportForm extends React.Component {
       this.setState({ loading: false });
       this.props.onMinervaImage(image, this.state.loadedChannelNames);
     }).catch(err => {
-      console.error(err);
-      let msg = JSON.parse(err.message);
-      this.setState({ loading: false, error: msg.error });
+      let errorText = '';
+      if (err.status === 403) {
+        errorText = 'Image not found, or you don\'t have permission to view the image.';
+      } else {
+        console.error(err);
+        let msg = JSON.parse(err.message);
+        errorText = msg.error;
+      }
+      this.setState({ loading: false, error: errorText });
     });
   }
 
@@ -108,6 +132,8 @@ export default class CloudImportForm extends React.Component {
         return 0;
       });
       this.setState({ stories: stories });
+    }).catch(err => {
+      console.error(err);
     });
   }
 
@@ -130,42 +156,13 @@ export default class CloudImportForm extends React.Component {
     this.setState({imageUuid: evt.target.value});
   }
 
-  onToken(data) {
-    Client.setUser(data.user);
-    this.setState({signedIn: true});
-    this.props.onToken(data);
-    this.loadStoryList();
-
-    const urlParams = new URLSearchParams(window.location.search);
-    const storyUuid = urlParams.get('story');
-    if (storyUuid) {
-      this.loadCloudStory(storyUuid);
-    }
-    const imageUuid = urlParams.get('image');
-    if (imageUuid) {
-      this.openMinervaImage(imageUuid);
-    }
-  }
-
-  onSignout() {
-    this.setState({ signedIn: false });
-  }
-
   render() {
     return (
-      <div>
-        {!this.state.signedIn ?
-          <h4 className="ui large dividing header purple">Sign in</h4>
-          : null
-        }
-        <SignIn onToken={this.onToken} onSignout={this.onSignout} />
-        {this.state.signedIn ?
-          <div>
-            {this.renderCreateCloudStory()}
-            <br /><br />
-            {this.renderStoryList()}
-          </div>
-          : null}
+      <div className="cloud-import-form-div">
+          { this.renderCreateCloudStory() }
+          { this.renderStoryList() }
+          { this.renderLogoutFields() }
+          <ErrorFooter message={this.state.error} />
       </div>
     );
   }
@@ -187,16 +184,16 @@ export default class CloudImportForm extends React.Component {
         </div>
         <div className="field">
           <div className="ui">
-            <label htmlFor="markerFile" style={{ color: "#333333" }} className="ui icon button">Select marker file
-             &nbsp;<FontAwesomeIcon hidden={!this.state.markerFilename} color="green" icon={faCheckCircle} />
+            <label htmlFor="markerFile" style={{ color: "#333333" }} className="ui icon button cloud-form-button">Select marker file
             </label>
             <input type="file" accept=".csv" id="markerFile" style={{ display: "none" }} onChange={this.readMarkerFile} />
             <label>
-              {this.state.markerFilename}
+              {this.state.markerFilename} &nbsp;
+              <FontAwesomeIcon hidden={!this.state.markerFilename} color="#016936" icon={faCheckCircle} size="lg" />
             </label>
           </div>
           <br />
-          <button type="button" className="ui button" onClick={() => this.openMinervaImage(this.state.imageUuid)}>Import</button>          
+          <button type="button" className="ui button cloud-form-button" onClick={() => this.openMinervaImage(this.state.imageUuid)}>Import</button>          
           <Loader active={this.state.loading} />
         </div>
       </form>
@@ -221,7 +218,7 @@ export default class CloudImportForm extends React.Component {
       );
     });
     return (
-      <div>
+      <div className="cloud-import-storylist">
         <h4 className="ui large dividing header purple">Load an existing story</h4>
         <div className="ui relaxed divided list inverted minerva-storylist">
           {list}
@@ -229,4 +226,19 @@ export default class CloudImportForm extends React.Component {
       </div>
     );
   }
+
+  renderLogoutFields() {
+    return (
+        <div className="signout-button">
+        <div className="ui black button" disabled={this.state.loading}
+        onClick={this.props.onSignout}>
+            <span className="visible content">
+              <FontAwesomeIcon icon={faSignOutAlt} size="lg" />&nbsp;Sign out
+            </span>
+
+        </div>
+        </div>
+    );
+  }
+
 }
