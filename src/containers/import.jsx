@@ -10,7 +10,7 @@ class Import extends Component {
       <div className="full-height">
         <div className="center-div">
         <div>
-          <img className="minerva-author-logo" src="images/Minerva-Author_HorizLogo_RGB.svg"></img>
+          <img className="minerva-author-logo" src="image/Minerva-Author_HorizLogo_RGB.svg"></img>
         </div>
           { this.props.env === 'local' ?
             <ImportForm />

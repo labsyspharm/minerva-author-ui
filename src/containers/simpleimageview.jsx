@@ -86,7 +86,7 @@ class MinervaImageView extends Component {
       immediateRender: true,
       // Specific to this project
       id: "ImageView",
-      prefixUrl: "images/openseadragon/",
+      prefixUrl: "image/openseadragon/",
       maxZoomPixelRatio: 10,
       ajaxHeaders: {
         "Cache-Control": "no-store"
