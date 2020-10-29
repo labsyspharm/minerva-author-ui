@@ -5,6 +5,8 @@ import "regenerator-runtime/runtime";
 import 'semantic-ui-css/semantic.min.css';
 import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
 import { faExclamationCircle, faCheckCircle, faAngleLeft, faFileAlt} from "@fortawesome/free-solid-svg-icons";
+import Loader from "../components/loader";
+import ErrorFooter from "../components/errorfooter";
 
 class ImportForm extends Component {
   constructor() {
@@ -107,21 +109,20 @@ class ImportForm extends Component {
     return (
       <div>
         { this.renderLocalFields() }
-        {this.renderErrors() }
+        <ErrorFooter message={this.state.error} />
       </div>
     )
   }
 
   renderLocalFields() {
-    const {loading} = this.state;
     let imageHome = this.state.currentFileFolder ? this.state.currentFileFolder : this.state.currentMarkerFolder;
     let markerHome = this.state.currentMarkerFolder ? this.state.currentMarkerFolder : this.state.currentFileFolder;
     return (
       <form className="ui form" onSubmit={this.handleSubmit}>
           <label htmlFor="filepath">Enter path to image or story: </label>
-          <br/>
+          <div className="field">
           <div className="ui action input">
-            <input ref={this.filePath} className='full-width-input' id="filepath" name="filepath" type="text" />
+            <input ref={this.filePath} id="filepath" name="filepath" type="text" />
             <button type="button" onClick={this.openFileBrowser} className="ui button">Browse</button>
             <FileBrowserModal open={this.state.showFileBrowser} close={this.onFileSelected}
               title="Select image or story (tiff, svs, json)" 
@@ -130,12 +131,11 @@ class ImportForm extends Component {
               home={imageHome}
               />
           </div>
-          <br/>
-          <br/>
+          </div>
           <label htmlFor="filepath">Optional marker_name csv: </label>
-          <br/>
+          <div className="field">
           <div className="ui action input">
-            <input ref={this.markerPath} className='full-width-input' id="csvpath" name="csvpath" type="text" />
+            <input ref={this.markerPath} id="csvpath" name="csvpath" type="text" />
             <button type="button" onClick={this.openMarkerBrowser} className="ui button">Browse</button>
             <FileBrowserModal open={this.state.showMarkerBrowser} close={this.onMarkerFileSelected}
               title="Select a marker name csv" 
@@ -144,38 +144,17 @@ class ImportForm extends Component {
               home={markerHome}
               />
           </div>
-          <br/>
-          <br/>
+          </div>
           <label htmlFor="filepath">Optional output name: </label>
-          <br/>
-          <input className='full-width-input' id="dataset" name="dataset" type="text" value={this.state.output} onChange={this.outputChanged} />
-          <br/>
-          <br/>
+          <div className="field">
+          <input id="dataset" name="dataset" type="text" value={this.state.output} onChange={this.outputChanged} />
+          </div>
           <button className="ui button"> Import </button>
-          <ClipLoader animation="border"
-          size={15} color={"#FFFFFF"}
-          loading={loading}/>
-          <br/>
-          <br/>
+          <Loader active={this.state.loading} />
         </form>
     );
   }
 
-  renderErrors() {
-    if (!this.state.error) {
-      return null;
-    }
-    return (
-      <div className="import-errors">
-        <div className="ui icon message">
-          <FontAwesomeIcon className="icon" icon={faExclamationCircle} />
-          <div className="content">
-            <div className="header">{this.state.error}</div>
-          </div>
-        </div>
-      </div>
-    );
-  }
 }
 
 export default ImportForm;

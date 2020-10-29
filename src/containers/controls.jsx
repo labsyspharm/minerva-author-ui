@@ -186,7 +186,7 @@ class Controls extends Component {
       return (
 			<div className="ui form">
 				<div className="row">
-					<div className="col no-right-padding bg-trans">
+					<div className="col no-right-padding">
 						<div className="">
               <div className="row">
                 <div className="col-5">
@@ -236,7 +236,7 @@ class Controls extends Component {
             </div>
 					</div>
 					<div className="col-1 p-0">
-						<div className="btn-group-vertical bg-trans">
+						<div className="btn-group-vertical">
 							<span id="arrow-switch" className="nav-item arrow-switch">
 							<a className="btn" onClick={arrowClick} title="Add arrow">
 									<FontAwesomeIcon icon={faLocationArrow}
@@ -266,7 +266,7 @@ class Controls extends Component {
     const {activeChannels} = this.props;
 
     return (
-      <div className="bg-trans row">
+      <div className="row">
         <div className="col">
         <Select
           isMulti={true}

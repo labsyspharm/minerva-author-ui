@@ -15,6 +15,7 @@
   max-width:100%;
   max-height:100%;
   overflow:hidden;
+
 }
 
 .align-center {
@@ -52,4 +53,18 @@ form label {
 .minerva-storylist {
   overflow: auto;
   max-height: 200px;
+}
+
+.signout-button {
+  position: fixed;
+  right: 10px;
+  top: 10px;
+}
+
+.cloud-form-button {
+  width: 150px;
+}
+
+.cloud-import-storylist {
+  margin-top: 30px;
 }

@@ -90,7 +90,7 @@ export default class PublishStoryModal extends React.Component {
                         Publishing the story will create a standalone Minerva Story website hosted in AWS S3 bucket.
                     </p>
                     <p>
-                        The website will be <strong>publicly accessible</strong>.
+                        The website will be <strong>accessible to public</strong>.
                     </p>
                     <p>
                         Status of this story is <strong>{this.state.status}</strong>

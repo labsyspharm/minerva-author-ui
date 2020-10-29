@@ -3,11 +3,14 @@ import React, { Component } from "react";
 import Repo from "./repo";
 import Import from "./import";
 import Preview from "./preview";
+import LoginPage from "./login";
 
 import Client from '../MinervaClient';
 import login from '../login';
 import 'semantic-ui-css/semantic.min.css'
 import '../style/app.css';
+
+import { CognitoUserPool } from 'amazon-cognito-identity-js';
 
 class AuthorApp extends Component {
 
@@ -15,10 +18,10 @@ class AuthorApp extends Component {
     super(props);
 
     this.state = {
-      token: 'Anonymous',
       loaded: false,
       preview: false,
       minerva: false,
+      signedIn: false,
       rgba: false,
       warning: '',
       url: 'http://localhost:2020/api/u16',
@@ -42,10 +45,25 @@ class AuthorApp extends Component {
     this.onMinervaImage = this.onMinervaImage.bind(this);
     this.onStoryLoaded = this.onStoryLoaded.bind(this);
     this.onPreview = this.onPreview.bind(this);
+    this.onSignout = this.onSignout.bind(this);
 
     login.configure(this.props.config);
     Client.configure(this.props.config);
 
+    if (this.props.env === 'cloud') {
+      this.tryLogin();
+    }
+  }
+
+  tryLogin() {
+    login.storedAuthentication().then(cognitoUser => {
+      this.onToken({
+        token: cognitoUser.signInUserSession.idToken.jwtToken,
+        user: cognitoUser
+      });
+    }).catch(err => {
+      console.debug('No token');
+    });
   }
 
   async getImportResult() {
@@ -60,8 +78,6 @@ class AuthorApp extends Component {
   }
 
   async componentDidMount() {
-    const { minerva, url, uuid } = this.state;
-
     if (this.props.env === 'local') {
       try {
         setInterval(async () => {
@@ -91,10 +107,17 @@ class AuthorApp extends Component {
     }
   }
 
-  onToken(data) {
-    this.setState({token: data.token });
+  onToken(data, token) {
+    Client.setUser(data.user);
     Client.guest = false;
     Client.warmupRenderTile(4);
+
+    this.setState({ signedIn: true, username: '' });
+  }
+
+  onSignout() {
+    login.logout();
+    this.setState({signedIn: false});
   }
 
   onStoryLoaded(story) {
@@ -144,7 +167,7 @@ class AuthorApp extends Component {
   }
 
   render() {
-    const {token, loaded, width, height, tilesize, maxLevel, rgba, url, uuid, storyUuid, story, imageName} = this.state;
+    const {loaded, width, height, tilesize, maxLevel, rgba, url, uuid, storyUuid, story, imageName} = this.state;
     const {channels, sample_info, waypoints, groups, warning} = this.state;
 
     if (loaded) {
@@ -153,7 +176,7 @@ class AuthorApp extends Component {
         return (
           <div>
             <div className={repoClass}>
-            <Repo   env={this.props.env} token={token} rgba={rgba}
+            <Repo   env={this.props.env} rgba={rgba}
                     channels={channels} waypoints={waypoints}
                     groups={groups} url={url} uuid={uuid} maxLevel={maxLevel}
                     width={width} height={height} tilesize={tilesize}
@@ -174,9 +197,25 @@ class AuthorApp extends Component {
         )
 
     }
-    return (
-      <Import env={this.props.env} onToken={this.onToken} onMinervaImage={this.onMinervaImage} onStoryLoaded={this.onStoryLoaded} />
-    );
+    if (this.props.env === 'local' || this.state.signedIn) {
+      return (
+        <Import env={this.props.env} 
+          onToken={this.onToken} 
+          onMinervaImage={this.onMinervaImage} 
+          onStoryLoaded={this.onStoryLoaded}
+          onSignout={this.onSignout}
+          username={this.state.username} />
+      );
+    } else {
+      return (
+        <div className="full-height">
+          <LoginPage
+            onToken={this.onToken}
+            allowGuest={false} />
+            <footer className="copyright">©2020, Laboratory of Systems Pharmacology. All rights reserved.</footer>
+        </div>
+      )
+    }
   }
 }
 
