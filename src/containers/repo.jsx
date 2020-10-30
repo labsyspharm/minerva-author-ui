@@ -1570,14 +1570,23 @@ class Repo extends Component {
 
     let viewer;
     if (minerva) {
-      viewer = <MinervaImageView className="ImageView"
+      // viewer = <MinervaImageView className="ImageView"
+      //   img={ img }
+      //   channels={ visibleChannels }
+      //   overlays={ overlays } arrows={ arrows }
+      //   handleViewport={ this.handleViewport }
+      //   interactor={ this.interactor }
+      //   rotation={this.state.rotation}
+      //   rangeSliderComplete={this.state.rangeSliderComplete}
+      // />
+      viewer = <ImageView className="ImageView"
         img={ img }
         channels={ visibleChannels }
         overlays={ overlays } arrows={ arrows }
         handleViewport={ this.handleViewport }
         interactor={ this.interactor }
         rotation={this.state.rotation}
-        rangeSliderComplete={this.state.rangeSliderComplete}
+        env={this.props.env}
       />
     }
     else if (rgba) {

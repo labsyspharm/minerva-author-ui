@@ -1,4 +1,5 @@
 import React, { Component } from "react";
+import Client from '../MinervaClient';
 
 import viaWebGL from 'viawebgl';
 import SvgArrow from '../components/svgarrow.jsx'
@@ -16,8 +17,9 @@ class ImageView extends Component {
   }
 
   makeTileSource(id) {
+   
     const {img, channels} = this.props;
-
+    console.log('img: ', img);
     const channel = channels.get(id);
     if (channel === undefined) {
       return undefined;
@@ -37,11 +39,32 @@ class ImageView extends Component {
 
 			const name = getTileName(x, y, level, channel);
 			return url + '/' + name;
+    }
+    
+    const getCloudTileName = (x, y, level, channel) => {
+      return x + "/" + y + "/0/0/" + level + "/" + channel;
 		}
+    
+    const getCloudTileUrl = function(l, x, y) {
+			const level = this.maxLevel - l;
+			const url = this.many_channel_url;
+			const channel = this.many_channel_id;
 
+			const name = getCloudTileName(x, y, level, channel);
+			return url + '/' + img.uuid + '/raw-tile/' + name;
+    }
+
+    let getTileUrlFunc = this.props.env === 'cloud' ? getCloudTileUrl : getTileUrl;
     return {
 			// Custom functions
-			getTileUrl: getTileUrl,
+      getTileUrl: getTileUrlFunc,
+      getTileAjaxHeaders: (level, x, y) => {
+        return {
+            'Content-Type': 'application/json',
+            'Authorization': Client.getToken(),
+            'Accept': 'image/png'
+        }
+      },   
 			// CUstom parameters
       many_channel_id: id,
 			many_channel_url: url,
