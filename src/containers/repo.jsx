@@ -974,7 +974,7 @@ class Repo extends Component {
     const {stories, activeStory, activeGroup, viewport} = this.state;
     let newStory = stories.get(activeStory) || this.defaultStory();
 
-    newStory.arrows = arrows.concat([{
+    newStory.arrows = newStory.arrows.concat([{
 				position: new_xy,
         hide: false,
         angle: '',
