@@ -1481,7 +1481,8 @@ class Repo extends Component {
   }
 
   share() {
-    let url = window.location.href + `?story=${this.state.storyUuid}`;
+    let baseUrl = document.location.protocol +"//"+ document.location.host + document.location.pathname
+    let url = baseUrl + `?story=${this.state.storyUuid}`;
     if (navigator.clipboard) {
       navigator.clipboard.writeText(url);
     }
