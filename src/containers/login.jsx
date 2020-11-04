@@ -225,7 +225,7 @@ class LoginPage extends React.Component {
         return (
         <form className="loginForm">
             <h2 className="h2 mb-4">
-                <img width="300px" src="images/Minerva_FinalLogo_RGB.svg"></img>
+                <img width="300px" src="image/Minerva_FinalLogo_RGB.svg"></img>
             </h2>
             <div className="loginForm">
             <div className="input-group mb-3">
