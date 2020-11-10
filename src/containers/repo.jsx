@@ -1689,6 +1689,9 @@ class Repo extends Component {
     else {
       tabBar = (
         <span className="ui buttons">
+          <button className="ui button" onClick={() => this.toggleSampleInfo()}>
+              Sample Info
+          </button>
           {previewButton}
           {shareButton}
           {saveButton}
