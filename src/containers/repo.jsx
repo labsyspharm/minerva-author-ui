@@ -83,6 +83,7 @@ class Repo extends Component {
       warning: warning,
       showFileBrowser: false,
       showVisDataBrowser: false,
+      showMaskBrowser: false,
       rotation: sample_info.rotation,
       sampleName: sample_info.name,
       sampleText: sample_info.text,
@@ -111,9 +112,12 @@ class Repo extends Component {
         value: -1, id: -1, label: '', colormapInvert: false,
         data: '', x: '', y: '', cluster: -1, clusters: new Map([])
       },
+      activeMaskId: -1,
+      masks: new Map([]),
       deleteGroupModal: false,
       deleteStoryModal: false,
       deleteClusterModal: false,
+      deleteMaskModal: false,
       saving: false,
       saved: false,
       publishing: false,
@@ -127,6 +131,7 @@ class Repo extends Component {
         	'text': v.text,
         	'pan': v.pan,
         	'zoom': v.zoom,
+          'masks': [],
         	'arrows': v.arrows,
         	'overlays': v.overlays,
         	'group': groups.findIndex(g => {
@@ -240,6 +245,7 @@ class Repo extends Component {
     this.handleChange = this.handleChange.bind(this);
     this.handleSelect = this.handleSelect.bind(this);
     this.handleSelectStory = this.handleSelectStory.bind(this);
+    this.handleSelectStoryMasks = this.handleSelectStoryMasks.bind(this);
     this.handleSelectVis = this.handleSelectVis.bind(this);
     this.handleStoryName = this.handleStoryName.bind(this);
     this.handleStoryText = this.handleStoryText.bind(this);
@@ -274,6 +280,13 @@ class Repo extends Component {
     this.getCreateLabel = this.getCreateLabel.bind(this);
     this.labelRGBA = this.labelRGBA.bind(this);
     this.defaultStory = this.defaultStory.bind(this);
+    this.handleUpdateMask = this.handleUpdateMask.bind(this);
+    this.handleMaskChange = this.handleMaskChange.bind(this);
+    this.handleMaskInsert = this.handleMaskInsert.bind(this);
+    this.handleMaskRemove = this.handleMaskRemove.bind(this);
+    this.deleteMask = this.deleteMask.bind(this);
+    this.openMaskBrowser = this.openMaskBrowser.bind(this);
+    this.onMaskSelected = this.onMaskSelected.bind(this);
   }
 
   defaultStory() {
@@ -282,6 +295,7 @@ class Repo extends Component {
     return {
       text: '',
       name: '',
+      masks: [],
       arrows: [],
       overlays: [],
       group: activeGroup,
@@ -461,11 +475,13 @@ class Repo extends Component {
     };
 
     const newClusters = new Map([...[...newLabel.clusters].map(([k,v]) => {
-                                return [k <= newLabel.cluster? k: k+1, v];
+                                return [k < newLabel.cluster? k: k+1, v];
                               }),
                               ...(new Map([[newLabel.cluster, newCluster]]))]);
 
-    newLabel.clusters = newClusters;
+    const sortedClusters = new Map([...newClusters.entries()].sort((e1, e2) => e1[0] - e2[0]));
+
+    newLabel.clusters = sortedClusters;
     newStory.visLabels = new Map([...newStory.visLabels,
                     ...(new Map([[newLabel.id, newLabel]]))]);
 
@@ -524,8 +540,10 @@ class Repo extends Component {
                               }),
                               ...(new Map([[activeStory + 1, newStory]]))]);
 
+    const sortedStories = new Map([...newStories.entries()].sort((e1, e2) => e1[0] - e2[0]));
+
     this.setState({
-      stories: newStories,
+      stories: sortedStories,
       activeStory: activeStory + 1,
       activeVisLabel: {
         value: -1, id: -1, label: '', colormapInvert: false,
@@ -777,6 +795,98 @@ class Repo extends Component {
     }
   }
 
+  handleUpdateMask(newMask) {
+    const maskId = Math.max(0, this.state.activeMaskId);
+    this.setState({
+      activeMaskId: maskId,
+      masks: new Map([...this.state.masks,
+                ...(new Map([[maskId, newMask]]))])
+    })
+  }
+
+  handleMaskChange(maskId) {
+    this.setState({
+      activeMaskId: maskId
+    })
+  }
+
+  handleMaskInsert() {
+    let {stories} = this.state;
+    let activeMaskId = this.state.activeMaskId + 1;
+
+    const newMask = {
+      path: "",
+      name: ""+(activeMaskId+1),
+			color: hexToRgb("#FFFFFF"),
+    };
+
+    const newMasks = new Map([...[...this.state.masks].map(([k,v]) => {
+                                return [k < activeMaskId? k: k+1, v];
+                              }),
+                              ...(new Map([[activeMaskId, newMask]]))]);
+
+    const sortedMasks = new Map([...newMasks.entries()].sort((e1, e2) => e1[0] - e2[0]));
+
+    // Update story mask array with new ids
+    stories.forEach((story) => {
+      story.masks = story.masks.map((k) => {
+        return k < activeMaskId? k : k + 1;
+      })
+    })
+
+    this.setState({
+      activeMaskId: activeMaskId,
+      masks: sortedMasks,
+      stories: stories
+    })
+  }
+
+  handleMaskRemove() {
+
+    const {activeMaskId} = this.state;
+    const m = this.state.masks.get(activeMaskId);
+    if (m === undefined) {
+      this.deleteMask();
+    }
+    else {
+      this.setState({deleteMaskModal: true})
+    }
+
+  }
+
+  deleteMask() {
+
+    const {stories, masks, activeMaskId} = this.state;
+
+    const newMasks = new Map([...masks].filter(([k,v]) => {
+                                return k != activeMaskId;
+                              }).map(([k,v])=>{
+                                return [k < activeMaskId? k : k - 1, v]
+                              }))
+
+    // Update story mask array with new ids
+    stories.forEach((story) => {
+      story.masks = story.masks.filter((k) => {
+        return k != activeMaskId;
+      }).map((k) => {
+        return k < activeMaskId? k : k - 1;
+      })
+    })
+
+    let newMaskId = Math.max(0, activeMaskId - 1);
+    if (newMasks.size == 0) {
+      newMaskId = -1;
+    }
+
+    this.setState({
+      activeMaskId: newMaskId,
+      masks: newMasks,
+      stories: stories
+    });
+    this.setState({deleteMaskModal: false});
+  }
+
+
   handleSelectGroup(g, action) {
     if (action.action === 'clear') {
       this.setState({deleteGroupModal: true});
@@ -859,6 +969,21 @@ class Repo extends Component {
         groups: newGroups
       })
     }
+  }
+
+  handleSelectStoryMasks(masks) {
+    const {stories, activeStory} = this.state;
+    const maskArray = masks? masks : [];
+    const activeMaskIds = maskArray.map(c => c.id);
+    let newStory = stories.get(activeStory) || this.defaultStory();
+    newStory.masks = activeMaskIds;
+
+    const newStories = new Map([...stories,
+                              ...(new Map([[activeStory, newStory]]))]);
+
+    this.setState({
+      stories: newStories
+    })
   }
 
   computeBounds(value, start, len) {
@@ -1461,6 +1586,29 @@ class Repo extends Component {
     }
   }
 
+  openMaskBrowser() {
+    this.setState({ showMaskBrowser: true});
+  }
+
+  onMaskSelected(file) {
+    this.setState({ 
+      showMaskBrowser: false
+    });
+    const {masks, activeMaskId} = this.state;
+
+    let mask = masks.get(activeMaskId);
+    if (mask === undefined) {
+      mask = {
+        color: [255, 255, 255],
+        name: "",
+        path: ""
+      };
+    }
+    if (file && file.path) {
+      this.handleUpdateMask({name: mask.name, path: file.path, color: mask.color })
+    }
+  }
+
   dismissWarning() {
     this.setState({warning: ''});
   }
@@ -1552,6 +1700,7 @@ class Repo extends Component {
     const visLabels =  story.visLabels;
     const storyName = story.name;
     const storyText = story.text;
+    const storyMasks = story.masks;
     const overlays = story.overlays;
     const arrows = story.arrows;
 		const activeArrow = this.state.activeArrow;
@@ -1798,6 +1947,7 @@ class Repo extends Component {
               handleChange={this.handleChange}
               handleSelect={this.handleSelect}
               handleSelectStory={this.handleSelectStory}
+              handleSelectStoryMasks={this.handleSelectStoryMasks}
               chanLabel={chanLabel}
               activeChanLabel={activeChanLabel}
               activeChannels={activeChannels}
@@ -1811,6 +1961,7 @@ class Repo extends Component {
 							arrows={arrows}
               storyName={storyName}
               storyText={storyText}
+              storyMasks={storyMasks}
               activeStory={activeStory}
               handleSelectVis={this.handleSelectVis}
               handleClusterChange={this.handleClusterChange}
@@ -1821,6 +1972,15 @@ class Repo extends Component {
               showVisDataBrowser={this.state.showVisDataBrowser}
               openVisDataBrowser={this.openVisDataBrowser}
               onVisDataSelected={this.onVisDataSelected}
+              masks={this.state.masks}
+              activeMaskId={this.state.activeMaskId}
+              handleUpdateMask={this.handleUpdateMask}
+              handleMaskChange={this.handleMaskChange}
+              handleMaskInsert={this.handleMaskInsert}
+              handleMaskRemove={this.handleMaskRemove}
+              showMaskBrowser={this.state.showMaskBrowser}
+              openMaskBrowser={this.openMaskBrowser}
+              onMaskSelected={this.onMaskSelected}
             />
             <Confirm
               header="Delete channel group" 
@@ -1848,6 +2008,15 @@ class Repo extends Component {
               open={this.state.deleteClusterModal}
               onCancel={() => { this.setState({deleteClusterModal: false})} }
               onConfirm={this.deleteCluster}
+            />
+            <Confirm
+              header="Delete mask"
+              content="Are you sure?"
+              confirmButton="Delete"
+              size="small"
+              open={this.state.deleteMaskModal}
+              onCancel={() => { this.setState({deleteMaskModal: false})} }
+              onConfirm={this.deleteMask}
             />
           </div>
           { this.renderWarning() }

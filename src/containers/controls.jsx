@@ -25,14 +25,39 @@ class Controls extends Component {
 
     const {addArrowText, rgba, minerva} = this.props;
     const {deleteOverlay, deleteArrow} = this.props;
-    const {activeStory, handleSelectStory} = this.props;
+    const {activeStory, handleSelectStory, handleSelectStoryMasks} = this.props;
     const {handleClusterChange, handleClusterInsert, handleClusterRemove} = this.props;
     const {showVisDataBrowser, openVisDataBrowser, onVisDataSelected} = this.props;
     const {visLabels, activeVisLabel, handleSelectVis} = this.props;
-    const {stories, storyName, storyText, textEdit} = this.props;
+    const {stories, storyName, storyMasks, storyText, textEdit} = this.props;
     const {handleStoryInsert, handleStoryName, handleStoryText} = this.props;
     const {handleStoryRemove, handleStoryChange, overlays, arrows} = this.props;
     const {arrowClick, lassoClick, boxClick, drawType} = this.props;
+    const {masks, activeMaskId, handleUpdateMask} = this.props;
+    const {handleMaskChange, handleMaskInsert, handleMaskRemove} = this.props;
+    const {showMaskBrowser, openMaskBrowser, onMaskSelected} = this.props;
+
+    const activeMasks = new Map([...masks].map(([k,v])=>{
+                                  return [k, {
+                                    name: v.name,
+                                    path: v.path,
+                                    color: v.color,
+                                    value: k, id: k,
+                                    label: '#' + (k+1) + (v.name? ': ' + v.name : '')
+                                  }]
+                                }))
+    const activeStoryMasks = new Map(storyMasks.map(a => [a, activeMasks.get(a)]))
+
+    let activeMask = activeMasks.get(activeMaskId)
+    if (activeMask === undefined) {
+      activeMask = {
+        color: [255, 255, 255],
+        id: 0, value: 0,
+        label: "",
+        name: "",
+        path: ""
+      };
+    }
 
     const activeClusters = new Map([...activeVisLabel.clusters].map(([k,v])=>{
                                   return [k, {
@@ -66,6 +91,67 @@ class Controls extends Component {
       activeStoryLabel = {value: activeStory, id: activeStory,
                           label: '#' + (activeStory+1)}
     }
+    let maskData = (
+      <div className="ui form">
+          <div className="row">
+            <div className="col-5">
+              <div className="font-white">
+                Masks:
+              </div>
+              <div className="width-100">
+                <Select
+                  value={activeMask}
+                  onChange={(m)=>handleMaskChange(m.value)}
+                  options={Array.from(activeMasks.values())}
+                />
+              </div>
+            </div>
+            <div className="pt-2 pl-0 col-7">
+              <button className="ui button compact" title="Previous waypoint" onClick={()=>{
+                handleMaskChange(Math.max(0, activeMaskId - 1))
+              }}>
+                <FontAwesomeIcon icon={faArrowLeft} />
+              </button>
+              <button className="ui button compact" onClick={handleMaskInsert} title="Add waypoint">
+                <FontAwesomeIcon icon={faPlus} />
+              </button>
+              <button className="ui button compact" title="Next waypoint" onClick={()=>{
+                handleMaskChange(Math.min(activeMaskId + 1, activeMasks.size - 1))
+              }}>
+                <FontAwesomeIcon icon={faArrowRight} />
+              </button>
+              <button className="ui button red compact" title="Delete waypoint" onClick={handleMaskRemove}>
+                X
+              </button>
+            </div>
+          </div>
+          <div className="row">
+            <div className="col-12">
+              <input value={activeMask.path} onChange={(v)=>handleUpdateMask({name: activeMask.name, path: v.target.value, color: activeMask.color })} style={{ width: "72%" }} id="maskpath" name="maskpath" type="text"/>
+              <button type="button" onClick={openMaskBrowser} className="ui button">Browse</button>
+              <FileBrowserModal open={showMaskBrowser} close={onMaskSelected}
+                title="Select an OME-TIFF mask image" 
+                onFileSelected={onMaskSelected} 
+                filter={["tif", "tiff"]}
+              />
+            </div>
+          </div>
+          <div className="row font-white">
+            <div className="col-4">
+              Mask Color:
+              <HuePicker
+                  color={ activeMask.color}
+                handleChange={(color)=>handleUpdateMask({ name: activeMask.name, path: activeMask.path, color: color })}
+              />
+            </div>
+            <div className="col-8">
+                Mask Name:
+                <input value={activeMask.name} onChange={(v)=>handleUpdateMask({ name: v.target.value, path: activeMask.path, color: activeMask.color })} style={{ width: "50%" }} id="maskname" name="maskname" type="text"/>
+            </div>
+         </div>
+      </div>
+    );
+
     let visData = ''
     if (activeVisLabel.id >= 0) {
       let visDataGeneric = (
@@ -182,8 +268,24 @@ class Controls extends Component {
         ) 
       }
     }
+    let storyMaskControls = ''
     let visControls = ''
     if (!minerva) {
+      storyMaskControls = (
+        <div>
+          <div className="font-white">
+            Masks:
+          </div>
+          <div className="width-100">
+            <Select
+              isMulti={true}
+              onChange={handleSelectStoryMasks}
+              value={Array.from(activeStoryMasks.values())}
+              options={Array.from(activeMasks.values())}
+            />
+          </div>
+        </div>
+      );
       visControls = (
         <div>
           <div className="font-white">
@@ -241,6 +343,7 @@ class Controls extends Component {
 						</div>
 						<input className="width-100" type="text" placeholder="Waypoint Name" value={storyName} onChange={handleStoryName}></input>
             <textarea className="width-100 height-20vh" placeholder="Waypoint Description" value={storyText} onChange={handleStoryText}></textarea>
+            {storyMaskControls}
             {visControls}
 					</div>
 					<div className="col-1 p-0">
@@ -288,6 +391,7 @@ class Controls extends Component {
             handleChange={ handleChange }
           />
         </div>
+        {maskData}
         </div>
       </div>
     );
