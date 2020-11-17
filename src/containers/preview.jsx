@@ -73,7 +73,7 @@ class Preview extends Component {
         "Name": "i0",
         "Description": story.sample_info.name,
         "Provider": "minerva",
-        "Path": Client.baseUrl + '/image/' + story.imageUuid + "/prerendered-tile/",
+        "Path": Client.baseUrl + '/image/' + story.imageUuid + '/render-tile/',
         "Width": this.props.image.width,
         "Height": this.props.image.height,
         "MaxLevel": this.props.image.pyramid_levels
@@ -85,13 +85,25 @@ class Preview extends Component {
     let groupList = [];
     for (let group of story.groups) {
       groupList.push({
-        "Path": group.uuid,
+        "Path": group.label,
         "Name": group.label,
         "Colors": this.buildColors(group),
-        "Channels": this.buildChannels(group)
+        "Channels": this.buildGroupChannels(group),
+        "Render": this.buildRenderSettings(group)
       });
     }
     return groupList;
+  }
+
+  buildRenderSettings(group) {
+    return group.render.map(channel => {
+      return {
+        Color: channel.color,
+        Images: ["i0"],
+        Range: [channel.min, channel.max],
+        Index: channel.id
+      }
+    });
   }
 
   buildColors(group) {
@@ -100,7 +112,7 @@ class Preview extends Component {
     });
   }
 
-  buildChannels(group) {
+  buildGroupChannels(group) {
     return group.channels.map(channel => {
       return channel.label;
     });
