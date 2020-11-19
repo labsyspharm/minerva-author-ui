@@ -1,6 +1,6 @@
 # Minerva Author UI
 
-<img width="500px" src="./static/images/Minerva-Author_HorizLogo_RGB.svg" />
+<img width="500px" src="./static/image/Minerva-Author_HorizLogo_RGB.svg" />
           
 ## Minerva Repository Structure
 
