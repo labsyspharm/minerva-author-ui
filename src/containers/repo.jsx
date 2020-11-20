@@ -1746,6 +1746,7 @@ class Repo extends Component {
           {previewButton}
           {shareButton}
           {saveButton}
+          {publishButton}
         </span>
       )
     }

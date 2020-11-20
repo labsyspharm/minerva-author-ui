@@ -21,6 +21,8 @@ export default class PublishStoryModal extends React.Component {
         }
 
         this.renderImagesChanged = this.renderImagesChanged.bind(this);
+        this.publish = this.publish.bind(this);
+        this.updateStatus = this.updateStatus.bind(this);
         this.statusPolling = null;
     }
 
