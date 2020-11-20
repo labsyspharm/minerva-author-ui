@@ -21,6 +21,8 @@ export default class PublishStoryModal extends React.Component {
         }
 
         this.renderImagesChanged = this.renderImagesChanged.bind(this);
+        this.publish = this.publish.bind(this);
+        this.updateStatus = this.updateStatus.bind(this);
         this.statusPolling = null;
     }
 
@@ -58,6 +60,7 @@ export default class PublishStoryModal extends React.Component {
             });
             console.log(res);
             setTimeout(() => { this.setState({publishButtonDisabled: false})}, 5000);
+            this.startStatusPolling();
           }).catch(err => {
             let errorObj = JSON.parse(err.message);
             this.setState({publishing: false, 
@@ -130,7 +133,7 @@ export default class PublishStoryModal extends React.Component {
     }
 
     renderOpenStoryButton() {
-        if (!this.state.storyUrl) {
+        if (!this.state.status || this.state.status === 'unpublished') {
             return null;
         }
         return (
