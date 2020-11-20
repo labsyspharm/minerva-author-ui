@@ -1691,12 +1691,28 @@ class Repo extends Component {
     const activeChannels = new Map(activeIds.map(a => [a, {
       ...activeChanLabel.get(a), ...activeChanRender.get(a)
     } ])) 
-    const visibleChannels = new Map(
-      [...activeChannels].filter(([k, v]) => v.visible)
-    );
 
-    const {stories, activeStory} = this.state;
+    const {stories, activeStory, masks, activeMaskId} = this.state;
     const story = stories.get(activeStory) || this.defaultStory();
+
+    const visibleChannels = new Map([
+      ...[...activeChannels].filter(([k, v]) => v.visible),
+      ...(new Map(story.masks.map((k) => {
+        let mask_k = `mask_${k}`;
+        let mask = masks.get(k);
+        mask.range = {
+          max: 65535,
+          min: 0 
+        };
+        mask.maxRange = 65535;
+        mask.visible = true;
+        mask.value = mask_k;
+        mask.label = mask_k;
+        mask.id = mask_k;
+        return [mask_k, mask] 
+      })))
+    ]);
+
     const visLabels =  story.visLabels;
     const storyName = story.name;
     const storyText = story.text;
@@ -1972,8 +1988,8 @@ class Repo extends Component {
               showVisDataBrowser={this.state.showVisDataBrowser}
               openVisDataBrowser={this.openVisDataBrowser}
               onVisDataSelected={this.onVisDataSelected}
-              masks={this.state.masks}
-              activeMaskId={this.state.activeMaskId}
+              masks={masks}
+              activeMaskId={activeMaskId}
               handleUpdateMask={this.handleUpdateMask}
               handleMaskChange={this.handleMaskChange}
               handleMaskInsert={this.handleMaskInsert}
