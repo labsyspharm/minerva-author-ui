@@ -25,7 +25,6 @@ export default class FileBrowser extends React.Component {
     }
 
     componentDidMount() {
-        console.log('activeFolder: ', this.state.activeFolder);
         let home = this.props.home || '';
         this.browse(home).then(response => {
             let root = new Directory();
@@ -48,7 +47,6 @@ export default class FileBrowser extends React.Component {
             }
         })
         .then(response => {
-            console.log(response);
             return response.json();
         });
     }

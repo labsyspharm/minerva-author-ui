@@ -23,8 +23,11 @@ class ImageView extends Component {
       return undefined;
     }
 
-    const { color, range, maxRange } = channel;
-    const { url } = img;
+    const { u32, key, color, range, maxRange } = channel;
+    let { url } = img;
+    if (u32 === true) {
+      url = 'http://localhost:2020/api/u32';
+    }
 
 		const getTileName = (x, y, level, channel) => {
 			return channel + "/" + level + "_" + x + "_" + y + ".png";
@@ -43,8 +46,8 @@ class ImageView extends Component {
 			// Custom functions
 			getTileUrl: getTileUrl,
 			// CUstom parameters
-      many_channel_id: id,
 			many_channel_url: url,
+      many_channel_id: u32 === true ? key : id,
       many_channel_range: [range['min'] / maxRange, range['max'] / maxRange],
       many_channel_color: color.map(c => c / 255.),
 			// Standard parameters
@@ -204,6 +207,15 @@ class ImageView extends Component {
 			// Store channel color and range to send to shader
 			via.color_3fv = new Float32Array(source.many_channel_color);
 			via.range_2fv = new Float32Array(source.many_channel_range);
+      let fmt = 0;
+      if (tile._format == 'u16') {
+        fmt = 16;      
+      }
+      else if (tile._format == 'u32') {
+        fmt = 32;
+      }
+
+      via.fmt_1i = fmt;
 
 			// Start webGL rendering
 			callback(e);
@@ -213,6 +225,7 @@ class ImageView extends Component {
 			// Send color and range to shader
 			this.gl.uniform3fv(this.u_tile_color, this.color_3fv);
 			this.gl.uniform2fv(this.u_tile_range, this.range_2fv);
+			this.gl.uniform1i(this.u_tile_fmt, this.fmt_1i);
 
 			// Clear before each draw call
 			this.gl.clear(this.gl.COLOR_BUFFER_BIT);
@@ -227,6 +240,7 @@ class ImageView extends Component {
 			// Uniform variable for coloring
 			this.u_tile_color = this.gl.getUniformLocation(program, 'u_tile_color');
 			this.u_tile_range = this.gl.getUniformLocation(program, 'u_tile_range');
+			this.u_tile_fmt = this.gl.getUniformLocation(program, 'u_tile_fmt');
 		});
 
 		seaGL.addHandler('tile-loaded', (callback, e) => callback(e));
