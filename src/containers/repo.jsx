@@ -1707,7 +1707,7 @@ class Repo extends Component {
         mask.u32 = true;
         // Double encoded URI component is required for flask
         mask.key = encodeURIComponent(encodeURIComponent(mask.path));
-        mask.maxRange = 65535;
+        mask.maxRange = 16777215;
         mask.visible = true;
         mask.value = mask_k;
         mask.label = mask_k;

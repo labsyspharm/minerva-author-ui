@@ -47,7 +47,8 @@ class ImageView extends Component {
 			getTileUrl: getTileUrl,
 			// Custom parameters
       u32: u32,
-			many_channel_url: url,
+      unique_id: id,
+      many_channel_url: url,
       many_channel_id: u32 === true ? key : id,
       many_channel_range: [range['min'] / maxRange, range['max'] / maxRange],
       many_channel_color: color.map(c => c / 255.),
@@ -71,8 +72,8 @@ class ImageView extends Component {
 
     return [...Array(itemCount).keys()].map(i => {
       const tiledImage = world.getItemAt(i);
-      const {many_channel_id} = tiledImage.source;
-      return many_channel_id;
+      const {unique_id} = tiledImage.source;
+      return unique_id;
     });
   }
 
@@ -82,9 +83,9 @@ class ImageView extends Component {
 
     for (let i in [...Array(itemCount).keys()]) {
       const tiledImage = world.getItemAt(i);
-      const { many_channel_id } = tiledImage.source;
+      const { unique_id } = tiledImage.source;
 
-      if (id == many_channel_id)
+      if (id == unique_id)
         return tiledImage;
     }
   }
@@ -391,6 +392,7 @@ class ImageView extends Component {
       else {
         // Compare the channel ids
         const old_ids = new Set(this.getTiledImageIds());
+
         const redrawn = intersectSet(ids, old_ids);
         const removed = differSet(old_ids, ids);
         const added = differSet(ids, old_ids);
@@ -398,9 +400,6 @@ class ImageView extends Component {
         removed.forEach(id => {
           world.removeItem(this.getTiledImageById(id))
         })
-        if (removed.length) {
-          viewer.forceRedraw();
-        }
 
         this.addChannels([...added])
         
