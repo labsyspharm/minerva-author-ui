@@ -37,7 +37,11 @@ vec4 colormap (uint id) {
   vec3 hsv = spike(float(id));
   float alpha = 1.;
   if (id == uint(0)) {
+    hsv = vec3(0.0, 0.0, 0.0);
     alpha = 0.; 
+  }
+  else if (id == uint(1)) {
+    return vec4(u_tile_color, alpha);
   }
   return hsv2rgb(hsv, alpha);
 }
@@ -65,7 +69,7 @@ vec4 u16_rg_range() {
 
 void main() {
   if (u_tile_fmt == 32) {
-    color = u32_rgba_map(); 
+    color = u32_rgba_map();
   }
   else {
     color = u16_rg_range();

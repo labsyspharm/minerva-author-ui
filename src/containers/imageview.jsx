@@ -45,7 +45,8 @@ class ImageView extends Component {
     return {
 			// Custom functions
 			getTileUrl: getTileUrl,
-			// CUstom parameters
+			// Custom parameters
+      u32: u32,
 			many_channel_url: url,
       many_channel_id: u32 === true ? key : id,
       many_channel_range: [range['min'] / maxRange, range['max'] / maxRange],
@@ -104,7 +105,8 @@ class ImageView extends Component {
     tileSources.map(tileSource => {
       viewer.addTiledImage({
         tileSource: tileSource,
-        width: img.width / img.height
+        width: img.width / img.height,
+        compositeOperation: tileSource.u32 ? 'source-over' : 'lighter'
       });
     });
   }
@@ -150,7 +152,6 @@ class ImageView extends Component {
       showFullPageControl: false,
       // Specific to this project
       id: "ImageView",
-      compositeOperation: "lighter",
       prefixUrl: "image/openseadragon/",
       tileSources: this.makeTileSources(ids),
       maxZoomPixelRatio: 10,
@@ -397,6 +398,9 @@ class ImageView extends Component {
         removed.forEach(id => {
           world.removeItem(this.getTiledImageById(id))
         })
+        if (removed.length) {
+          viewer.forceRedraw();
+        }
 
         this.addChannels([...added])
         
