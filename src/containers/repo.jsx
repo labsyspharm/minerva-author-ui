@@ -66,7 +66,7 @@ class Repo extends Component {
 
     const { width, height, maxLevel, tilesize,
       rgba, uuid, url, warning} = props;
-    const { channels, sample_info, waypoints, groups } = props;
+    const { channels, sample_info, waypoints, groups, masks} = props;
 
 		const defaultChanRender = new Map(channels.map((v,k) => {
 			return [k, {
@@ -113,7 +113,6 @@ class Repo extends Component {
         data: '', x: '', y: '', cluster: -1, clusters: new Map([])
       },
       activeMaskId: -1,
-      masks: new Map([]),
       deleteGroupModal: false,
       deleteStoryModal: false,
       deleteClusterModal: false,
@@ -183,6 +182,14 @@ class Repo extends Component {
       activeGroup: 0,
       storyUuid: props.storyUuid,
       activeGroup: 0,
+      masks: new Map(masks.map((v,k) => {
+        const mask = {
+          path: v.path,
+          name: v.label,
+          color: hexToRgb(v.channels[0].color)
+        }
+        return [k, mask] 
+      })),
       groups: new Map(groups.map((v,k) => {
 				return [k, {
 					activeIds: v.channels.map(chan => {
@@ -1327,6 +1334,21 @@ class Repo extends Component {
     });
   }
 
+  createMaskOutput(masks) {
+    return Array.from(masks.values()).map(v => {
+      const channels = [{
+          'color': rgbToHex(v.color),
+          'label': v.name,
+      }];
+      let group_out = {
+        'label': v.name,
+        'path': v.path,
+        'channels': channels
+      };
+      return group_out;
+    });
+  }
+
   createGroupOutput(groups, chanLabel) {
     return Array.from(groups.values()).map(v => {
       const channels = v.activeIds.map(id => {
@@ -1429,11 +1451,12 @@ class Repo extends Component {
 
   save() {
 
-    let {groups} = this.state;
+    let {groups, masks} = this.state;
     const {stories, chanLabel} = this.state;
     const {img} = this.state;
     let minerva = this.props.env === 'cloud';
 
+    const mask_output = this.createMaskOutput(masks);
     const group_output = this.createGroupOutput(groups, chanLabel);
     const story_output = this.createWaypoints(stories);
     const story_definition = this.createStoryDefinition(story_output, group_output);
@@ -1468,6 +1491,7 @@ class Repo extends Component {
       let render = fetch('http://localhost:2020/api/render', {
         method: 'POST',
         body: JSON.stringify({
+					'masks': mask_output,
           'groups': group_output,
           'waypoints': story_output,
           'header': this.state.sampleText,
@@ -1486,6 +1510,7 @@ class Repo extends Component {
 				body: JSON.stringify({
 					'waypoints': story_output,
 					'groups': group_output,
+					'masks': mask_output,
           'sample_info': {
             'rotation': this.state.rotation,
             'name': this.state.sampleName,
@@ -1701,7 +1726,7 @@ class Repo extends Component {
         let mask_k = `mask_${k}`;
         let mask = masks.get(k);
         mask.range = {
-          max: 65535,
+          max: 16777215,
           min: 0 
         };
         mask.u32 = true;

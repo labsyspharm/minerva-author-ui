@@ -35,6 +35,7 @@ class AuthorApp extends Component {
         "rotation":0
       },
       waypoints: [],
+      masks: [],
       groups: [],
       channels: [],
       width: 1024,
@@ -90,6 +91,7 @@ class AuthorApp extends Component {
               sample_info: sample_info || this.state.sample_info,
               waypoints: import_result.waypoints,
               groups: import_result.groups,
+              masks: import_result.masks,
               loaded: import_result.loaded,
               channels: import_result.channels,
               tilesize: import_result.tilesize,
@@ -168,7 +170,7 @@ class AuthorApp extends Component {
 
   render() {
     const {loaded, width, height, tilesize, maxLevel, rgba, url, uuid, storyUuid, story, imageName} = this.state;
-    const {channels, sample_info, waypoints, groups, warning} = this.state;
+    const {channels, sample_info, waypoints, groups, warning, masks} = this.state;
 
     if (loaded) {
       let repoClass = this.state.preview ? "repo-div" : "repo-div show";
@@ -177,7 +179,7 @@ class AuthorApp extends Component {
           <div>
             <div className={repoClass}>
             <Repo   env={this.props.env} rgba={rgba}
-                    channels={channels} waypoints={waypoints}
+                    masks={masks} channels={channels} waypoints={waypoints}
                     groups={groups} url={url} uuid={uuid} maxLevel={maxLevel}
                     width={width} height={height} tilesize={tilesize}
                     sample_info={sample_info} warning={warning} storyUuid={storyUuid}
