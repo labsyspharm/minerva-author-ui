@@ -130,7 +130,9 @@ class Repo extends Component {
         	'text': v.text,
         	'pan': v.pan,
         	'zoom': v.zoom,
-          'masks': [],
+          'masks': v.masks.map(n => {
+            return masks.map(m => m.label).indexOf(n);
+          }).filter(i => i >= 0),
         	'arrows': v.arrows,
         	'overlays': v.overlays,
         	'group': groups.findIndex(g => {
@@ -1398,6 +1400,7 @@ class Repo extends Component {
   }
 
   createWaypoints(waypoints) {
+    const {masks, groups} = this.state;
     return Array.from(waypoints.values()).map(v => {
       let wp = {
         'name': v.name,
@@ -1406,7 +1409,8 @@ class Repo extends Component {
         'zoom': v.zoom,
         'arrows': v.arrows,
         'overlays': v.overlays,
-        'group': this.state.groups.get(v.group).label
+        'group': groups.get(v.group).label,
+        'masks': v.masks.map(i => { return masks.get(i).name }),
       }
       Array.from(v.visLabels.values()).forEach(visLabel => {
         if (visLabel.value < 2) {
