@@ -1478,20 +1478,6 @@ class Repo extends Component {
       });
     }
     else {
-      fetch('http://localhost:2020/api/stories', {
-        method: 'POST',
-        body: JSON.stringify({
-          'stories': [{
-            'name': '',
-            'text': '',
-            'waypoints': story_output
-          }]
-        }),
-        headers: {
-          "Content-Type": "application/json"
-        }
-      })
-      
       let render = fetch('http://localhost:2020/api/render', {
         method: 'POST',
         body: JSON.stringify({
