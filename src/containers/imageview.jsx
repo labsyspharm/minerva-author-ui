@@ -155,6 +155,7 @@ class ImageView extends Component {
       id: "ImageView",
       prefixUrl: "image/openseadragon/",
       tileSources: this.makeTileSources(ids),
+      compositeOperation: 'lighter',
       maxZoomPixelRatio: 10,
       ajaxHeaders: {
         "Cache-Control": "no-store"
