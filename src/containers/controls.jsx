@@ -91,7 +91,7 @@ class Controls extends Component {
       activeStoryLabel = {value: activeStory, id: activeStory,
                           label: '#' + (activeStory+1)}
     }
-    let maskData = (
+    let maskData = minerva ? '' : (
       <div className="ui form">
           <div className="row">
             <div className="col-5">
