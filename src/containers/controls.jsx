@@ -271,7 +271,7 @@ class Controls extends Component {
     let storyMaskControls = ''
     let visControls = ''
     if (!minerva) {
-      storyMaskControls = (
+      storyMaskControls = rgba? '' : (
         <div>
           <div className="font-white">
             Masks:
