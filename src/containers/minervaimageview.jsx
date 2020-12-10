@@ -35,11 +35,13 @@ class MinervaImageView extends Component {
     const {img, channels} = this.props;
     const { url, uuid } = img;
 
+    let channelPath = "";
+
     const channelList = Array.from(channels.values()).map(function(c){
       const specs = [c.id, rgbToHex(c.color), c.range.min / c.maxRange, c.range.max / c.maxRange];
       return specs.join(',');
     })
-    const channelPath = channelList.join('/');
+    channelPath = channelList.join('/');
 
 		const getTileUrl = function(l, x, y) {
       const lod = (this.maxLevel - l) + '/';

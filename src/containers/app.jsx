@@ -145,6 +145,7 @@ class AuthorApp extends Component {
         channels.push(channel.Name);
       }
     }
+    let rgba = channels.length === 3 || channels.length === 1;
     this.setState({
       loaded: true,
       tilesize: image.tile_size,
@@ -152,7 +153,7 @@ class AuthorApp extends Component {
       channels: channels,
       width: image.width,
       height: image.height,
-      rgba: false,
+      rgba: rgba,
       warning: '',
       imageName: image.name,
       maxLevel: Math.ceil(Math.log2(Math.max(image.width, image.height) / 1024)),

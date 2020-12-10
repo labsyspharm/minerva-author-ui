@@ -24,8 +24,11 @@ class MarkerCsvParser {
         let rows = csv.split(/\r?\n/);
         for (let row of rows) {
             let cols = row.split(',');
+            if (!cols || cols.size <= 3) {
+                continue;
+            }
             let markerName = cols[2];
-            if (markerName.toLowerCase() === 'marker_name') {
+            if (!markerName || markerName.toLowerCase() === 'marker_name') {
                 // Skip header row
                 continue;
             }

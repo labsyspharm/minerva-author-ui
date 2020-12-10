@@ -1366,9 +1366,22 @@ class Repo extends Component {
           'id': id,
         } 
       });
+      let render = channels;
+      if (this.state.rgba) {
+        render = Array.from(this.RGBAChannels().values()).map(rgba => {
+          return {
+            'color': rgbToHex(rgba.color),
+            'min': rgba.range.min / rgba.maxRange,
+            'max': rgba.range.max / rgba.maxRange,
+            'label': rgba.label,
+            'id': rgba.id,
+          } 
+        });
+      }
       let group_out = {
         'label': v.label,
-        'channels': channels
+        'channels': channels,
+        'render': render
       };
       if (v.id) {
         group_out.id = v.id;
@@ -1633,13 +1646,10 @@ class Repo extends Component {
 
   preview() {
     let {groups, chanLabel} = this.state;
-    const group_output = this.createGroupOutput(groups, chanLabel);
-    this.saveRenderingSettings(this.state.img.uuid, group_output).then(() => {
       const group_output = this.createGroupOutput(groups, chanLabel);
       const story_output = this.createWaypoints(this.state.stories);
       const story_definition = this.createStoryDefinition(story_output, group_output);
       this.props.onPreview(true, story_definition);
-    });
   }
 
   setPublishStoryModal(active) {
@@ -1647,7 +1657,8 @@ class Repo extends Component {
   }
 
   share() {
-    let url = window.location.href + `?story=${this.state.storyUuid}`;
+    let baseUrl = document.location.protocol +"//"+ document.location.host + document.location.pathname
+    let url = baseUrl + `?story=${this.state.storyUuid}`;
     if (navigator.clipboard) {
       navigator.clipboard.writeText(url);
     }
@@ -1694,6 +1705,41 @@ class Repo extends Component {
     );
   }
 
+  RGBAChannels() {
+    return new Map([
+      [0, {
+        id: 0,
+        label: "Red",
+        color: [255, 0, 0],
+        range: {
+          min: 0,
+          max: 65535,
+        },
+        maxRange: 255
+      }],
+      [1, {
+        id: 1,
+        label: "Green",
+        color: [0, 255, 0],
+        range: {
+          min: 0,
+          max: 65535
+        },
+        maxRange: 255
+      }],
+      [2, {
+        id: 2,
+        label: "Blue",
+        color: [0, 0, 255],
+        range: {
+          min: 0,
+          max: 65535
+        },
+        maxRange: 255
+      }],
+    ]);
+  }
+
   render() {
     const { rgba } = this.state;
     let minerva = this.props.env === 'cloud';
@@ -1719,7 +1765,7 @@ class Repo extends Component {
     if (rgba) {
       minervaChannels = this.RGBAChannels();
     }
-
+    
     const {stories, activeStory, masks, activeMaskId} = this.state;
     const story = stories.get(activeStory) || this.defaultStory(); 
 
@@ -1890,6 +1936,7 @@ class Repo extends Component {
           {previewButton}
           {shareButton}
           {saveButton}
+          {publishButton}
         </span>
       )
     }
