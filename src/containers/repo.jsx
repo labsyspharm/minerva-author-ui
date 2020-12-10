@@ -692,7 +692,12 @@ class Repo extends Component {
   }
 
   validateChannelGroupLabel(label) {
-    return label && validNameRegex.test(label);
+    const {groups} = this.state;
+    const is_valid = label && validNameRegex.test(label);
+    const is_unique = Array.from(groups).map(([key, group]) => {
+      return group.label;
+    }).indexOf(label) == -1;
+    return is_valid && is_unique;
   }
 
   handleAddGroup(evt) {
@@ -2072,7 +2077,7 @@ class Repo extends Component {
            <Popup
             trigger={<input type="text" onChange={this.handleAddGroup} />}
             open={this.state.invalidChannelGroupName} 
-            content='Channel group name can contain only letters, numbers, space, dash or underscore.'
+            content='Channel group name must be unique and contain only letters, numbers, space, dash or underscore.'
             position='top center'
           />
         </form>
