@@ -1710,11 +1710,20 @@ class Repo extends Component {
       ...activeChanLabel.get(a), ...activeChanRender.get(a)
     } ])) 
 
-    const {stories, activeStory, masks, activeMaskId} = this.state;
-    const story = stories.get(activeStory) || this.defaultStory();
 
-    const visibleChannels = new Map([
-      ...[...activeChannels].filter(([k, v]) => v.visible),
+    let visibleChannels = new Map(
+      [...activeChannels].filter(([k, v]) => v.visible)
+    );
+    
+    let minervaChannels = visibleChannels;
+    if (rgba) {
+      minervaChannels = this.RGBAChannels();
+    }
+
+    const {stories, activeStory, masks, activeMaskId} = this.state;
+    const story = stories.get(activeStory) || this.defaultStory(); 
+
+    visibleChannels = new Map([ visibleChannels
       ...(new Map(story.masks.map((k) => {
         let mask_k = `mask_${k}`;
         let mask = masks.get(k);
@@ -1758,7 +1767,7 @@ class Repo extends Component {
     if (minerva) {
       viewer = <MinervaImageView className="ImageView"
         img={ img }
-        channels={ visibleChannels }
+        channels={ minervaChannels }
         overlays={ overlays } arrows={ arrows }
         handleViewport={ this.handleViewport }
         interactor={ this.interactor }
