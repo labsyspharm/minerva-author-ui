@@ -1769,7 +1769,7 @@ class Repo extends Component {
     const {stories, activeStory, masks, activeMaskId} = this.state;
     const story = stories.get(activeStory) || this.defaultStory(); 
 
-    visibleChannels = new Map([ visibleChannels
+    visibleChannels = new Map([ ...visibleChannels,
       ...(new Map(story.masks.map((k) => {
         let mask_k = `mask_${k}`;
         let mask = masks.get(k);
