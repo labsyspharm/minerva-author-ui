@@ -6,6 +6,7 @@ const HtmlWebpackPlugin = require('html-webpack-plugin')
 
 var webpackConfig = {
   entry: [
+    "babel-polyfill",
     "./src/demo.jsx",
     "react-hot-loader/patch",
     "webpack/hot/only-dev-server",
