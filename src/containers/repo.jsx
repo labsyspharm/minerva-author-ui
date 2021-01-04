@@ -7,6 +7,7 @@ import FileBrowserModal from "../components/filebrowsermodal";
 import Modal from "../components/modal";
 import ImageView from "./imageview";
 import Controls from "./controls";
+import { handleFetchErrors } from "./app";
 import { Confirm } from 'semantic-ui-react';
 import ClipLoader from "react-spinners/ClipLoader";
 import { Progress, Popup } from 'semantic-ui-react'
@@ -182,6 +183,7 @@ class Repo extends Component {
       activeGroup: 0,
       storyUuid: props.storyUuid,
       activeGroup: 0,
+      maskPathStatus: new Map(),
       masks: new Map(masks.map((v,k) => {
         const mask = {
           path: v.path,
@@ -330,6 +332,11 @@ class Repo extends Component {
 
   componentDidMount() {
     this.labelRGBA();
+    this.setMaskPathStatusPolling(true);
+  }
+
+  componentWillUnmount() {
+    this.setMaskPathStatusPolling(false);
   }
 
   labelRGBA() {
@@ -1621,6 +1628,63 @@ class Repo extends Component {
     this.setState({ showMaskBrowser: true});
   }
 
+  async fetchMaskPathStatus(mask_path) {
+    // Double encoded URI component is required for flask
+    const key = encodeURIComponent(encodeURIComponent(mask_path))
+
+    const response =  await fetch(`http://localhost:2020/api/validate/u32/${key}`, {
+      headers: {
+        'pragma': 'no-cache',
+        'cache-control': 'no-store'
+      }
+    })
+
+    try {
+      const res = handleFetchErrors(response)
+      return res.json();
+    }
+    catch (error) {
+      console.error(error)
+      return {
+        invalid: true,
+        ready: false,
+        path: '',
+      }
+    }
+  }
+
+  async updateMaskPathStatus() {
+    const { masks, maskPathStatus} = this.state;
+    const mask_paths = [...masks].map(([key, value]) => value.path)
+    // Only fetch new status for paths that are not ready
+    const non_ready_mask_paths = mask_paths.filter(p => {
+      const p_status = maskPathStatus.get(p)
+      return !(p_status? p_status.ready : false)
+    })
+
+    const newMaskPathStatus = new Map(
+      (await Promise.all(non_ready_mask_paths.map(this.fetchMaskPathStatus))).map((d,i) => {
+        return [non_ready_mask_paths[i], d]
+      })
+    )
+    this.setState({
+      maskPathStatus: new Map([
+        ...maskPathStatus,
+        ...newMaskPathStatus
+      ])
+    })
+  }
+
+  setMaskPathStatusPolling(poll) {
+    if (poll) {
+      this.maskPathStatusInterval = setInterval(() => {
+        this.updateMaskPathStatus();
+      }, 3000);
+    } else {
+      clearInterval(this.maskPathStatusInterval);
+    }
+  }
+
   onMaskSelected(file) {
     this.setState({ 
       showMaskBrowser: false
@@ -1636,7 +1700,11 @@ class Repo extends Component {
       };
     }
     if (file && file.path) {
-      this.handleUpdateMask({name: mask.name, path: file.path, color: mask.color })
+      this.handleUpdateMask({
+        name: mask.name,
+        path: file.path,
+        color: mask.color
+      })
     }
   }
 
@@ -1766,6 +1834,7 @@ class Repo extends Component {
       minervaChannels = this.RGBAChannels();
     }
     
+    const {maskPathStatus} = this.state;
     const {stories, activeStory, masks, activeMaskId} = this.state;
     const story = stories.get(activeStory) || this.defaultStory(); 
 
@@ -1786,6 +1855,10 @@ class Repo extends Component {
         mask.label = mask_k;
         mask.id = mask_k;
         return [mask_k, mask] 
+      }).filter(([mask_k, mask]) => {
+        // Only show masks that are ready
+        const m_status = maskPathStatus.get(mask.path)
+        return m_status? m_status.ready : false
       })))
     ]);
 

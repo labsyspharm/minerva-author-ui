@@ -12,6 +12,13 @@ import '../style/app.css';
 
 import { CognitoUserPool } from 'amazon-cognito-identity-js';
 
+export function handleFetchErrors(response) {
+  if (!response.ok) {
+    throw Error(response.statusText);
+  }
+  return response;
+}
+
 class AuthorApp extends Component {
 
   constructor(props) {
