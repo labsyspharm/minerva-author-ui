@@ -37,11 +37,6 @@ class Controls extends Component {
     const {handleMaskChange, handleMaskInsert, handleMaskRemove} = this.props;
     const {showMaskBrowser, openMaskBrowser, onMaskSelected} = this.props;
 
-    const ready_mask_paths = [...masks].filter(([k,v]) => {
-      const p_status = maskPathStatus.get(v.path)
-      console.log({maskPathStatus, v})
-      return p_status? p_status.ready : false
-    })
     const activeMasks = new Map([...masks].map(([k,v])=>{
                                   return [k, {
                                     name: v.name,
@@ -63,6 +58,14 @@ class Controls extends Component {
         path: ""
       };
     }
+    const ready_mask_paths = [...masks].filter(([k,v]) => {
+      const p_status = maskPathStatus.get(v.path)
+      console.log({maskPathStatus, v})
+      return p_status? p_status.ready : false
+    })
+    const is_active_mask_loading = ((p_status) => {
+      return p_status && !p_status.invalid && !p_status.ready
+    })(maskPathStatus.get(activeMask.path))
 
     const activeClusters = new Map([...activeVisLabel.clusters].map(([k,v])=>{
                                   return [k, {
@@ -96,9 +99,11 @@ class Controls extends Component {
       activeStoryLabel = {value: activeStory, id: activeStory,
                           label: '#' + (activeStory+1)}
     }
-    const mask_help_text = ready_mask_paths.length ? (
-      'Open the "Edit Story" tab to select loaded masks to show.'
-    ) : ''
+    const mask_help_text = is_active_mask_loading ? 'Loading...' : (
+      ready_mask_paths.length ? (
+        'Open the "Edit Story" tab to select loaded masks to show.'
+      ) : ''
+    )
     let maskData = minerva ? '' : (
       <div className="ui form">
           <div className="row">
