@@ -33,10 +33,15 @@ class Controls extends Component {
     const {handleStoryInsert, handleStoryName, handleStoryText} = this.props;
     const {handleStoryRemove, handleStoryChange, overlays, arrows} = this.props;
     const {arrowClick, lassoClick, boxClick, drawType} = this.props;
-    const {masks, activeMaskId, handleUpdateMask} = this.props;
+    const {masks, activeMaskId, handleUpdateMask, maskPathStatus} = this.props;
     const {handleMaskChange, handleMaskInsert, handleMaskRemove} = this.props;
     const {showMaskBrowser, openMaskBrowser, onMaskSelected} = this.props;
 
+    const ready_mask_paths = [...masks].filter(([k,v]) => {
+      const p_status = maskPathStatus.get(v.path)
+      console.log({maskPathStatus, v})
+      return p_status? p_status.ready : false
+    })
     const activeMasks = new Map([...masks].map(([k,v])=>{
                                   return [k, {
                                     name: v.name,
@@ -91,6 +96,9 @@ class Controls extends Component {
       activeStoryLabel = {value: activeStory, id: activeStory,
                           label: '#' + (activeStory+1)}
     }
+    const mask_help_text = ready_mask_paths.length ? (
+      'Open the "Edit Story" tab to select loaded masks to show.'
+    ) : ''
     let maskData = minerva ? '' : (
       <div className="ui form">
           <div className="row">
@@ -149,6 +157,11 @@ class Controls extends Component {
                 <input value={activeMask.name} onChange={(v)=>handleUpdateMask({ name: v.target.value, path: activeMask.path, color: activeMask.color })} style={{ width: "50%" }} id="maskname" name="maskname" type="text"/>
             </div>
          </div>
+        <div className="row font-white">
+          <div className="col-12">
+            {mask_help_text}
+          </div>
+        </div>
       </div>
     );
 

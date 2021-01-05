@@ -1667,7 +1667,23 @@ class Repo extends Component {
         return [non_ready_mask_paths[i], d]
       })
     )
+    const invalid_new_mask_paths = non_ready_mask_paths.filter(p => {
+      const p_status = newMaskPathStatus.get(p)
+      return p_status? p_status.invalid : true
+    })
+    let new_error = null
+    if (invalid_new_mask_paths.length) {
+      const s = invalid_new_mask_paths.length === 1 ? '' : 's'
+      const list = [...masks].reduce((items, [i, mask]) => {
+        if (invalid_new_mask_paths.includes(mask.path)) {
+          return items == '' ? `#${i+1}` : items + `, #${i+1}`
+        }
+        return items
+      }, '')
+      new_error = `${invalid_new_mask_paths.length} invalid mask path${s}: ${list}`
+    }
     this.setState({
+      error: new_error,
       maskPathStatus: new Map([
         ...maskPathStatus,
         ...newMaskPathStatus
@@ -1748,7 +1764,7 @@ class Repo extends Component {
       <div className="import-warning">
         <div className="ui icon message">
           <FontAwesomeIcon className="icon" icon={faExclamationCircle} />
-          <div class="content">
+          <div className="content">
             <div className="header">{this.state.warning}</div>
             <button className="ui button compact ml-1 mr-1" onClick={this.dismissWarning}>Dismiss</button>
           </div>
@@ -1765,7 +1781,7 @@ class Repo extends Component {
       <div className="import-errors">
         <div className="ui icon message">
           <FontAwesomeIcon className="icon" icon={faExclamationCircle} />
-          <div class="content">
+          <div className="content">
             <div className="header">{this.state.error}</div>
           </div>
         </div>
@@ -2071,7 +2087,7 @@ class Repo extends Component {
 						  onChange={this.handleSampleText} />
               <input type='text' placeholder='Author Name'
                 value={this.state.authorName} onChange={this.handleAuthorName } />
-              <div class="field">
+              <div className="field">
                 <label>Rotation (degrees)</label>
                <input type='text' placeholder='Rotation'
                 value={this.state.rotation? this.state.rotation : ''}
@@ -2140,6 +2156,7 @@ class Repo extends Component {
               onVisDataSelected={this.onVisDataSelected}
               masks={masks}
               activeMaskId={activeMaskId}
+              maskPathStatus={maskPathStatus}
               handleUpdateMask={this.handleUpdateMask}
               handleMaskChange={this.handleMaskChange}
               handleMaskInsert={this.handleMaskInsert}
