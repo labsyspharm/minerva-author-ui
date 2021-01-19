@@ -1053,7 +1053,7 @@ class Repo extends Component {
 			return;
 		}
 	
-		newStory.arrows[activeArrow].hide = !arrows[activeArrow].hide;
+		newStory.arrows[activeArrow].hide = !newStory.arrows[activeArrow].hide;
 
     const newStories = new Map([...stories,
                               ...(new Map([[activeStory, newStory]]))]);
