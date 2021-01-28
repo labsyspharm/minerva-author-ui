@@ -119,12 +119,14 @@ class Repo extends Component {
       deleteClusterModal: false,
       deleteMaskModal: false,
       saving: false,
-      saved: false,
+      published: false,
       publishing: false,
       showPublishStoryModal: false,
       rangeSliderComplete: true,
       saveProgress: 0,
       saveProgressMax: 0,
+      publishProgress: 0,
+      publishProgressMax: 0,
       stories: new Map(waypoints.map((v,k) => {
 				let wp = {
 					'name': v.name,
@@ -281,6 +283,7 @@ class Repo extends Component {
     this.toggleModal = this.toggleModal.bind(this);
     this.save = this.save.bind(this);
     this.share = this.share.bind(this);
+    this.publish = this.publish.bind(this);
     this.deleteActiveGroup = this.deleteActiveGroup.bind(this);
     this.showRenameModal = this.showRenameModal.bind(this);
     this.showAddGroupModal = this.showAddGroupModal.bind(this);
@@ -681,8 +684,8 @@ class Repo extends Component {
     const {textEdit, activeStory} = this.state;
     this.setState({
       textEdit: value,
-      saveProgress: 0,
-      saveProgressMax: 0
+      publishProgress: 0,
+      publishProgressMax: 0
     })
     if (!textEdit) {
       this.handleStoryChange(activeStory);
@@ -1513,7 +1516,7 @@ class Repo extends Component {
       render.then(res => {
         this.setState({publishing: false});
         this.setProgressPolling(false);
-        this.getSaveProgress();
+        this.getPublishProgress();
       }).catch(err => {
         console.error(err);
         this.setState({publishing: false});
@@ -1565,7 +1568,9 @@ class Repo extends Component {
       })
 
       save.then(res => {
-        this.setState({saving: false});
+        setTimeout(() => {
+          this.setState({saving: false});
+        }, 3000);
       }).catch(err => {
         console.error(err);
         this.setState({saving: false});
@@ -1592,25 +1597,25 @@ class Repo extends Component {
   setProgressPolling(poll) {
     if (poll) {
       this.progressInterval = setInterval(() => {
-        this.getSaveProgress();
+        this.getPublishProgress();
       }, 500);
     } else {
       clearInterval(this.progressInterval);
     }
   }
 
-  getSaveProgress() {
+  getPublishProgress() {
     fetch('http://127.0.0.1:2020/api/render/progress').then(response => {
       return response.json();
     }).then(progress => {
       if (progress.progress >= progress.max && progress.max != 0) {
         this.setState({
-          saved: true 
+          published: true 
         })
       }
       this.setState({
-        saveProgress: progress.progress,
-        saveProgressMax: progress.max
+        publishProgress: progress.progress,
+        publishProgressMax: progress.max
       });
     });
   }
@@ -2000,18 +2005,21 @@ class Repo extends Component {
       // TODO - Implement rendering in backend and show previewButton 
       previewButton = null;
       shareButton = null;
-      publishButton = (
-        <button className="ui button primary" disabled={this.state.publishing} 
-          onClick={() => this.publish()}
-          title="Publish story">
-        <FontAwesomeIcon icon={faBullhorn} />&nbsp;
-         Publish&nbsp;
-         <ClipLoader animation="border"
-            size={12} color={"#FFFFFF"}
-            loading={this.state.publishing}/>
-        </button>
-      );
-      if (this.state.saved) {
+      publishButton = null;
+      if (group != undefined) {
+        publishButton = (
+          <button className="ui button primary" disabled={this.state.publishing} 
+            onClick={this.publish}
+            title="Publish story">
+          <FontAwesomeIcon icon={faBullhorn} />&nbsp;
+           Publish&nbsp;
+           <ClipLoader animation="border"
+              size={12} color={"#FFFFFF"}
+              loading={this.state.publishing}/>
+          </button>
+        );
+      }
+      if (this.state.published) {
         previewButton = (
           <button className="ui button teal" onClick={() => window.open("/story")} title="Preview story">
             <FontAwesomeIcon icon={faEye} />&nbsp;
@@ -2291,10 +2299,10 @@ class Repo extends Component {
   }
 
   renderProgressBar() {
-    if (this.state.saveProgress <= 0) {
+    if (this.state.publishProgress <= 0) {
       return null;
     }
-    let percent = Math.round(this.state.saveProgress/this.state.saveProgressMax*100);
+    let percent = Math.round(this.state.publishProgress/this.state.publishProgressMax*100);
     return (
       <div className="row">
         <div className="col">
