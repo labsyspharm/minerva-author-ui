@@ -78,7 +78,7 @@ class Repo extends Component {
         visible: true
 			}];
     }));
-    
+
 		this.state = {
       error: null,
       warning: warning,
@@ -391,7 +391,7 @@ class Repo extends Component {
       })    
     }
   }
-  
+
   handleViewport(viewport) {
     const {stories, activeStory, activeGroup} = this.state;
     let newStory = stories.get(activeStory) || this.defaultStory();
@@ -404,7 +404,7 @@ class Repo extends Component {
 
     const newStories = new Map([...stories,
                               ...(new Map([[activeStory, newStory]]))]);
-    
+
     this.setState({viewport: viewport});
     if (this.state.textEdit) {
       this.setState({stories: newStories});
@@ -722,7 +722,7 @@ class Repo extends Component {
         label: evt.target.value,
         value: id
       }
-    
+
       const newGroups = new Map([...groups,
                                 ...(new Map([[id, newGroup]]))]);
 
@@ -942,7 +942,7 @@ class Repo extends Component {
         label: g.label,
         value: id
       }
-    
+
       const newGroups = new Map([...groups,
                                 ...(new Map([[id, newGroup]]))]);
 
@@ -980,7 +980,7 @@ class Repo extends Component {
         label: group.label,
         value: group.value
       }
-    
+
       const newGroups = new Map([...groups,
                                 ...(new Map([[activeGroup, newGroup]]))]);
 
@@ -1031,7 +1031,7 @@ class Repo extends Component {
 		if (newStory.arrows.length - 1 < activeArrow) {
 			return;
 		}
-	
+
     let angle = parseInt(event.target.value)
     newStory.arrows[activeArrow].angle = isNaN(angle) ? '' : angle; 
 
@@ -1052,7 +1052,7 @@ class Repo extends Component {
 		if (newStory.arrows.length - 1 < activeArrow) {
 			return;
 		}
-	
+
 		newStory.arrows[activeArrow].hide = !newStory.arrows[activeArrow].hide;
 
     const newStories = new Map([...stories,
@@ -1099,7 +1099,7 @@ class Repo extends Component {
 		if (newStory.arrows.length - 1 < activeArrow) {
 			return;
 		}
-	
+
 		newStory.arrows[activeArrow].text = event.target.value;
 
     const newStories = new Map([...stories,
@@ -1476,6 +1476,52 @@ class Repo extends Component {
     });
   }
 
+  publish() {
+
+    let {groups, masks} = this.state;
+    const {stories, chanLabel} = this.state;
+    const {img} = this.state;
+    let minerva = this.props.env === 'cloud';
+
+    const mask_output = this.createMaskOutput(masks);
+    const group_output = this.createGroupOutput(groups, chanLabel);
+    const story_output = this.createWaypoints(stories);
+    const story_definition = this.createStoryDefinition(story_output, group_output);
+
+    this.setState({publishing: true});
+
+    if (!minerva) {
+      let render = fetch('http://localhost:2020/api/render', {
+        method: 'POST',
+        body: JSON.stringify({
+					'masks': mask_output,
+          'groups': group_output,
+          'waypoints': story_output,
+          'header': this.state.sampleText,
+          'rotation': this.state.rotation,
+          'image': {
+            'description': this.state.sampleName
+          }
+        }),
+        headers: {
+          "Content-Type": "application/json"
+        }
+      })
+
+      this.setProgressPolling(true);
+
+      render.then(res => {
+        this.setState({publishing: false});
+        this.setProgressPolling(false);
+        this.getSaveProgress();
+      }).catch(err => {
+        console.error(err);
+        this.setState({publishing: false});
+        this.setProgressPolling(false);
+      })
+    }
+  }
+
   save() {
 
     let {groups, masks} = this.state;
@@ -1501,23 +1547,6 @@ class Repo extends Component {
       });
     }
     else {
-      let render = fetch('http://localhost:2020/api/render', {
-        method: 'POST',
-        body: JSON.stringify({
-					'masks': mask_output,
-          'groups': group_output,
-          'waypoints': story_output,
-          'header': this.state.sampleText,
-          'rotation': this.state.rotation,
-          'image': {
-            'description': this.state.sampleName
-          }
-        }),
-        headers: {
-          "Content-Type": "application/json"
-        }
-      })
-
 			let save = fetch('http://localhost:2020/api/save', {
 				method: 'POST',
 				body: JSON.stringify({
@@ -1535,16 +1564,11 @@ class Repo extends Component {
 				}
       })
 
-      this.setProgressPolling(true);
-      
-      Promise.all([render, save]).then(res => {
+      save.then(res => {
         this.setState({saving: false});
-        this.setProgressPolling(false);
-        this.getSaveProgress();
       }).catch(err => {
         console.error(err);
         this.setState({saving: false});
-        this.setProgressPolling(false);
       })
     }
   }
@@ -1844,12 +1868,12 @@ class Repo extends Component {
     let visibleChannels = new Map(
       [...activeChannels].filter(([k, v]) => v.visible)
     );
-    
+
     let minervaChannels = visibleChannels;
     if (rgba) {
       minervaChannels = this.RGBAChannels();
     }
-    
+
     const {maskPathStatus} = this.state;
     const {stories, activeStory, masks, activeMaskId} = this.state;
     const story = stories.get(activeStory) || this.defaultStory(); 
@@ -1969,14 +1993,24 @@ class Repo extends Component {
        <ClipLoader animation="border"
           size={12} color={"#FFFFFF"}
           loading={this.state.publishing}/>
-    </button>
+      </button>
     );
     if (this.props.env === 'local') {
       // Hide buttons which are not implemented in local environment yet
       // TODO - Implement rendering in backend and show previewButton 
       previewButton = null;
       shareButton = null;
-      publishButton = null;
+      publishButton = (
+        <button className="ui button primary" disabled={this.state.publishing} 
+          onClick={() => this.publish()}
+          title="Publish story">
+        <FontAwesomeIcon icon={faBullhorn} />&nbsp;
+         Publish&nbsp;
+         <ClipLoader animation="border"
+            size={12} color={"#FFFFFF"}
+            loading={this.state.publishing}/>
+        </button>
+      );
       if (this.state.saved) {
         previewButton = (
           <button className="ui button teal" onClick={() => window.open("/story")} title="Preview story">
@@ -1986,7 +2020,7 @@ class Repo extends Component {
         );
       }
     }
-    if (!this.state.storyUuid) {
+    else if (!this.state.storyUuid) {
       shareButton = null;
       publishButton = null;
     }
@@ -2249,7 +2283,7 @@ class Repo extends Component {
             content='Channel group name can contain only letters, numbers, space, dash or underscore.'
             position='top center'
         />
-          
+
         </form>
         </Modal>
       </div>
