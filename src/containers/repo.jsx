@@ -78,7 +78,7 @@ class Repo extends Component {
         visible: true
 			}];
     }));
-    
+
 		this.state = {
       error: null,
       warning: warning,
@@ -119,12 +119,14 @@ class Repo extends Component {
       deleteClusterModal: false,
       deleteMaskModal: false,
       saving: false,
-      saved: false,
+      published: false,
       publishing: false,
       showPublishStoryModal: false,
       rangeSliderComplete: true,
       saveProgress: 0,
       saveProgressMax: 0,
+      publishProgress: 0,
+      publishProgressMax: 0,
       stories: new Map(waypoints.map((v,k) => {
 				let wp = {
 					'name': v.name,
@@ -281,6 +283,7 @@ class Repo extends Component {
     this.toggleModal = this.toggleModal.bind(this);
     this.save = this.save.bind(this);
     this.share = this.share.bind(this);
+    this.publish = this.publish.bind(this);
     this.deleteActiveGroup = this.deleteActiveGroup.bind(this);
     this.showRenameModal = this.showRenameModal.bind(this);
     this.showAddGroupModal = this.showAddGroupModal.bind(this);
@@ -391,7 +394,7 @@ class Repo extends Component {
       })    
     }
   }
-  
+
   handleViewport(viewport) {
     const {stories, activeStory, activeGroup} = this.state;
     let newStory = stories.get(activeStory) || this.defaultStory();
@@ -404,7 +407,7 @@ class Repo extends Component {
 
     const newStories = new Map([...stories,
                               ...(new Map([[activeStory, newStory]]))]);
-    
+
     this.setState({viewport: viewport});
     if (this.state.textEdit) {
       this.setState({stories: newStories});
@@ -681,8 +684,8 @@ class Repo extends Component {
     const {textEdit, activeStory} = this.state;
     this.setState({
       textEdit: value,
-      saveProgress: 0,
-      saveProgressMax: 0
+      publishProgress: 0,
+      publishProgressMax: 0
     })
     if (!textEdit) {
       this.handleStoryChange(activeStory);
@@ -722,7 +725,7 @@ class Repo extends Component {
         label: evt.target.value,
         value: id
       }
-    
+
       const newGroups = new Map([...groups,
                                 ...(new Map([[id, newGroup]]))]);
 
@@ -942,7 +945,7 @@ class Repo extends Component {
         label: g.label,
         value: id
       }
-    
+
       const newGroups = new Map([...groups,
                                 ...(new Map([[id, newGroup]]))]);
 
@@ -980,7 +983,7 @@ class Repo extends Component {
         label: group.label,
         value: group.value
       }
-    
+
       const newGroups = new Map([...groups,
                                 ...(new Map([[activeGroup, newGroup]]))]);
 
@@ -1031,7 +1034,7 @@ class Repo extends Component {
 		if (newStory.arrows.length - 1 < activeArrow) {
 			return;
 		}
-	
+
     let angle = parseInt(event.target.value)
     newStory.arrows[activeArrow].angle = isNaN(angle) ? '' : angle; 
 
@@ -1052,7 +1055,7 @@ class Repo extends Component {
 		if (newStory.arrows.length - 1 < activeArrow) {
 			return;
 		}
-	
+
 		newStory.arrows[activeArrow].hide = !newStory.arrows[activeArrow].hide;
 
     const newStories = new Map([...stories,
@@ -1099,7 +1102,7 @@ class Repo extends Component {
 		if (newStory.arrows.length - 1 < activeArrow) {
 			return;
 		}
-	
+
 		newStory.arrows[activeArrow].text = event.target.value;
 
     const newStories = new Map([...stories,
@@ -1476,6 +1479,56 @@ class Repo extends Component {
     });
   }
 
+  publish() {
+
+    let minerva = this.props.env === 'cloud';
+ 
+    if (minerva) {
+      this.setPublishStoryModal(true)
+    }
+    else {
+      let {groups, masks} = this.state;
+      const {stories, chanLabel} = this.state;
+      const {img} = this.state;
+
+      const mask_output = this.createMaskOutput(masks);
+      const group_output = this.createGroupOutput(groups, chanLabel);
+      const story_output = this.createWaypoints(stories);
+      const story_definition = this.createStoryDefinition(story_output, group_output);
+
+      this.setState({publishing: true});
+
+      let render = fetch('http://localhost:2020/api/render', {
+        method: 'POST',
+        body: JSON.stringify({
+					'masks': mask_output,
+          'groups': group_output,
+          'waypoints': story_output,
+          'header': this.state.sampleText,
+          'rotation': this.state.rotation,
+          'image': {
+            'description': this.state.sampleName
+          }
+        }),
+        headers: {
+          "Content-Type": "application/json"
+        }
+      })
+
+      this.setProgressPolling(true);
+
+      render.then(res => {
+        this.setState({publishing: false});
+        this.setProgressPolling(false);
+        this.getPublishProgress();
+      }).catch(err => {
+        console.error(err);
+        this.setState({publishing: false});
+        this.setProgressPolling(false);
+      })
+    }
+  }
+
   save() {
 
     let {groups, masks} = this.state;
@@ -1501,23 +1554,6 @@ class Repo extends Component {
       });
     }
     else {
-      let render = fetch('http://localhost:2020/api/render', {
-        method: 'POST',
-        body: JSON.stringify({
-					'masks': mask_output,
-          'groups': group_output,
-          'waypoints': story_output,
-          'header': this.state.sampleText,
-          'rotation': this.state.rotation,
-          'image': {
-            'description': this.state.sampleName
-          }
-        }),
-        headers: {
-          "Content-Type": "application/json"
-        }
-      })
-
 			let save = fetch('http://localhost:2020/api/save', {
 				method: 'POST',
 				body: JSON.stringify({
@@ -1535,16 +1571,13 @@ class Repo extends Component {
 				}
       })
 
-      this.setProgressPolling(true);
-      
-      Promise.all([render, save]).then(res => {
-        this.setState({saving: false});
-        this.setProgressPolling(false);
-        this.getSaveProgress();
+      save.then(res => {
+        setTimeout(() => {
+          this.setState({saving: false});
+        }, 3000);
       }).catch(err => {
         console.error(err);
         this.setState({saving: false});
-        this.setProgressPolling(false);
       })
     }
   }
@@ -1568,25 +1601,25 @@ class Repo extends Component {
   setProgressPolling(poll) {
     if (poll) {
       this.progressInterval = setInterval(() => {
-        this.getSaveProgress();
+        this.getPublishProgress();
       }, 500);
     } else {
       clearInterval(this.progressInterval);
     }
   }
 
-  getSaveProgress() {
+  getPublishProgress() {
     fetch('http://127.0.0.1:2020/api/render/progress').then(response => {
       return response.json();
     }).then(progress => {
       if (progress.progress >= progress.max && progress.max != 0) {
         this.setState({
-          saved: true 
+          published: true 
         })
       }
       this.setState({
-        saveProgress: progress.progress,
-        saveProgressMax: progress.max
+        publishProgress: progress.progress,
+        publishProgressMax: progress.max
       });
     });
   }
@@ -1844,12 +1877,12 @@ class Repo extends Component {
     let visibleChannels = new Map(
       [...activeChannels].filter(([k, v]) => v.visible)
     );
-    
+
     let minervaChannels = visibleChannels;
     if (rgba) {
       minervaChannels = this.RGBAChannels();
     }
-    
+
     const {maskPathStatus} = this.state;
     const {stories, activeStory, masks, activeMaskId} = this.state;
     const story = stories.get(activeStory) || this.defaultStory(); 
@@ -1931,7 +1964,8 @@ class Repo extends Component {
       />
     }
 
-    let saveButton = ''
+    let saveButton = null;
+    let publishButton = null;
     if (group != undefined) {
       saveButton = (
         <button className="ui button primary" 
@@ -1944,7 +1978,18 @@ class Repo extends Component {
           size={12} color={"#FFFFFF"}
           loading={this.state.saving}/>
         </button>
-      )
+      );
+      publishButton = (
+        <button className="ui button primary" disabled={this.state.publishing} 
+          onClick={this.publish}
+          title="Publish story">
+        <FontAwesomeIcon icon={faBullhorn} />&nbsp;
+         Publish&nbsp;
+         <ClipLoader animation="border"
+            size={12} color={"#FFFFFF"}
+            loading={this.state.publishing}/>
+        </button>
+      );
     }
     let previewButton = (
       <button className="ui button teal" onClick={() => this.preview()} title="Preview story">
@@ -1959,25 +2004,12 @@ class Repo extends Component {
       Share
       </button> 
     );
-
-    let publishButton = (
-      <button className="ui button primary" disabled={this.state.publishing} 
-        onClick={() => this.setPublishStoryModal(true)}
-        title="Publish story">
-      <FontAwesomeIcon icon={faBullhorn} />&nbsp;
-       Publish&nbsp;
-       <ClipLoader animation="border"
-          size={12} color={"#FFFFFF"}
-          loading={this.state.publishing}/>
-    </button>
-    );
     if (this.props.env === 'local') {
       // Hide buttons which are not implemented in local environment yet
       // TODO - Implement rendering in backend and show previewButton 
       previewButton = null;
       shareButton = null;
-      publishButton = null;
-      if (this.state.saved) {
+      if (this.state.published) {
         previewButton = (
           <button className="ui button teal" onClick={() => window.open("/story")} title="Preview story">
             <FontAwesomeIcon icon={faEye} />&nbsp;
@@ -1986,7 +2018,7 @@ class Repo extends Component {
         );
       }
     }
-    if (!this.state.storyUuid) {
+    else if (!this.state.storyUuid) {
       shareButton = null;
       publishButton = null;
     }
@@ -2249,7 +2281,7 @@ class Repo extends Component {
             content='Channel group name can contain only letters, numbers, space, dash or underscore.'
             position='top center'
         />
-          
+
         </form>
         </Modal>
       </div>
@@ -2257,10 +2289,10 @@ class Repo extends Component {
   }
 
   renderProgressBar() {
-    if (this.state.saveProgress <= 0) {
+    if (this.state.publishProgress <= 0) {
       return null;
     }
-    let percent = Math.round(this.state.saveProgress/this.state.saveProgressMax*100);
+    let percent = Math.round(this.state.publishProgress/this.state.publishProgressMax*100);
     return (
       <div className="row">
         <div className="col">
