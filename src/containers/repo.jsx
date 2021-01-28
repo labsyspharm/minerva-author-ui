@@ -1481,19 +1481,23 @@ class Repo extends Component {
 
   publish() {
 
-    let {groups, masks} = this.state;
-    const {stories, chanLabel} = this.state;
-    const {img} = this.state;
     let minerva = this.props.env === 'cloud';
+ 
+    if (minerva) {
+      this.setPublishStoryModal(true)
+    }
+    else {
+      let {groups, masks} = this.state;
+      const {stories, chanLabel} = this.state;
+      const {img} = this.state;
 
-    const mask_output = this.createMaskOutput(masks);
-    const group_output = this.createGroupOutput(groups, chanLabel);
-    const story_output = this.createWaypoints(stories);
-    const story_definition = this.createStoryDefinition(story_output, group_output);
+      const mask_output = this.createMaskOutput(masks);
+      const group_output = this.createGroupOutput(groups, chanLabel);
+      const story_output = this.createWaypoints(stories);
+      const story_definition = this.createStoryDefinition(story_output, group_output);
 
-    this.setState({publishing: true});
+      this.setState({publishing: true});
 
-    if (!minerva) {
       let render = fetch('http://localhost:2020/api/render', {
         method: 'POST',
         body: JSON.stringify({
@@ -1960,7 +1964,8 @@ class Repo extends Component {
       />
     }
 
-    let saveButton = ''
+    let saveButton = null;
+    let publishButton = null;
     if (group != undefined) {
       saveButton = (
         <button className="ui button primary" 
@@ -1973,7 +1978,18 @@ class Repo extends Component {
           size={12} color={"#FFFFFF"}
           loading={this.state.saving}/>
         </button>
-      )
+      );
+      publishButton = (
+        <button className="ui button primary" disabled={this.state.publishing} 
+          onClick={this.publish}
+          title="Publish story">
+        <FontAwesomeIcon icon={faBullhorn} />&nbsp;
+         Publish&nbsp;
+         <ClipLoader animation="border"
+            size={12} color={"#FFFFFF"}
+            loading={this.state.publishing}/>
+        </button>
+      );
     }
     let previewButton = (
       <button className="ui button teal" onClick={() => this.preview()} title="Preview story">
@@ -1988,37 +2004,11 @@ class Repo extends Component {
       Share
       </button> 
     );
-
-    let publishButton = (
-      <button className="ui button primary" disabled={this.state.publishing} 
-        onClick={() => this.setPublishStoryModal(true)}
-        title="Publish story">
-      <FontAwesomeIcon icon={faBullhorn} />&nbsp;
-       Publish&nbsp;
-       <ClipLoader animation="border"
-          size={12} color={"#FFFFFF"}
-          loading={this.state.publishing}/>
-      </button>
-    );
     if (this.props.env === 'local') {
       // Hide buttons which are not implemented in local environment yet
       // TODO - Implement rendering in backend and show previewButton 
       previewButton = null;
       shareButton = null;
-      publishButton = null;
-      if (group != undefined) {
-        publishButton = (
-          <button className="ui button primary" disabled={this.state.publishing} 
-            onClick={this.publish}
-            title="Publish story">
-          <FontAwesomeIcon icon={faBullhorn} />&nbsp;
-           Publish&nbsp;
-           <ClipLoader animation="border"
-              size={12} color={"#FFFFFF"}
-              loading={this.state.publishing}/>
-          </button>
-        );
-      }
       if (this.state.published) {
         previewButton = (
           <button className="ui button teal" onClick={() => window.open("/story")} title="Preview story">
