@@ -15,7 +15,7 @@ import '../style/channelcontrol'
 const ChannelControl = ({ id, color, range, minRange, maxRange,
                           label, visible, handleChange }) => {
 
-  let stepSize = Math.ceil((maxRange - minRange) / 100)
+  let stepSize = Math.floor((maxRange - minRange) / 100)
 
   let eyeIcon = (
     <FontAwesomeIcon icon={faEye} size="lg"
@@ -46,7 +46,7 @@ const ChannelControl = ({ id, color, range, minRange, maxRange,
         <div className="ui input mini width-75px">
           <input type="text" value={range.min} 
             onBlur={ e=> {
-              let r0 = range.min >= maxRange ? maxRange : range.min;
+              let r0 = range.min >= maxRange ? maxRange - 1 : range.min;
               let r1 = r0 >= range.max ? Math.min(r0 + 1, maxRange) : range.max;
               handleChange(id, null, {min: r0, max: r1}, null, visible);
             }}

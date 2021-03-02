@@ -85,6 +85,7 @@ class Repo extends Component {
       showFileBrowser: false,
       showVisDataBrowser: false,
       showMaskBrowser: false,
+      showMaskMapBrowser: false,
       rotation: sample_info.rotation,
       sampleName: sample_info.name,
       sampleText: sample_info.text,
@@ -187,10 +188,13 @@ class Repo extends Component {
       activeGroup: 0,
       maskPathStatus: new Map(),
       masks: new Map(masks.map((v,k) => {
+        const chan0 = v.channels[0];
         const mask = {
           path: v.path,
           name: v.label,
-          color: hexToRgb(v.channels[0].color)
+          map_path: "map_path" in v? v.map_path : "",
+          map: "ids" in chan0? new Map([[chan0.label, chan0.ids]]) : new Map(),
+          color: hexToRgb(chan0.color)
         }
         return [k, mask] 
       })),
@@ -292,6 +296,7 @@ class Repo extends Component {
     this.getCreateLabel = this.getCreateLabel.bind(this);
     this.labelRGBA = this.labelRGBA.bind(this);
     this.defaultStory = this.defaultStory.bind(this);
+    this.handleUpdateAllMasks = this.handleUpdateAllMasks.bind(this);
     this.handleUpdateMask = this.handleUpdateMask.bind(this);
     this.handleMaskChange = this.handleMaskChange.bind(this);
     this.handleMaskInsert = this.handleMaskInsert.bind(this);
@@ -299,6 +304,8 @@ class Repo extends Component {
     this.deleteMask = this.deleteMask.bind(this);
     this.openMaskBrowser = this.openMaskBrowser.bind(this);
     this.onMaskSelected = this.onMaskSelected.bind(this);
+    this.openMaskMapBrowser = this.openMaskMapBrowser.bind(this);
+    this.onMaskMapSelected = this.onMaskMapSelected.bind(this);
   }
 
   defaultStory() {
@@ -815,13 +822,41 @@ class Repo extends Component {
           ...(new Map([[this.state.activeStory, newStory]]))])
       })
     }
+}
+
+  handleUpdateAllMasks(newMask) {
+    this.setState({
+      masks: new Map([...this.state.masks].map(([a, b]) => {
+        return [a, {
+          ...b,
+          ...newMask
+        }];
+      }))
+    })
   }
 
-  handleUpdateMask(newMask) {
+  handleUpdateMask(newMask, clear=false) {
     const maskId = Math.max(0, this.state.activeMaskId);
+    let activeMask = this.state.masks.get(maskId);
+
+    if (activeMask === undefined) {
+      activeMask = {
+        name: ""+(maskId+1),
+        color: [255, 255, 255],
+        map: new Map(),
+        map_path: "",
+        path: ""
+      };
+    };
+
+    newMask = {
+      ...activeMask,
+      ...newMask
+    };
+ 
     this.setState({
-      activeMaskId: maskId,
-      masks: new Map([...this.state.masks,
+      activeMaskId: clear? 0: maskId,
+      masks: new Map([...(clear? new Map(): this.state.masks),
                 ...(new Map([[maskId, newMask]]))])
     })
   }
@@ -832,16 +867,28 @@ class Repo extends Component {
     })
   }
 
-  handleMaskInsert() {
+  handleMaskInsert(attributes={}) {
     let {stories} = this.state;
     let activeMaskId = this.state.activeMaskId + 1;
+    let activeMask = this.state.masks.get(activeMaskId - 1);
+
+    if (activeMask === undefined) {
+      activeMask = {
+        name: ""+(activeMaskId+1),
+        color: [255, 255, 255],
+        map: new Map(),
+        map_path: "",
+        path: ""
+      };
+    }
 
     const newMask = {
-      path: "",
+      ...activeMask,
+      color: [255, 255, 255],
       name: ""+(activeMaskId+1),
-			color: hexToRgb("#FFFFFF"),
+      ...attributes
     };
-
+    
     const newMasks = new Map([...[...this.state.masks].map(([k,v]) => {
                                 return [k < activeMaskId? k: k+1, v];
                               }),
@@ -1351,13 +1398,21 @@ class Repo extends Component {
 
   createMaskOutput(masks) {
     return Array.from(masks.values()).map(v => {
-      const channels = [{
+      const channels = map.size == 0 ? [{
           'color': rgbToHex(v.color),
           'label': v.name,
-      }];
+          'ids': []
+      }] : [...v.map].map(([k, m]) => {
+          return {
+            'color': rgbToHex(v.color),
+            'label': k,
+            'ids': m
+          }
+      }).slice(0, 1);
       let group_out = {
         'label': v.name,
         'path': v.path,
+        'map_path': v.map_path,
         'channels': channels
       };
       return group_out;
@@ -1661,6 +1716,10 @@ class Repo extends Component {
     this.setState({ showMaskBrowser: true});
   }
 
+  openMaskMapBrowser() {
+    this.setState({ showMaskMapBrowser: true});
+  }
+
   async fetchMaskPathStatus(mask_path) {
     // Double encoded URI component is required for flask
     const key = encodeURIComponent(encodeURIComponent(mask_path))
@@ -1688,9 +1747,9 @@ class Repo extends Component {
 
   async updateMaskPathStatus() {
     const { masks, maskPathStatus} = this.state;
-    const mask_paths = [...masks].map(([key, value]) => value.path)
+    const unique_mask_paths = [...new Set([...masks].map(([key, value]) => value.path))]
     // Only fetch new status for paths that are not ready
-    const non_ready_mask_paths = mask_paths.filter(p => {
+    const non_ready_mask_paths = unique_mask_paths.filter(p => {
       const p_status = maskPathStatus.get(p)
       return !(p_status? p_status.ready : false)
     })
@@ -1734,26 +1793,88 @@ class Repo extends Component {
     }
   }
 
+  async onMaskMapSelected(file) {
+    this.setState({ 
+      showMaskMapBrowser: false
+    });
+    const {masks, activeMaskId} = this.state;
+    let mask = masks.get(activeMaskId);
+
+    if (mask === undefined) {
+      mask = {
+        name: "all cells",
+        color: [255, 255, 255],
+        map: new Map(),
+        map_path: "",
+        path: ""
+      };
+    }
+
+    if (file && file.path) {
+      this.handleUpdateMask({
+        ...mask,
+        name: "all cells",
+        map_path: file.path
+      }, true);
+
+      // Double encoded URI component is required for flask
+      const key = encodeURIComponent(encodeURIComponent(file.path));
+
+      const response = await fetch(`http://localhost:2020/api/mask_subsets/${key}`, {
+        headers: {
+          'pragma': 'no-cache',
+          'cache-control': 'no-store'
+        }
+      })
+
+      try {
+        const res = handleFetchErrors(response);
+        const data = (await res.json()) || {};
+        const subsets = "mask_subsets" in data ? data.mask_subsets : [];
+        const colors = "subset_colors" in data ? data.subset_colors : [];
+        subsets.forEach(([key, ids], idx) => {
+          const color = idx < colors.length? colors[idx]: [255, 255, 255];
+          this.handleMaskInsert({
+            map: new Map([[key, ids]]),
+            color: color,
+            name: key
+          });
+        });
+      }
+      catch (error) {
+        console.error(error)
+      }
+
+    }
+  }
+
   onMaskSelected(file) {
     this.setState({ 
       showMaskBrowser: false
     });
     const {masks, activeMaskId} = this.state;
-
     let mask = masks.get(activeMaskId);
+
     if (mask === undefined) {
       mask = {
+        name: "all cells",
         color: [255, 255, 255],
-        name: "",
+        map: new Map(),
+        map_path: "",
         path: ""
       };
     }
+
     if (file && file.path) {
       this.handleUpdateMask({
-        name: mask.name,
+        ...mask,
+        name: "all cells",
         path: file.path,
-        color: mask.color
-      })
+      }, true);
+
+      if (mask.map_path != "") {
+        this.onMaskMapSelected(mask.map_path);
+      }
     }
   }
 
@@ -1896,6 +2017,7 @@ class Repo extends Component {
           min: 0 
         };
         mask.u32 = true;
+        mask.map_ids = mask.map.size ? [...mask.map][0][1] : undefined;
         // Double encoded URI component is required for flask
         mask.key = encodeURIComponent(encodeURIComponent(mask.path));
         mask.maxRange = 16777215;
@@ -2196,6 +2318,9 @@ class Repo extends Component {
               showMaskBrowser={this.state.showMaskBrowser}
               openMaskBrowser={this.openMaskBrowser}
               onMaskSelected={this.onMaskSelected}
+              showMaskMapBrowser={this.state.showMaskMapBrowser}
+              openMaskMapBrowser={this.openMaskMapBrowser}
+              onMaskMapSelected={this.onMaskMapSelected}
             />
             <Confirm
               header="Delete channel group" 

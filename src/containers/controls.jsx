@@ -36,12 +36,11 @@ class Controls extends Component {
     const {masks, activeMaskId, handleUpdateMask, maskPathStatus} = this.props;
     const {handleMaskChange, handleMaskInsert, handleMaskRemove} = this.props;
     const {showMaskBrowser, openMaskBrowser, onMaskSelected} = this.props;
+    const {showMaskMapBrowser, openMaskMapBrowser, onMaskMapSelected} = this.props;
 
     const activeMasks = new Map([...masks].map(([k,v])=>{
                                   return [k, {
-                                    name: v.name,
-                                    path: v.path,
-                                    color: v.color,
+                                    ...v,
                                     value: k, id: k,
                                     label: '#' + (k+1) + (v.name? ': ' + v.name : '')
                                   }]
@@ -53,6 +52,8 @@ class Controls extends Component {
       activeMask = {
         color: [255, 255, 255],
         id: 0, value: 0,
+        map: new Map(),
+        map_path: "",
         label: "",
         name: "",
         path: ""
@@ -60,7 +61,6 @@ class Controls extends Component {
     }
     const ready_mask_paths = [...masks].filter(([k,v]) => {
       const p_status = maskPathStatus.get(v.path)
-      console.log({maskPathStatus, v})
       return p_status? p_status.ready : false
     })
     const is_active_mask_loading = ((p_status) => {
@@ -72,7 +72,7 @@ class Controls extends Component {
                                     name: v.name,
                                     color: v.color,
                                     value: k, id: k,
-                                    label: '#' + (k+1) + (v.name? ': ' + v.name : '')
+                                  label: '#' + (k+1) + (v.name? ': ' + v.name : '')
                                   }]
                                 }))
 
@@ -104,10 +104,56 @@ class Controls extends Component {
         'Open the "Edit Story" tab to select loaded masks to show.'
       ) : ''
     )
+
+    let plusButton = false ? (
+      <button className="ui button compact" onClick={handleMaskInsert} title="Add mask">
+        <FontAwesomeIcon icon={faPlus} />
+      </button>
+    ) : '';
     let maskData = minerva ? '' : (
       <div className="ui form">
           <div className="row">
-            <div className="col-5">
+            <div className="col-12">
+              <div className="font-white">
+                Mask .tif or ome.tif:
+              </div>
+            </div>
+          </div>
+          <div className="row">
+            <div className="col-12">
+              <input value={activeMask.path} onChange={(v)=>{
+                onMaskSelected({path: v.target.value})
+              }} style={{ width: "72%" }} id="maskpath" name="maskpath" type="text"/>
+              <button type="button" onClick={openMaskBrowser} className="ui button">Browse</button>
+              <FileBrowserModal open={showMaskBrowser} close={onMaskSelected}
+                title="Select a TIFF or OME-TIFF mask image" 
+                onFileSelected={onMaskSelected} 
+                filter={["tif", "tiff"]}
+              />
+            </div>
+          </div>
+          <div className="row">
+            <div className="col-12">
+              <div className="font-white">
+                Mask (CellID, State) .csv:
+              </div>
+            </div>
+          </div>
+          <div className="row">
+            <div className="col-12">
+              <input value={activeMask.map_path} onChange={(v)=>{
+                onMaskMapSelected({path: v.target.value})
+              }} style={{ width: "72%" }} id="mask_map_path" name="mask_map_path" type="text"/>
+              <button type="button" onClick={openMaskMapBrowser} className="ui button">Browse</button>
+              <FileBrowserModal open={showMaskMapBrowser} close={onMaskMapSelected}
+                title="Select a CSV mask cell state file" 
+                onFileSelected={onMaskMapSelected} 
+                filter={["csv"]}
+              />
+            </div>
+          </div>
+          <div className="row">
+            <div className="col-7">
               <div className="font-white">
                 Masks:
               </div>
@@ -119,15 +165,13 @@ class Controls extends Component {
                 />
               </div>
             </div>
-            <div className="pt-2 pl-0 col-7">
+            <div className="pt-2 pl-0 col-5">
               <button className="ui button compact" title="Previous waypoint" onClick={()=>{
                 handleMaskChange(Math.max(0, activeMaskId - 1))
               }}>
                 <FontAwesomeIcon icon={faArrowLeft} />
               </button>
-              <button className="ui button compact" onClick={handleMaskInsert} title="Add waypoint">
-                <FontAwesomeIcon icon={faPlus} />
-              </button>
+              {plusButton}
               <button className="ui button compact" title="Next waypoint" onClick={()=>{
                 handleMaskChange(Math.min(activeMaskId + 1, activeMasks.size - 1))
               }}>
@@ -138,17 +182,6 @@ class Controls extends Component {
               </button>
             </div>
           </div>
-          <div className="row">
-            <div className="col-12">
-              <input value={activeMask.path} onChange={(v)=>handleUpdateMask({name: activeMask.name, path: v.target.value, color: activeMask.color })} style={{ width: "72%" }} id="maskpath" name="maskpath" type="text"/>
-              <button type="button" onClick={openMaskBrowser} className="ui button">Browse</button>
-              <FileBrowserModal open={showMaskBrowser} close={onMaskSelected}
-                title="Select an OME-TIFF mask image" 
-                onFileSelected={onMaskSelected} 
-                filter={["tif", "tiff"]}
-              />
-            </div>
-          </div>
           <div className="row font-white">
             <div className="col-4">
               Mask Color:
@@ -157,9 +190,11 @@ class Controls extends Component {
                 handleChange={(color)=>handleUpdateMask({ name: activeMask.name, path: activeMask.path, color: color })}
               />
             </div>
-            <div className="col-8">
+            <div className="col-4" style={{textAlign: "right", paddingRight: 0}}>
                 Mask Name:
-                <input value={activeMask.name} onChange={(v)=>handleUpdateMask({ name: v.target.value, path: activeMask.path, color: activeMask.color })} style={{ width: "50%" }} id="maskname" name="maskname" type="text"/>
+            </div>
+            <div className="col-4">
+                <input value={activeMask.name} onChange={(v)=>handleUpdateMask({ name: v.target.value, path: activeMask.path, color: activeMask.color })} style={{ width: "100%" }} id="maskname" name="maskname" type="text"/>
             </div>
          </div>
         <div className="row font-white">
