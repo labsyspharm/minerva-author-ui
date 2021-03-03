@@ -4,11 +4,16 @@ precision highp float;
 precision highp usampler2D;
 
 uniform usampler2D u_tile;
+uniform usampler2D u_ids;
 uniform vec3 u_tile_color;
 uniform vec2 u_tile_range;
+uniform ivec2 u_ids_shape;
 uniform int u_tile_fmt;
 
 uniform uint u8;
+
+const uint MAX = uint(16384) * uint(16384);
+const uint bMAX = uint(ceil(log2(float(MAX))));
 
 in vec2 uv;
 out vec4 color;
@@ -16,6 +21,46 @@ out vec4 color;
 // rgba to 32 bit int
 uint unpack(uvec4 id) {
   return id.x + uint(256)*id.y + uint(65536)*id.z + uint(16777216)*id.w;
+}
+
+// ID Lookup
+uint lookup_ids_idx(float idx) {
+  // 2D indices for given index
+  vec2 ids_max = vec2(float(u_ids_shape.x), float(u_ids_shape.y));
+  vec2 ids_idx = vec2(mod(idx, ids_max.x) / ids_max.x, 1.0 - ceil(idx / ids_max.x) / ids_max.y);
+  // Value for given index
+  uvec4 m_value = texture(u_ids, ids_idx);
+  return unpack(m_value);
+}
+
+// Binary Search
+bool is_in_ids(uint ikey) {
+  // Array size
+  uint first = uint(0);
+  uint last = uint(u_ids_shape.x) * uint(u_ids_shape.y) - uint(1);
+
+  // Search within log(n) runtime
+  for (uint i = uint(0); i <= bMAX; i++) {
+    // Evaluate the midpoint
+    uint mid = (first + last) / uint(2);
+    uint here = lookup_ids_idx(float(mid));
+
+    // Break if list gone
+    if (first == last && ikey != here) {
+      break;
+    }
+
+    // Search below midpoint
+    if (here > ikey) last = mid;
+
+    // Search above midpoint
+    else if (ikey > here) first = mid;
+
+    // Found at midpoint
+    else return true;
+  }
+  // Not found
+  return false;
 }
 
 vec4 hsv2rgb(vec3 c, float a) {
@@ -49,7 +94,18 @@ vec4 colormap (uint id) {
 vec4 u32_rgba_map() {
   uvec4 pixel = texture(u_tile, uv);
   uint id = unpack(pixel);
-  return colormap(id);
+
+  uint n_ids = uint(u_ids_shape.x) * uint(u_ids_shape.y); 
+
+  if (n_ids == uint(0)) {
+    return colormap(id);
+  }
+  else if (id != uint(0) && is_in_ids(id)) {
+    return colormap(uint(1));
+  }
+  else {
+    return vec4(0.0, 0.0, 0.0, 0.0);
+  }
 }
 
 vec4 u16_rg_range() {
