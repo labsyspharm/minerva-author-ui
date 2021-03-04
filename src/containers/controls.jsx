@@ -37,6 +37,8 @@ class Controls extends Component {
     const {handleMaskChange, handleMaskInsert, handleMaskRemove} = this.props;
     const {showMaskBrowser, openMaskBrowser, onMaskSelected} = this.props;
     const {showMaskMapBrowser, openMaskMapBrowser, onMaskMapSelected} = this.props;
+    const is_mask_map_loading = this.props.isMaskMapLoading;
+    const invalid_mask_map = this.props.invalidMaskMap;
 
     const activeMasks = new Map([...masks].map(([k,v])=>{
                                   return [k, {
@@ -52,7 +54,8 @@ class Controls extends Component {
       activeMask = {
         color: [255, 255, 255],
         id: 0, value: 0,
-        map: new Map(),
+        map_ids: [],
+        cache_name: "",
         map_path: "",
         label: "",
         name: "",
@@ -99,16 +102,35 @@ class Controls extends Component {
       activeStoryLabel = {value: activeStory, id: activeStory,
                           label: '#' + (activeStory+1)}
     }
-    const mask_help_text = is_active_mask_loading ? 'Loading...' : (
-      ready_mask_paths.length ? (
-        'Open the "Edit Story" tab to select loaded masks to show.'
-      ) : ''
-    )
+
+    let mask_help_text = '';
+
+    if (is_active_mask_loading && is_mask_map_loading) {
+        mask_help_text = 'Loading the mask image tiles and cell states...';
+    }
+    else if (is_active_mask_loading) {
+        mask_help_text = 'Loading the mask image tiles...';
+    }
+    else if (is_mask_map_loading) {
+        mask_help_text = 'Loading the mask cell states...';
+    }
+    else if (ready_mask_paths.length && !invalid_mask_map ){
+        mask_help_text = 'Open the "Edit Story" tab to select loaded masks to show.';
+    }
 
     let plusButton = false ? (
       <button className="ui button compact" onClick={handleMaskInsert} title="Add mask">
         <FontAwesomeIcon icon={faPlus} />
       </button>
+    ) : '';
+    const mask_color_picker = activeMask.map_ids.length > 0 ? (
+      <div>
+          Mask Color:
+        <HuePicker
+            color={ activeMask.color}
+          handleChange={(color)=>handleUpdateMask({ color: color })}
+        />
+      </div>
     ) : '';
     let maskData = minerva ? '' : (
       <div className="ui form">
@@ -166,35 +188,31 @@ class Controls extends Component {
               </div>
             </div>
             <div className="pt-2 pl-0 col-5">
-              <button className="ui button compact" title="Previous waypoint" onClick={()=>{
+              <button className="ui button compact" title="Previous mask" onClick={()=>{
                 handleMaskChange(Math.max(0, activeMaskId - 1))
               }}>
                 <FontAwesomeIcon icon={faArrowLeft} />
               </button>
               {plusButton}
-              <button className="ui button compact" title="Next waypoint" onClick={()=>{
+              <button className="ui button compact" title="Next mask" onClick={()=>{
                 handleMaskChange(Math.min(activeMaskId + 1, activeMasks.size - 1))
               }}>
                 <FontAwesomeIcon icon={faArrowRight} />
               </button>
-              <button className="ui button red compact" title="Delete waypoint" onClick={handleMaskRemove}>
+              <button className="ui button red compact" title="Delete mask" onClick={handleMaskRemove}>
                 X
               </button>
             </div>
           </div>
           <div className="row font-white">
             <div className="col-4">
-              Mask Color:
-              <HuePicker
-                  color={ activeMask.color}
-                handleChange={(color)=>handleUpdateMask({ name: activeMask.name, path: activeMask.path, color: color })}
-              />
+              {mask_color_picker}
             </div>
             <div className="col-4" style={{textAlign: "right", paddingRight: 0}}>
                 Mask Name:
             </div>
             <div className="col-4">
-                <input value={activeMask.name} onChange={(v)=>handleUpdateMask({ name: v.target.value, path: activeMask.path, color: activeMask.color })} style={{ width: "100%" }} id="maskname" name="maskname" type="text"/>
+                <input value={activeMask.name} onChange={(v)=>handleUpdateMask({ name: v.target.value })} style={{ width: "100%" }} id="maskname" name="maskname" type="text"/>
             </div>
          </div>
         <div className="row font-white">
@@ -262,20 +280,20 @@ class Controls extends Component {
               </div>
             </div>
             <div className="pt-2 pl-0 col-7">
-              <button className="ui button compact" title="Previous waypoint" onClick={()=>{
+              <button className="ui button compact" title="Previous cluster" onClick={()=>{
                 handleClusterChange(Math.max(0, activeVisLabel.cluster - 1))
               }}>
                 <FontAwesomeIcon icon={faArrowLeft} />
               </button>
-              <button className="ui button compact" onClick={handleClusterInsert} title="Add waypoint">
+              <button className="ui button compact" onClick={handleClusterInsert} title="Add cluster">
                 <FontAwesomeIcon icon={faPlus} />
               </button>
-              <button className="ui button compact" title="Next waypoint" onClick={()=>{
+              <button className="ui button compact" title="Next cluster" onClick={()=>{
                 handleClusterChange(activeVisLabel.cluster + 1)
               }}>
                 <FontAwesomeIcon icon={faArrowRight} />
               </button>
-              <button className="ui button red compact" title="Delete waypoint" onClick={handleClusterRemove}>
+              <button className="ui button red compact" title="Delete cluster" onClick={handleClusterRemove}>
                 X
               </button>
             </div>

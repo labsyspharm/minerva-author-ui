@@ -85,9 +85,6 @@ vec4 colormap (uint id) {
     hsv = vec3(0.0, 0.0, 0.0);
     alpha = 0.; 
   }
-  else if (id == uint(1)) {
-    return vec4(u_tile_color, alpha);
-  }
   return hsv2rgb(hsv, alpha);
 }
 
@@ -101,7 +98,7 @@ vec4 u32_rgba_map() {
     return colormap(id);
   }
   else if (id != uint(0) && is_in_ids(id)) {
-    return colormap(uint(1));
+    return vec4(u_tile_color, 1.0);
   }
   else {
     return vec4(0.0, 0.0, 0.0, 0.0);

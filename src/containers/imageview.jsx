@@ -40,7 +40,7 @@ class ImageView extends Component {
 
       let name = getTileName(x, y, level, channel);
       // Prevent cache mistakes
-      if (this.many_channels[0].map_ids != undefined) {
+      if (this.many_channels[0].map_ids.length > 0) {
         name += '?map';
       }
       return url + '/' + name;
@@ -55,7 +55,7 @@ class ImageView extends Component {
       many_channels_url: url,
       many_channels: [{
         unique_id: id,
-        map_ids: map_ids,
+        map_ids: map_ids || [],
         color: color.map(c => c / 255.),
         range: [range['min'] / maxRange, range['max'] / maxRange]
       }],
@@ -99,7 +99,7 @@ class ImageView extends Component {
         continue;
 
       // Return any mask with a map
-      if (key == many_channels_id && many_channels[0].map_ids != undefined)
+      if (key == many_channels_id && many_channels[0].map_ids.length > 0)
         return tiledImage;
     }
   }
@@ -133,7 +133,7 @@ class ImageView extends Component {
     tileSources.map(tileSource => {
       const {many_channels, many_channels_id} = tileSource;
       // Handle Mask channels that can use the same source
-      if (many_channels[0].map_ids != undefined) {
+      if (many_channels[0].map_ids.length > 0) {
         const duplicate = this.getTiledImageByMaskKey(many_channels_id);
         if (duplicate) {
           const {source} = duplicate;
@@ -350,7 +350,7 @@ class ImageView extends Component {
         let ids_array = undefined;
         const {map_ids} = chan;
 
-        if (fmt == 32 && map_ids != undefined) {
+        if (fmt == 32 && map_ids.length > 0) {
           ids_width = via.gl.getParameter(via.gl.MAX_TEXTURE_SIZE);
           ids_height = Math.ceil(map_ids.length / ids_width);
           ids_array = toBytesInt32(map_ids, ids_width * ids_height - map_ids.length);

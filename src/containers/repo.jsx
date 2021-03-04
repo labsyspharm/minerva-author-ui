@@ -81,6 +81,8 @@ class Repo extends Component {
 
 		this.state = {
       error: null,
+      isMaskMapLoading: false,
+      invalidMaskMap: false,
       warning: warning,
       showFileBrowser: false,
       showVisDataBrowser: false,
@@ -114,7 +116,6 @@ class Repo extends Component {
         value: -1, id: -1, label: '', colormapInvert: false,
         data: '', x: '', y: '', cluster: -1, clusters: new Map([])
       },
-      activeMaskId: -1,
       deleteGroupModal: false,
       deleteStoryModal: false,
       deleteClusterModal: false,
@@ -128,6 +129,7 @@ class Repo extends Component {
       saveProgressMax: 0,
       publishProgress: 0,
       publishProgressMax: 0,
+      storyMasksTempCache: new Map(), 
       stories: new Map(waypoints.map((v,k) => {
 				let wp = {
 					'name': v.name,
@@ -187,16 +189,18 @@ class Repo extends Component {
       storyUuid: props.storyUuid,
       activeGroup: 0,
       maskPathStatus: new Map(),
+      activeMaskId: masks.length? 0 : -1,
       masks: new Map(masks.map((v,k) => {
         const chan0 = v.channels[0];
         const mask = {
           path: v.path,
           name: v.label,
-          map_path: "map_path" in v? v.map_path : "",
-          map: "ids" in chan0? new Map([[chan0.label, chan0.ids]]) : new Map(),
+          cache_name: v.original_label || "",
+          map_path: v.map_path || "",
+          map_ids: chan0.ids || [],
           color: hexToRgb(chan0.color)
         }
-        return [k, mask] 
+        return [k, mask];
       })),
       groups: new Map(groups.map((v,k) => {
 				return [k, {
@@ -261,6 +265,7 @@ class Repo extends Component {
     this.handleSelect = this.handleSelect.bind(this);
     this.handleSelectStory = this.handleSelectStory.bind(this);
     this.handleSelectStoryMasks = this.handleSelectStoryMasks.bind(this);
+    this.handleConcatStoryMasks = this.handleConcatStoryMasks.bind(this);
     this.handleSelectVis = this.handleSelectVis.bind(this);
     this.handleStoryName = this.handleStoryName.bind(this);
     this.handleStoryText = this.handleStoryText.bind(this);
@@ -532,9 +537,17 @@ class Repo extends Component {
 
   deleteStory() {
 
-    const {stories, activeStory} = this.state;
+    const {stories, storyMasksTempCache, activeStory} = this.state;
+
+    // Reassign indices to active and cached stories
 
     let newStories = new Map([...stories].filter(([k,v]) => {
+                                return k != activeStory;
+                              }).map(([k,v])=>{
+                                return [k < activeStory? k : k - 1, v]
+                              }))
+
+    let newStoryMasksTempCache = new Map([...storyMasksTempCache].filter(([k,v]) => {
                                 return k != activeStory;
                               }).map(([k,v])=>{
                                 return [k < activeStory? k : k - 1, v]
@@ -546,6 +559,7 @@ class Repo extends Component {
     }
     this.setState({
       stories: newStories,
+      storyMasksTempCache: newStoryMasksTempCache,
       activeStory: newActiveStory,
       activeVisLabel: {
         value: -1, id: -1, label: '', colormapInvert: false,
@@ -556,18 +570,25 @@ class Repo extends Component {
   }
 
   handleStoryInsert() {
-    const {stories, activeStory, activeGroup, viewport} = this.state;
+    const {stories, storyMasksTempCache, activeStory, activeGroup, viewport} = this.state;
     const newStory = this.defaultStory();
+
+    // Reassign indices to active and cached stories
 
     const newStories = new Map([...[...stories].map(([k,v]) => {
                                 return [k <= activeStory? k: k+1, v];
                               }),
                               ...(new Map([[activeStory + 1, newStory]]))]);
 
+    const newStoryMasksTempCache = new Map([...storyMasksTempCache].map(([k,v]) => {
+                                return [k <= activeStory? k: k+1, v];
+                              }));
+
     const sortedStories = new Map([...newStories.entries()].sort((e1, e2) => e1[0] - e2[0]));
 
     this.setState({
       stories: sortedStories,
+      storyMasksTempCache: newStoryMasksTempCache,
       activeStory: activeStory + 1,
       activeVisLabel: {
         value: -1, id: -1, label: '', colormapInvert: false,
@@ -660,13 +681,13 @@ class Repo extends Component {
       }
       else if (response.status == 404){
         this.setState({
-          error: 'Imported dat file is not found.'
+          error: 'Imported json file is not found.'
         })
         return null;
       }
       else {
         this.setState({
-          error: 'Imported dat file is invalid.'
+          error: 'Imported json file is invalid.'
         })
         return null;
       }
@@ -836,14 +857,15 @@ class Repo extends Component {
   }
 
   handleUpdateMask(newMask, clear=false) {
-    const maskId = Math.max(0, this.state.activeMaskId);
+    const maskId = clear? 0 : Math.max(0, this.state.activeMaskId);
     let activeMask = this.state.masks.get(maskId);
 
     if (activeMask === undefined) {
       activeMask = {
+        cache_name: "",
         name: ""+(maskId+1),
         color: [255, 255, 255],
-        map: new Map(),
+        map_ids: [],
         map_path: "",
         path: ""
       };
@@ -853,9 +875,31 @@ class Repo extends Component {
       ...activeMask,
       ...newMask
     };
+
+    if (clear) {
+      const storyMasksTempCache = new Map();
+      [...this.state.stories].forEach(([s_id, story]) => {
+        // Remove the masks from the actual stories, only to save the names in the cache
+        if (this.state.masks.size > 1) {
+          const cache_masks = story.masks.map(m=>this.state.masks.get(m)).filter(mask=> {
+            return mask.cache_name && mask.map_ids && mask.map_ids.length > 0;
+          });
+          const cache_names = cache_masks.map(mask => mask.cache_name);
+          if (cache_names.length > 0) {
+            storyMasksTempCache.set(s_id, cache_names);
+          }
+          this.handleSelectStoryMasks(story.masks.includes(0) ? [{id:0}] : [], {s_id});
+        }
+      });
+      if (storyMasksTempCache.size > 0) {
+        this.setState({
+          storyMasksTempCache
+        });
+      }
+    }
  
     this.setState({
-      activeMaskId: clear? 0: maskId,
+      activeMaskId: maskId,
       masks: new Map([...(clear? new Map(): this.state.masks),
                 ...(new Map([[maskId, newMask]]))])
     })
@@ -874,9 +918,7 @@ class Repo extends Component {
 
     if (activeMask === undefined) {
       activeMask = {
-        name: ""+(activeMaskId+1),
-        color: [255, 255, 255],
-        map: new Map(),
+        map_ids: [],
         map_path: "",
         path: ""
       };
@@ -886,6 +928,7 @@ class Repo extends Component {
       ...activeMask,
       color: [255, 255, 255],
       name: ""+(activeMaskId+1),
+      cache_name: "",
       ...attributes
     };
     
@@ -1040,12 +1083,26 @@ class Repo extends Component {
     }
   }
 
-  handleSelectStoryMasks(masks) {
-    const {stories, activeStory} = this.state;
+  handleConcatStoryMasks(masks, params) {
+    const {stories} = this.state;
     const maskArray = masks? masks : [];
-    const activeMaskIds = maskArray.map(c => c.id);
-    let newStory = stories.get(activeStory) || this.defaultStory();
-    newStory.masks = activeMaskIds;
+    const activeStory = 's_id' in params ? params.s_id : this.state.activeStory;
+    const newStory = stories.get(activeStory) || this.defaultStory();
+
+    this.handleSelectStoryMasks(
+      newStory.masks.map((id) => {
+        return {id: id};
+      }).concat(maskArray), params
+    )
+  }
+
+  handleSelectStoryMasks(masks, params) {
+    const {stories} = this.state;
+    const maskArray = masks? masks : [];
+    const activeStory = 's_id' in params ? params.s_id : this.state.activeStory;
+    const newStory = stories.get(activeStory) || this.defaultStory();
+
+    newStory.masks = maskArray.map(c => c.id);
 
     const newStories = new Map([...stories,
                               ...(new Map([[activeStory, newStory]]))]);
@@ -1398,18 +1455,13 @@ class Repo extends Component {
 
   createMaskOutput(masks) {
     return Array.from(masks.values()).map(v => {
-      const channels = map.size == 0 ? [{
+      const channels = [{
           'color': rgbToHex(v.color),
           'label': v.name,
-          'ids': []
-      }] : [...v.map].map(([k, m]) => {
-          return {
-            'color': rgbToHex(v.color),
-            'label': k,
-            'ids': m
-          }
-      }).slice(0, 1);
+          'ids': v.map_ids
+      }];
       let group_out = {
+        'original_label': v.cache_name || '',
         'label': v.name,
         'path': v.path,
         'map_path': v.map_path,
@@ -1746,7 +1798,7 @@ class Repo extends Component {
   }
 
   async updateMaskPathStatus() {
-    const { masks, maskPathStatus} = this.state;
+    const { masks, maskPathStatus, invalidMaskMap} = this.state;
     const unique_mask_paths = [...new Set([...masks].map(([key, value]) => value.path))]
     // Only fetch new status for paths that are not ready
     const non_ready_mask_paths = unique_mask_paths.filter(p => {
@@ -1772,8 +1824,13 @@ class Repo extends Component {
         }
         return items
       }, '')
-      new_error = `${invalid_new_mask_paths.length} invalid mask path${s}: ${list}`
+      new_error = `invalid mask image path${s}`
     }
+    if (invalidMaskMap) {
+      const csv_error = 'invalid mask cell state CSV';
+      new_error = new_error ? `${new_error} and ${csv_error}`: csv_error;
+    }
+    
     this.setState({
       error: new_error,
       maskPathStatus: new Map([
@@ -1793,58 +1850,98 @@ class Repo extends Component {
     }
   }
 
-  async onMaskMapSelected(file) {
+  async onMaskMapSelected(file, params={}) {
     this.setState({ 
       showMaskMapBrowser: false
     });
-    const {masks, activeMaskId} = this.state;
-    let mask = masks.get(activeMaskId);
+    const {masks} = this.state;
+    let mask = masks.get(0);
 
     if (mask === undefined) {
       mask = {
+        cache_name: "",
         name: "all cells",
         color: [255, 255, 255],
-        map: new Map(),
+        map_ids: [],
         map_path: "",
         path: ""
       };
     }
 
     if (file && file.path) {
-      this.handleUpdateMask({
-        ...mask,
-        name: "all cells",
-        map_path: file.path
-      }, true);
+
+      if (file.path != mask.map_path) {
+        this.handleUpdateMask({
+          ...mask,
+          ...params,
+          cache_name: "",
+          name: "all cells",
+          map_path: file.path
+        }, true);
+      }
+
+      this.setState({
+        invalidMaskMap: false,
+        isMaskMapLoading: true
+      });
 
       // Double encoded URI component is required for flask
       const key = encodeURIComponent(encodeURIComponent(file.path));
 
-      const response = await fetch(`http://localhost:2020/api/mask_subsets/${key}`, {
-        headers: {
-          'pragma': 'no-cache',
-          'cache-control': 'no-store'
-        }
-      })
-
       try {
+        const url = `http://localhost:2020/api/mask_subsets/${key}`;
+        const response = await fetch(url, {
+          headers: {
+            'pragma': 'no-cache',
+            'cache-control': 'no-store'
+          }
+        });
+        const {storyMasksTempCache} = this.state;
         const res = handleFetchErrors(response);
         const data = (await res.json()) || {};
         const subsets = "mask_subsets" in data ? data.mask_subsets : [];
         const colors = "subset_colors" in data ? data.subset_colors : [];
+        const subset_name_set = new Set();
         subsets.forEach(([key, ids], idx) => {
           const color = idx < colors.length? colors[idx]: [255, 255, 255];
+          subset_name_set.add(key);
           this.handleMaskInsert({
-            map: new Map([[key, ids]]),
+            map_ids: ids,
             color: color,
+            cache_name: key,
             name: key
+          });
+        });
+        this.setState({
+          isMaskMapLoading: false
+        });
+        [...storyMasksTempCache].forEach(([s_id, cache_name_list]) => {
+          const story = this.state.stories.get(s_id);
+          // Reset Story Masks from cache
+          cache_name_list.forEach((cache_name) => {
+            if (subset_name_set.has(cache_name)) {
+              const is_same = ([idx, mask]) => mask.cache_name == cache_name;
+              const m_id = ([...this.state.masks].find(is_same) || [])[0];
+              if (m_id != undefined && !story.masks.includes(m_id)) {
+                this.handleConcatStoryMasks([{id: m_id}], {s_id});
+              }
+            }
           });
         });
       }
       catch (error) {
         console.error(error)
+        this.handleUpdateMask({
+          ...mask,
+          cache_name: "",
+          name: "all cells",
+          map_path: file.path,
+        }, true);
+        this.setState({
+          invalidMaskMap: true,
+          isMaskMapLoading: false
+        });
       }
-
     }
   }
 
@@ -1852,28 +1949,22 @@ class Repo extends Component {
     this.setState({ 
       showMaskBrowser: false
     });
-    const {masks, activeMaskId} = this.state;
-    let mask = masks.get(activeMaskId);
-
-    if (mask === undefined) {
-      mask = {
-        name: "all cells",
-        color: [255, 255, 255],
-        map: new Map(),
-        map_path: "",
-        path: ""
-      };
-    }
 
     if (file && file.path) {
-      this.handleUpdateMask({
-        ...mask,
-        name: "all cells",
-        path: file.path,
-      }, true);
-
-      if (mask.map_path != "") {
-        this.onMaskMapSelected(mask.map_path);
+      if (this.state.masks.get(0) === undefined) {
+        this.handleUpdateMask({
+          cache_name: "",
+          name: "all cells",
+          color: [255, 255, 255],
+          map_ids: [],
+          map_path: "",
+          path: file.path
+        }, true);
+      }
+      else {
+        this.handleUpdateAllMasks({
+          path: file.path
+        });
       }
     }
   }
@@ -2017,7 +2108,7 @@ class Repo extends Component {
           min: 0 
         };
         mask.u32 = true;
-        mask.map_ids = mask.map.size ? [...mask.map][0][1] : undefined;
+        // mask.map_ids = mask.map_ids;
         // Double encoded URI component is required for flask
         mask.key = encodeURIComponent(encodeURIComponent(mask.path));
         mask.maxRange = 16777215;
@@ -2250,12 +2341,12 @@ class Repo extends Component {
                <input type="range" className="image-rotation-range" min="-180" max="180" value={this.state.rotation} onChange={this.handleRotation} id="myRange"></input>
               </div>
               <div className="ui action input">
-                <input ref={this.filePath} className='full-width-input' id="filepath" name="filepath" type="text" placeholder='Channel groups dat file'/>
+                <input ref={this.filePath} className='full-width-input' id="filepath" name="filepath" type="text" placeholder='Channel groups json file'/>
                 <button type="button" onClick={this.openFileBrowser} className="ui button">Browse</button>
                 <FileBrowserModal open={this.state.showFileBrowser} close={this.onFileSelected}
-                  title="Select a dat file" 
+                  title="Select a json file" 
                   onFileSelected={this.onFileSelected} 
-                  filter={["dat"]}
+                  filter={["dat", "json"]}
                   />
               </div>
             </form>
@@ -2321,6 +2412,8 @@ class Repo extends Component {
               showMaskMapBrowser={this.state.showMaskMapBrowser}
               openMaskMapBrowser={this.openMaskMapBrowser}
               onMaskMapSelected={this.onMaskMapSelected}
+              isMaskMapLoading={this.state.isMaskMapLoading}
+              invalidMaskMap={this.state.invalidMaskMap}
             />
             <Confirm
               header="Delete channel group" 
