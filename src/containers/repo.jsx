@@ -195,9 +195,9 @@ class Repo extends Component {
         const mask = {
           path: v.path,
           name: v.label,
-          cache_name: v.original_label || "",
           map_path: v.map_path || "",
           map_ids: chan0.ids || [],
+          cache_name: chan0.original_label || "",
           color: hexToRgb(chan0.color)
         }
         return [k, mask];
@@ -1456,12 +1456,12 @@ class Repo extends Component {
   createMaskOutput(masks) {
     return Array.from(masks.values()).map(v => {
       const channels = [{
+          'original_label': v.cache_name || '',
           'color': rgbToHex(v.color),
           'label': v.name,
           'ids': v.map_ids
       }];
       let group_out = {
-        'original_label': v.cache_name || '',
         'label': v.name,
         'path': v.path,
         'map_path': v.map_path,
