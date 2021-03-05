@@ -2461,9 +2461,12 @@ class Repo extends Component {
           { this.renderWarning() }
           { this.renderErrors() }
           { this.renderExitButton() }
-          <PublishStoryModal storyUuid={this.state.storyUuid} 
-            onClose={() => this.setPublishStoryModal(false)}
-            active={this.state.showPublishStoryModal} />
+          { minerva ? (
+            <PublishStoryModal storyUuid={this.state.storyUuid} 
+              onClose={() => this.setPublishStoryModal(false)}
+              active={this.state.showPublishStoryModal} />
+            ) : ''
+          }
         </div>
       </div>
     );

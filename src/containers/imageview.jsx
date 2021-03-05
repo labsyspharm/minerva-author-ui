@@ -13,6 +13,9 @@ class ImageView extends Component {
 
   constructor() {
     super();
+    this.state = {
+      ready: false
+    }
   }
 
   makeTileSource(id) {
@@ -148,11 +151,15 @@ class ImageView extends Component {
     });
   }
 
-  addChannels(ids) {
-    this.makeTileSources(ids).reduce((p, tileSource) => {
+  addTileSources(tileSources) {
+    tileSources.reduce((p, tileSource) => {
      return p.then(() => this.addChannel(tileSource));
     }, Promise.resolve());
-}
+  }
+
+  addChannels(ids) {
+    this.addTileSources(this.makeTileSources(ids));
+  }
 
   setChannel(channel) {
     const { id, color, range, maxRange } = channel;
@@ -191,268 +198,304 @@ class ImageView extends Component {
     }
   }
 
-  componentDidMount() {
-    const {channels, img, handleViewport} = this.props;
-    const {interactor} = this.props;
-    const ids = [...channels.keys()];
+  startOpenSeadragon() {
+    return new Promise((resolve) => {
+      const {channels, img, handleViewport} = this.props;
+      const {interactor} = this.props;
+      const ids = [...channels.keys()];
+      const tileSources = this.makeTileSources(ids);
 
-    // Set up openseadragon viewer
-    this.viewer = viaWebGL.OpenSeadragon({
-      collectionMode: false,
-      showZoomControl: false,
-      showHomeControl: false,
-      loadTilesWithAjax: true,
-      showFullPageControl: false,
-      // Specific to this project
-      id: "ImageView",
-      prefixUrl: "image/openseadragon/",
-      tileSources: this.makeTileSources(ids),
-      compositeOperation: 'lighter',
-      maxZoomPixelRatio: 10,
-      ajaxHeaders: {
-        "Cache-Control": "no-store"
+      if (tileSources.length < 1) {
+        return false;
       }
-    });
-    interactor(this.viewer);
 
-    const world = this.viewer.world;
-    world.addHandler('add-item', function(e) {
-      e.item.setWidth(img.width / img.height);
-    });
+      // Handle only first tile source at beginning
+      const firstTileSource = tileSources.shift();
 
-    this.viewer.addHandler('animation-finish', function(e) {
-      const THIS = e.userData;
-      const viewport = THIS.viewer.viewport;
-      handleViewport(viewport);
-    }, this);
+      // Set up openseadragon viewer
+      this.viewer = viaWebGL.OpenSeadragon({
+        collectionMode: false,
+        showZoomControl: false,
+        showHomeControl: false,
+        loadTilesWithAjax: true,
+        showFullPageControl: false,
+        // Specific to this project
+        id: "ImageView",
+        prefixUrl: "image/openseadragon/",
+        tileSources: [firstTileSource],
+        compositeOperation: 'lighter',
+        maxZoomPixelRatio: 10,
+        ajaxHeaders: {
+          "Cache-Control": "no-store"
+        }
+      });
 
-    this.viewer.uuid = img.uuid;
+      interactor(this.viewer);
 
-    const viewer = this.viewer;
+      let resolved = false;
+      const world = this.viewer.world;
+      world.addHandler('add-item', (e) => {
+        e.item.setWidth(img.width / img.height);
+        if (!resolved) {
+          resolved = true;
+          resolve();
+        }
+      });
 
-    function updateOverlays() {
-        viewer.currentOverlays.forEach(overlay => {
-            const isWhite = overlay.element.className == 'white-overlay';
-            const isGreen = overlay.element.className == 'green-overlay';
-            if (!(isWhite || isGreen)) {
-              overlay.element.style.transform = '';
-            }
+      this.viewer.addHandler('animation-finish', function(e) {
+        const THIS = e.userData;
+        const viewport = THIS.viewer.viewport;
+        handleViewport(viewport);
+      }, this);
+
+      this.viewer.uuid = img.uuid;
+
+      const viewer = this.viewer;
+
+      function updateOverlays() {
+          viewer.currentOverlays.forEach(overlay => {
+              const isWhite = overlay.element.className == 'white-overlay';
+              const isGreen = overlay.element.className == 'green-overlay';
+              if (!(isWhite || isGreen)) {
+                overlay.element.style.transform = '';
+              }
+          });
+      }
+
+      viewer.addHandler("update-viewport", function(){
+          setTimeout(updateOverlays, 1);
+      });
+
+      viewer.addHandler("animation", updateOverlays);
+
+      // Define interface to shaders
+      const seaGL = new viaWebGL.openSeadragonGL(this.viewer);
+
+      // Override loadArray to add more complex drawing
+      seaGL.viaGL.loadArray = function(width, height, pixels, format='u16') {
+
+          // Allow for custom drawing in webGL
+          var gl = this.gl;
+
+          // Clear before starting all the draw calls
+          gl.clear(this.gl.COLOR_BUFFER_BIT);
+
+          // Reset texture for GLSL
+          setTexture.call(this, gl.TEXTURE0, this.texture);
+
+          // Send the tile into the texture.
+          if (format == 'u16') {
+            gl.texImage2D(gl.TEXTURE_2D, 0, gl.RG8UI, width, height, 0,
+                          gl.RG_INTEGER, gl.UNSIGNED_BYTE, pixels);
+          }
+          else if (format == 'u32') {
+            gl.texImage2D(gl.TEXTURE_2D, 0, gl.RGBA8UI, width, height, 0,
+                          gl.RGBA_INTEGER, gl.UNSIGNED_BYTE, pixels);
+          }
+
+          var num_idx = [
+            this.all_color_3fv, this.all_range_2fv,
+            this.all_ids_shape_2iv, this.all_ids_array
+          ].reduce(function(a,b) {
+            return a.length < b.length ? a.length : b.length
+          }, []);
+
+          for (let idx = 0; idx < num_idx; idx ++) {
+            // Call gl-drawing __after__ loading TEXTURE0
+            this['gl-drawing'].call(this, idx);
+            // Draw four points
+            gl.drawArrays(gl.TRIANGLE_STRIP, 0, 4);
+          }
+          return this.gl.canvas;
+      }
+      seaGL.vShader = 'vert.glsl';
+      seaGL.fShader = 'frag.glsl';
+
+      seaGL.addHandler('tile-drawing',  function(callback, e) {
+
+        // Read parameters from each tile
+        const tile = e.tile;
+        const via = this.viaGL;
+        const viewer = this.openSD;
+        const image = e.tiledImage;
+        const source = image.source;
+        const {many_channels} = source;
+
+        // Store channel color and range to send to shader
+        const all_color_3fv = many_channels.map((chan) => {
+          return new Float32Array(chan.color);
         });
-    }
+        const all_range_2fv = many_channels.map((chan) => {
+          return new Float32Array(chan.range);
+        });
 
-    viewer.addHandler("update-viewport", function(){
-        setTimeout(updateOverlays, 1);
-    });
-
-    viewer.addHandler("animation", updateOverlays);
-
-    // Define interface to shaders
-    const seaGL = new viaWebGL.openSeadragonGL(this.viewer);
-
-    // Override loadArray to add more complex drawing
-    seaGL.viaGL.loadArray = function(width, height, pixels, format='u16') {
-
-        // Allow for custom drawing in webGL
-        var gl = this.gl;
-
-        // Clear before starting all the draw calls
-        gl.clear(this.gl.COLOR_BUFFER_BIT);
-
-        // Reset texture for GLSL
-        setTexture.call(this, gl.TEXTURE0, this.texture);
-
-        // Send the tile into the texture.
-        if (format == 'u16') {
-          gl.texImage2D(gl.TEXTURE_2D, 0, gl.RG8UI, width, height, 0,
-                        gl.RG_INTEGER, gl.UNSIGNED_BYTE, pixels);
-        }
-        else if (format == 'u32') {
-          gl.texImage2D(gl.TEXTURE_2D, 0, gl.RGBA8UI, width, height, 0,
-                        gl.RGBA_INTEGER, gl.UNSIGNED_BYTE, pixels);
+        const all_same = (a, b) => {
+          return a && b && a.length == b.length && a.every( (v, i) => v == b[i] );
         }
 
-        var num_idx = [
-          this.all_color_3fv, this.all_range_2fv,
-          this.all_ids_shape_2iv, this.all_ids_array
-        ].reduce(function(a,b) {
-          return a.length < b.length ? a.length : b.length
-        }, []);
-
-        for (let idx = 0; idx < num_idx; idx ++) {
-          // Call gl-drawing __after__ loading TEXTURE0
-          this['gl-drawing'].call(this, idx);
-          // Draw four points
-          gl.drawArrays(gl.TRIANGLE_STRIP, 0, 4);
-        }
-        return this.gl.canvas;
-    }
-    seaGL.vShader = 'vert.glsl';
-    seaGL.fShader = 'frag.glsl';
-
-    seaGL.addHandler('tile-drawing',  function(callback, e) {
-
-      // Read parameters from each tile
-      const tile = e.tile;
-      const via = this.viaGL;
-      const viewer = this.openSD;
-      const image = e.tiledImage;
-      const source = image.source;
-      const {many_channels} = source;
-
-      // Store channel color and range to send to shader
-      const all_color_3fv = many_channels.map((chan) => {
-        return new Float32Array(chan.color);
-      });
-      const all_range_2fv = many_channels.map((chan) => {
-        return new Float32Array(chan.range);
-      });
-
-      const all_same = (a, b) => {
-        return a && b && a.length == b.length && a.every( (v, i) => v == b[i] );
-      }
-
-      const all_all_same = (a, b) => {
-        return a && b && a.length == b.length && a.every( (v, i) => all_same(v, b[i]) );
-      }
-
-      const is_same = (
-        all_all_same(all_color_3fv, e.rendered.all_color_3fv) &&
-        all_all_same(all_range_2fv, e.rendered.all_range_2fv)
-      )
-
-      e.rendered.all_color_3fv = all_color_3fv;
-      e.rendered.all_range_2fv = all_range_2fv;
-
-      // Abort on all useless render calls
-      if (is_same) {
-        return;
-      }
-
-      const toBytesInt32 = (a, padding=0) => {
-        const arr_length = a.length + padding;
-        const arr = new ArrayBuffer(4 * arr_length);
-        const view = new DataView(arr);
-        a.forEach((v, i)=> {
-          view.setUint32(4 * padding + 4 * i, v, true);
-        })
-        return new Uint8Array(arr);
-      }
-
-      let fmt = 0;
-      if (tile._format == 'u16') {
-        fmt = 16;      
-      }
-      else if (tile._format == 'u32') {
-        fmt = 32;
-      }
-
-      let all_ids_array = [];
-      let all_ids_shape_2iv = [];
-
-      source.many_channels.forEach((chan) => {
-        let ids_width = 0;
-        let ids_height = 0;
-        let ids_array = undefined;
-        const {map_ids} = chan;
-
-        if (fmt == 32 && map_ids.length > 0) {
-          ids_width = via.gl.getParameter(via.gl.MAX_TEXTURE_SIZE);
-          ids_height = Math.ceil(map_ids.length / ids_width);
-          ids_array = toBytesInt32(map_ids, ids_width * ids_height - map_ids.length);
+        const all_all_same = (a, b) => {
+          return a && b && a.length == b.length && a.every( (v, i) => all_same(v, b[i]) );
         }
 
-        all_ids_array.push(ids_array);
-        all_ids_shape_2iv.push([ids_width, ids_height]);
+        const is_same = (
+          all_all_same(all_color_3fv, e.rendered.all_color_3fv) &&
+          all_all_same(all_range_2fv, e.rendered.all_range_2fv)
+        )
+
+        e.rendered.all_color_3fv = all_color_3fv;
+        e.rendered.all_range_2fv = all_range_2fv;
+
+        // Abort on all useless render calls
+        if (is_same) {
+          return;
+        }
+
+        const toBytesInt32 = (a, padding=0) => {
+          const arr_length = a.length + padding;
+          const arr = new ArrayBuffer(4 * arr_length);
+          const view = new DataView(arr);
+          a.forEach((v, i)=> {
+            view.setUint32(4 * padding + 4 * i, v, true);
+          })
+          return new Uint8Array(arr);
+        }
+
+        let fmt = 0;
+        if (tile._format == 'u16') {
+          fmt = 16;      
+        }
+        else if (tile._format == 'u32') {
+          fmt = 32;
+        }
+
+        let all_ids_array = [];
+        let all_ids_shape_2iv = [];
+
+        source.many_channels.forEach((chan) => {
+          let ids_width = 0;
+          let ids_height = 0;
+          let ids_array = undefined;
+          const {map_ids} = chan;
+
+          if (fmt == 32 && map_ids.length > 0) {
+            ids_width = via.gl.getParameter(via.gl.MAX_TEXTURE_SIZE);
+            ids_height = Math.ceil(map_ids.length / ids_width);
+            ids_array = toBytesInt32(map_ids, ids_width * ids_height - map_ids.length);
+          }
+
+          all_ids_array.push(ids_array);
+          all_ids_shape_2iv.push([ids_width, ids_height]);
+        });
+
+        via.fmt_1i = fmt;
+        via.all_color_3fv = all_color_3fv;
+        via.all_range_2fv = all_range_2fv;
+        via.all_ids_array = all_ids_array;
+        via.all_ids_shape_2iv = all_ids_shape_2iv; 
+
+        // Clear the rendered tile
+        if (fmt == 32) {
+          var w = e.rendered.canvas.width;
+          var h = e.rendered.canvas.height;
+          e.rendered.clearRect(0, 0, w, h);
+        }
+        // Start webGL rendering
+        callback(e);
       });
 
-      via.fmt_1i = fmt;
-      via.all_color_3fv = all_color_3fv;
-      via.all_range_2fv = all_range_2fv;
-      via.all_ids_array = all_ids_array;
-      via.all_ids_shape_2iv = all_ids_shape_2iv; 
-
-      // Clear the rendered tile
-      if (fmt == 32) {
-        var w = e.rendered.canvas.width;
-        var h = e.rendered.canvas.height;
-        e.rendered.clearRect(0, 0, w, h);
-      }
-      // Start webGL rendering
-      callback(e);
-    });
-
-    const setTexture = function(TEXTURE, texture){
-      // Set texture for GLSL
-      this.gl.activeTexture(TEXTURE);
-      this.gl.bindTexture(this.gl.TEXTURE_2D, texture),
-      this.gl.pixelStorei(this.gl.UNPACK_FLIP_Y_WEBGL, 1);
-      this.gl.pixelStorei(this.gl.UNPACK_ALIGNMENT, 1);
-
-      // Assign texture parameters
-      this.gl.texParameteri(this.gl.TEXTURE_2D, this.gl.TEXTURE_WRAP_T, this.gl.CLAMP_TO_EDGE);
-      this.gl.texParameteri(this.gl.TEXTURE_2D, this.gl.TEXTURE_WRAP_S, this.gl.CLAMP_TO_EDGE);
-      this.gl.texParameteri(this.gl.TEXTURE_2D, this.gl.TEXTURE_MAG_FILTER, this.gl.NEAREST);
-      this.gl.texParameteri(this.gl.TEXTURE_2D, this.gl.TEXTURE_MIN_FILTER, this.gl.NEAREST);
-    }
-
-
-    seaGL.addHandler('gl-drawing', function(idx) {
-      // Send color and range to shader
-      this.gl.uniform1i(this.u_tile_fmt, this.fmt_1i);
-      this.gl.uniform3fv(this.u_tile_color, this.all_color_3fv[idx]);
-      this.gl.uniform2fv(this.u_tile_range, this.all_range_2fv[idx]);
-
-      // Send ids shape to the shader
-      this.gl.uniform2iv(this.u_ids_shape, this.all_ids_shape_2iv[idx]);
-      const [ids_width, ids_height] = this.all_ids_shape_2iv[idx];
-
-      const ids_array = this.all_ids_array[idx];
-      if (ids_array != undefined) {
+      const setTexture = function(TEXTURE, texture){
         // Set texture for GLSL
-        setTexture.call(this, this.gl.TEXTURE1, this.texture_ids);
+        this.gl.activeTexture(TEXTURE);
+        this.gl.bindTexture(this.gl.TEXTURE_2D, texture),
+        this.gl.pixelStorei(this.gl.UNPACK_FLIP_Y_WEBGL, 1);
+        this.gl.pixelStorei(this.gl.UNPACK_ALIGNMENT, 1);
 
-        // Send the tile to the texture
-        this.gl.texImage2D(this.gl.TEXTURE_2D, 0, this.gl.RGBA8UI, ids_width, ids_height, 0,
-                      this.gl.RGBA_INTEGER, this.gl.UNSIGNED_BYTE, ids_array);
+        // Assign texture parameters
+        this.gl.texParameteri(this.gl.TEXTURE_2D, this.gl.TEXTURE_WRAP_T, this.gl.CLAMP_TO_EDGE);
+        this.gl.texParameteri(this.gl.TEXTURE_2D, this.gl.TEXTURE_WRAP_S, this.gl.CLAMP_TO_EDGE);
+        this.gl.texParameteri(this.gl.TEXTURE_2D, this.gl.TEXTURE_MAG_FILTER, this.gl.NEAREST);
+        this.gl.texParameteri(this.gl.TEXTURE_2D, this.gl.TEXTURE_MIN_FILTER, this.gl.NEAREST);
       }
-      else {
-        // Set texture for GLSL
-        setTexture.call(this, this.gl.TEXTURE1, this.texture_ids);
 
-        // Send an empty array to the texture
-        this.gl.texImage2D(this.gl.TEXTURE_2D, 0, this.gl.RGBA8UI, 1, 1, 0,
-                      this.gl.RGBA_INTEGER, this.gl.UNSIGNED_BYTE, new Uint8Array(4));
-      }
+
+      seaGL.addHandler('gl-drawing', function(idx) {
+        // Send color and range to shader
+        this.gl.uniform1i(this.u_tile_fmt, this.fmt_1i);
+        this.gl.uniform3fv(this.u_tile_color, this.all_color_3fv[idx]);
+        this.gl.uniform2fv(this.u_tile_range, this.all_range_2fv[idx]);
+
+        // Send ids shape to the shader
+        this.gl.uniform2iv(this.u_ids_shape, this.all_ids_shape_2iv[idx]);
+        const [ids_width, ids_height] = this.all_ids_shape_2iv[idx];
+
+        const ids_array = this.all_ids_array[idx];
+        if (ids_array != undefined) {
+          // Set texture for GLSL
+          setTexture.call(this, this.gl.TEXTURE1, this.texture_ids);
+
+          // Send the tile to the texture
+          this.gl.texImage2D(this.gl.TEXTURE_2D, 0, this.gl.RGBA8UI, ids_width, ids_height, 0,
+                        this.gl.RGBA_INTEGER, this.gl.UNSIGNED_BYTE, ids_array);
+        }
+        else {
+          // Set texture for GLSL
+          setTexture.call(this, this.gl.TEXTURE1, this.texture_ids);
+
+          // Send an empty array to the texture
+          this.gl.texImage2D(this.gl.TEXTURE_2D, 0, this.gl.RGBA8UI, 1, 1, 0,
+                        this.gl.RGBA_INTEGER, this.gl.UNSIGNED_BYTE, new Uint8Array(4));
+        }
+      });
+
+      seaGL.addHandler('gl-loaded', function(program) {
+        // Turn on additive blending
+        this.gl.enable(this.gl.BLEND);
+        this.gl.blendEquation(this.gl.FUNC_ADD);
+        this.gl.blendFunc(this.gl.ONE, this.gl.ONE);
+
+        // Uniform variable for coloring
+        this.u_tile_color = this.gl.getUniformLocation(program, 'u_tile_color');
+        this.u_tile_range = this.gl.getUniformLocation(program, 'u_tile_range');
+        this.u_tile_fmt = this.gl.getUniformLocation(program, 'u_tile_fmt');
+
+        // Get texture shape location
+        this.u_ids_shape = this.gl.getUniformLocation(program, 'u_ids_shape');
+
+        // Get texture location
+        const u_ids = this.gl.getUniformLocation(program, 'u_ids');
+        this.texture_ids = this.gl.createTexture();
+        this.gl.uniform1i(u_ids, 1);
+      });
+
+      seaGL.addHandler('tile-loaded', (callback, e) => callback(e) );
+
+      seaGL.init();
+      return true;
     });
+  }
 
-    seaGL.addHandler('gl-loaded', function(program) {
-      // Turn on additive blending
-      this.gl.enable(this.gl.BLEND);
-      this.gl.blendEquation(this.gl.FUNC_ADD);
-      this.gl.blendFunc(this.gl.ONE, this.gl.ONE);
 
-      // Uniform variable for coloring
-      this.u_tile_color = this.gl.getUniformLocation(program, 'u_tile_color');
-      this.u_tile_range = this.gl.getUniformLocation(program, 'u_tile_range');
-      this.u_tile_fmt = this.gl.getUniformLocation(program, 'u_tile_fmt');
+  componentDidMount() {
 
-      // Get texture shape location
-      this.u_ids_shape = this.gl.getUniformLocation(program, 'u_ids_shape');
-
-      // Get texture location
-      const u_ids = this.gl.getUniformLocation(program, 'u_ids');
-      this.texture_ids = this.gl.createTexture();
-      this.gl.uniform1i(u_ids, 1);
-    });
-
-    seaGL.addHandler('tile-loaded', (callback, e) => callback(e) );
-
-    seaGL.init();
+    const {channels} = this.props;
+    if (channels.size > 0) {
+      this.startOpenSeadragon().then(()=>{
+        this.setState({ ready: true });
+      });
+    }
   }
 
   componentDidUpdate() {
     const {viewer} = this;
-    const {overlays, arrows} = this.props;
+    const {channels, overlays, arrows} = this.props;
+    if (!viewer || !this.state.ready) {
+      if (channels.size > 0) {
+        const ready = this.startOpenSeadragon().then(()=>{
+          this.setState({ ready: true });
+        });
+      }
+      return;
+    }
 
     this.viewer.viewport.setRotation(this.props.rotation);
 
