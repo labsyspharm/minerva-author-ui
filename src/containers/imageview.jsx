@@ -94,13 +94,10 @@ class ImageView extends Component {
       const tiledImage = world.getItemAt(i);
       const { many_channels, many_channels_id} = tiledImage.source;
 
-      // Ignore non-mask channels
-      if (many_channels_id == many_channels[0].unique_id)
-        continue;
-
       // Return any mask with a map
-      if (key == many_channels_id && many_channels[0].map_ids.length > 0)
+      if (key == many_channels_id && many_channels[0].map_ids.length > 0) {
         return tiledImage;
+      }
     }
   }
 
@@ -126,28 +123,36 @@ class ImageView extends Component {
     values.map(this.setChannel, this);
   }
 
-  addChannels(ids) {
-    const {viewer} = this;
-    const {img} = this.props;
-    const tileSources = this.makeTileSources(ids);
-    tileSources.map(tileSource => {
+  addChannel(tileSource) {
+    return new Promise((resolve, reject)=> {
+      let need_new_tiled_image = true;
       const {many_channels, many_channels_id} = tileSource;
       // Handle Mask channels that can use the same source
       if (many_channels[0].map_ids.length > 0) {
-        const duplicate = this.getTiledImageByMaskKey(many_channels_id);
-        if (duplicate) {
-          const {source} = duplicate;
+        const tiledImage = this.getTiledImageByMaskKey(many_channels_id);
+        if (tiledImage) {
+          const {source} = tiledImage;
           source.many_channels = source.many_channels.concat(many_channels);
-          return;
+          resolve({item: tiledImage});
+          need_new_tiled_image = false;
         }
       }
-      viewer.addTiledImage({
-        tileSource: tileSource,
-        width: img.width / img.height,
-        compositeOperation: tileSource.u32 ? 'source-over' : 'lighter'
-      });
+      if (need_new_tiled_image) {
+        this.viewer.addTiledImage({
+          success: resolve,
+          tileSource: tileSource,
+          width: this.props.img.width / this.props.img.height,
+          compositeOperation: tileSource.u32 ? 'source-over' : 'lighter'
+        });
+      }
     });
   }
+
+  addChannels(ids) {
+    this.makeTileSources(ids).reduce((p, tileSource) => {
+     return p.then(() => this.addChannel(tileSource));
+    }, Promise.resolve());
+}
 
   setChannel(channel) {
     const { id, color, range, maxRange } = channel;
@@ -366,6 +371,12 @@ class ImageView extends Component {
       via.all_ids_array = all_ids_array;
       via.all_ids_shape_2iv = all_ids_shape_2iv; 
 
+      // Clear the rendered tile
+      if (fmt == 32) {
+        var w = e.rendered.canvas.width;
+        var h = e.rendered.canvas.height;
+        e.rendered.clearRect(0, 0, w, h);
+      }
       // Start webGL rendering
       callback(e);
     });
@@ -590,13 +601,16 @@ class ImageView extends Component {
           const tiledImage = this.getTiledImageById(id);
           if (tiledImage != undefined) {
             const {source} = tiledImage;
-            if (source.many_channels.length == 1) {
+            if (source.many_channels.length <= 1) {
               world.removeItem(tiledImage);
             }
             else {
               source.many_channels = source.many_channels.filter((chan) => {
                 return chan.unique_id != id;
               });
+              if (source.many_channels.length == 0) {
+                world.removeItem(tiledImage);
+              }
             }
           }
         })

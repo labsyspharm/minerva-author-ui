@@ -48,6 +48,7 @@
     "jquery": "3.5.1",
     "minerva-browser": "2.12.0",
     "prop-types": "^15.6.1",
+    "chroma-js": "^2.1.1",
     "react": "^16.12.0",
     "react-color": "^2.14.1",
     "react-dom": "^16.12.0",

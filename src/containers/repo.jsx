@@ -35,14 +35,14 @@ const normalize = (viewer, pixels) => {
   return norm.call(vp, pixels);
 }
 
-const IntToHex = c => {
+const intToHex = c => {
   var hex = c.toString(16);
   return hex.length == 1 ? "0" + hex : hex;
 }
 
 const rgbToHex = rgb => {
   const [r, g, b] = rgb;
-  return IntToHex(r) + IntToHex(g) + IntToHex(b);
+  return intToHex(r) + intToHex(g) + intToHex(b);
 }
 
 const hexToRgb = hex => {
@@ -1083,7 +1083,7 @@ class Repo extends Component {
     }
   }
 
-  handleConcatStoryMasks(masks, params) {
+  handleConcatStoryMasks(masks, params={}) {
     const {stories} = this.state;
     const maskArray = masks? masks : [];
     const activeStory = 's_id' in params ? params.s_id : this.state.activeStory;
@@ -1096,7 +1096,7 @@ class Repo extends Component {
     )
   }
 
-  handleSelectStoryMasks(masks, params) {
+  handleSelectStoryMasks(masks, params={}) {
     const {stories} = this.state;
     const maskArray = masks? masks : [];
     const activeStory = 's_id' in params ? params.s_id : this.state.activeStory;
@@ -2414,6 +2414,7 @@ class Repo extends Component {
               onMaskMapSelected={this.onMaskMapSelected}
               isMaskMapLoading={this.state.isMaskMapLoading}
               invalidMaskMap={this.state.invalidMaskMap}
+              toggleTextEdit={this.toggleTextEdit}
             />
             <Confirm
               header="Delete channel group" 

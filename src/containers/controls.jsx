@@ -1,11 +1,12 @@
 import React, { Component } from "react";
 
 import Select from 'react-select';
+import chroma from 'chroma-js';
 
+import Overlays from "./overlays";
 import HuePicker from "../components/huepicker";
 import ChannelControls from "./channelcontrols";
 import FileBrowserModal from "../components/filebrowsermodal";
-import Overlays from "./overlays";
 import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
 import { faArrowLeft } from "@fortawesome/free-solid-svg-icons";
 import { faArrowRight } from "@fortawesome/free-solid-svg-icons";
@@ -14,6 +15,71 @@ import {faCrosshairs} from "@fortawesome/free-solid-svg-icons";
 import {faPlus} from "@fortawesome/free-solid-svg-icons";
 
 import '../style/controls'
+
+const intToHex = c => {
+  var hex = c.toString(16);
+  return hex.length == 1 ? "0" + hex : hex;
+}
+
+const rgbToHex = rgb => {
+  const [r, g, b] = rgb;
+  return intToHex(r) + intToHex(g) + intToHex(b);
+}
+
+const colorStyles = {
+  control: styles => ({ ...styles, backgroundColor: 'white' }),
+  option: (styles, { data, isDisabled, isFocused, isSelected }) => {
+    const hex_color = "#"+rgbToHex(data.color);
+    const is_on = (isSelected || isFocused);
+    const fg_color = chroma.blend(hex_color, '222', 'multiply').css();
+    const bg_color_on = chroma.blend(hex_color, 'ccc', 'multiply').alpha(0.8).css();
+    const bg_color_off = chroma.blend(hex_color, 'fff', 'multiply').alpha(0.5).css();
+    const bg_color = is_on? bg_color_on : bg_color_off;
+    return {
+      ...styles,
+      color: fg_color,
+      backgroundColor: bg_color,
+      ':active': {
+        ...styles[':active'],
+        backgroundColor: bg_color,
+      },
+    };
+  },
+  multiValue: (styles, { data }) => {
+    const hex_color = "#"+rgbToHex(data.color);
+    const fg_color = chroma.blend(hex_color, '222', 'multiply').css();
+    const bg_color_off = chroma.blend(hex_color, 'fff', 'multiply').alpha(0.5).css();
+    return {
+      ...styles,
+      color: fg_color,
+      backgroundColor: bg_color_off,
+    };
+  },
+  multiValueLabel: (styles, { data }) => {
+    const hex_color = "#"+rgbToHex(data.color);
+    const fg_color = chroma.blend(hex_color, '222', 'multiply').css();
+    const bg_color_off = chroma.blend(hex_color, 'fff', 'multiply').alpha(0.5).css();
+    return{
+      ...styles,
+      color: fg_color,
+      backgroundColor: bg_color_off
+    };
+  },
+  multiValueRemove: (styles, { data }) => {
+    const hex_color = "#"+rgbToHex(data.color);
+    const bg_color_on = chroma.blend(hex_color, 'ddd', 'multiply').css();
+    const bg_color_off = chroma.blend(hex_color, 'fff', 'multiply').alpha(0.5).css();
+    return {
+      ...styles,
+      color: 'black',
+      backgroundColor: bg_color_off,
+      ':hover': {
+        backgroundColor: bg_color_on,
+        color: 'black',
+      }
+    };
+  },
+};
 
 class Controls extends Component {
 
@@ -24,7 +90,7 @@ class Controls extends Component {
   render() {
 
     const {addArrowText, rgba, minerva} = this.props;
-    const {deleteOverlay, deleteArrow} = this.props;
+    const {deleteOverlay, deleteArrow, toggleTextEdit} = this.props;
     const {activeStory, handleSelectStory, handleSelectStoryMasks} = this.props;
     const {handleClusterChange, handleClusterInsert, handleClusterRemove} = this.props;
     const {showVisDataBrowser, openVisDataBrowser, onVisDataSelected} = this.props;
@@ -115,7 +181,25 @@ class Controls extends Component {
         mask_help_text = 'Loading the mask cell states...';
     }
     else if (ready_mask_paths.length && !invalid_mask_map ){
-        mask_help_text = 'Open the "Edit Story" tab to select loaded masks to show.';
+        mask_help_text = (
+        <div className="font-white">
+          Open the&nbsp;
+            <a
+              href={null}
+              style={{
+                textDecoration: "underline",
+                cursor:"pointer",
+                color:"#4fbcff"
+              }}
+              onClick={() => {
+                toggleTextEdit(true);
+              }}
+            >
+            "Edit Story"
+            </a>
+           &nbsp;tab to select loaded masks to show.
+        </div>
+        )
     }
 
     let plusButton = false ? (
@@ -342,17 +426,83 @@ class Controls extends Component {
     let storyMaskControls = ''
     let visControls = ''
     if (!minerva) {
+      const all_masks = Array.from(activeMasks.values());
+      const story_masks = Array.from(activeStoryMasks.values());
+      const all_group_masks = all_masks.filter(v=> v.map_ids.length > 0);
+      const story_group_masks = story_masks.filter(v=> v.map_ids.length > 0);
+      let story_masks_header = (
+          <a
+            href={null}
+            style={{
+              textDecoration: "underline",
+              cursor:"pointer",
+              color:"#4fbcff"
+            }}
+            onClick={() => {
+              toggleTextEdit(false);
+            }}
+          >
+          Masks:
+          </a>
+      );
+      if (all_group_masks.length > 2 && story_group_masks.length < all_group_masks.length) {
+        story_masks_header = (
+          <div className="row">
+            <div className="col-6 font-white">
+              {story_masks_header}&nbsp; 
+            </div>
+            <div className="col-6 font-white" style={{textAlign: "right"}}>
+              <a
+                href={null}
+                style={{
+                  textDecoration: "underline",
+                  cursor:"pointer",
+                  color:"#4fbcff"
+                }}
+                onClick={() => {
+                  handleSelectStoryMasks(all_group_masks);
+                }}
+              >
+              &nbsp;Show all cell states
+              </a>
+            </div>
+          </div>
+        );
+      }
+      else if (story_group_masks.length > 0) {
+         story_masks_header = (
+          <div className="row">
+            <div className="col-6 font-white">
+              {story_masks_header} 
+            </div>
+            <div className="col-6 font-white" style={{textAlign: "right"}}>
+              <a
+                href={null}
+                style={{
+                  textDecoration: "underline",
+                  cursor:"pointer",
+                  color:"#4fbcff"
+                }}
+                onClick={() => {
+                  handleSelectStoryMasks([]);
+                }}
+              >
+              Clear
+              </a>
+            </div>
+          </div>
+        );     
+      }
       storyMaskControls = rgba? '' : (
         <div>
-          <div className="font-white">
-            Masks:
-          </div>
+          {story_masks_header}
           <div className="width-100">
             <Select
               isMulti={true}
+              styles={colorStyles}
               onChange={handleSelectStoryMasks}
-              value={Array.from(activeStoryMasks.values())}
-              options={Array.from(activeMasks.values())}
+              value={story_masks}
+              options={all_masks}
             />
           </div>
         </div>
