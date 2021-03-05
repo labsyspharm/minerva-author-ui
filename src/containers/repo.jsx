@@ -195,12 +195,14 @@ class Repo extends Component {
         const mask = {
           path: v.path,
           name: v.label,
-          map_path: v.map_path || "",
           map_ids: chan0.ids || [],
+          map_path: v.map_path || "",
           cache_name: chan0.original_label || "",
           color: hexToRgb(chan0.color)
         }
         return [k, mask];
+      }).filter(([k,mask]) => {
+        return (k == 0 || mask.map_ids.length > 0);
       })),
       groups: new Map(groups.map((v,k) => {
 				return [k, {
@@ -1455,6 +1457,7 @@ class Repo extends Component {
 
   createMaskOutput(masks) {
     return Array.from(masks.values()).map(v => {
+      console.log({cache_name: v.cache_name})
       const channels = [{
           'original_label': v.cache_name || '',
           'color': rgbToHex(v.color),
@@ -1905,12 +1908,14 @@ class Repo extends Component {
         subsets.forEach(([key, ids], idx) => {
           const color = idx < colors.length? colors[idx]: [255, 255, 255];
           subset_name_set.add(key);
-          this.handleMaskInsert({
-            map_ids: ids,
-            color: color,
-            cache_name: key,
-            name: key
-          });
+          if (ids.length > 0) {
+            this.handleMaskInsert({
+              map_ids: ids,
+              color: color,
+              cache_name: key,
+              name: key
+            });
+          }
         });
         this.setState({
           isMaskMapLoading: false
