@@ -413,17 +413,19 @@ class Repo extends Component {
     const {stories, activeStory, activeGroup} = this.state;
     let newStory = stories.get(activeStory) || this.defaultStory();
 
-    newStory.zoom = viewport.getZoom();
-    newStory.pan = [
-        viewport.getCenter().x,
-        viewport.getCenter().y
-    ];
-
-    const newStories = new Map([...stories,
-                              ...(new Map([[activeStory, newStory]]))]);
-
     this.setState({viewport: viewport});
     if (this.state.textEdit) {
+
+      newStory.zoom = viewport.getZoom();
+      newStory.pan = [
+          viewport.getCenter().x,
+          viewport.getCenter().y
+      ];
+
+      const newStories = new Map([...stories,
+                                ...(new Map([[activeStory, newStory]]))]);
+
+
       this.setState({stories: newStories});
     }
   }
@@ -1457,7 +1459,6 @@ class Repo extends Component {
 
   createMaskOutput(masks) {
     return Array.from(masks.values()).map(v => {
-      console.log({cache_name: v.cache_name})
       const channels = [{
           'original_label': v.cache_name || '',
           'color': rgbToHex(v.color),

@@ -14,7 +14,8 @@ class ImageView extends Component {
   constructor() {
     super();
     this.state = {
-      ready: false
+      ready: false,
+      waiting: false
     }
   }
 
@@ -219,6 +220,7 @@ class ImageView extends Component {
         showHomeControl: false,
         loadTilesWithAjax: true,
         showFullPageControl: false,
+        preserveViewport: true,
         // Specific to this project
         id: "ImageView",
         prefixUrl: "image/openseadragon/",
@@ -478,9 +480,10 @@ class ImageView extends Component {
   componentDidMount() {
 
     const {channels} = this.props;
-    if (channels.size > 0) {
+    if (channels.size > 0 && !this.state.waiting) {
+      this.setState({ waiting: true });
       this.startOpenSeadragon().then(()=>{
-        this.setState({ ready: true });
+        this.setState({ waiting: false, ready: true });
       });
     }
   }
@@ -489,9 +492,10 @@ class ImageView extends Component {
     const {viewer} = this;
     const {channels, overlays, arrows} = this.props;
     if (!viewer || !this.state.ready) {
-      if (channels.size > 0) {
-        const ready = this.startOpenSeadragon().then(()=>{
-          this.setState({ ready: true });
+      if (channels.size > 0 && !this.state.waiting) {
+        this.setState({ waiting: true });
+        this.startOpenSeadragon().then(()=>{
+          this.setState({ waiting: false, ready: true });
         });
       }
       return;
