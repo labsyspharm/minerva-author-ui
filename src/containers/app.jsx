@@ -29,6 +29,9 @@ class AuthorApp extends Component {
       preview: false,
       minerva: false,
       signedIn: false,
+      hasServerError: false,
+      outputSaveFile: '',
+      inputFile: '',
       rgba: false,
       warning: '',
       url: 'http://localhost:2020/api/u16',
@@ -54,6 +57,7 @@ class AuthorApp extends Component {
     this.onStoryLoaded = this.onStoryLoaded.bind(this);
     this.onPreview = this.onPreview.bind(this);
     this.onSignout = this.onSignout.bind(this);
+    this.updateInputFile = this.updateInputFile.bind(this);
 
     login.configure(this.props.config);
     Client.configure(this.props.config);
@@ -74,6 +78,15 @@ class AuthorApp extends Component {
     });
   }
 
+  async forceResetServerState() {
+    return fetch('http://localhost:2020/', {
+      headers: {
+        'pragma': 'no-cache',
+        'cache-control': 'no-store'
+      }
+    });
+  }
+
   async getImportResult() {
     return fetch('http://localhost:2020/api/import', {
       headers: {
@@ -88,13 +101,16 @@ class AuthorApp extends Component {
   async componentDidMount() {
     if (this.props.env === 'local') {
       try {
-        setInterval(async () => {
+        await this.forceResetServerState();
+        const import_interval = setInterval(async () => {
           const { loaded } = this.state;
           if (loaded === false) {
             const import_result = await this.getImportResult();
+            const output_save_file = import_result.output_save_file;
             const sample_info = import_result.sample_info;
 
             this.setState({
+              outputSaveFile: output_save_file || this.state.outputSaveFile,
               sample_info: sample_info || this.state.sample_info,
               waypoints: import_result.waypoints,
               groups: import_result.groups,
@@ -106,14 +122,27 @@ class AuthorApp extends Component {
               width: import_result.width,
               height: import_result.height,
               rgba: import_result.rgba,
-              warning: import_result.warning
+              warning: import_result.warning,
+              hasServerError: false
             });
+          }
+          else {
+            clearInterval(import_interval);
           }
         }, 3000);
       } catch (e) {
         console.log(e);
+        this.setState({
+          hasServerError: true
+        })
       }
     }
+  }
+
+  updateInputFile(filename) {
+    this.setState({
+      inputFile: filename
+    });
   }
 
   onToken(data, token) {
@@ -179,6 +208,7 @@ class AuthorApp extends Component {
   render() {
     const {loaded, width, height, tilesize, maxLevel, rgba, url, uuid, storyUuid, story, imageName} = this.state;
     const {channels, sample_info, waypoints, groups, warning, masks} = this.state;
+    const {inputFile, outputSaveFile} = this.state;
 
     if (loaded) {
       let repoClass = this.state.preview ? "repo-div" : "repo-div show";
@@ -187,6 +217,7 @@ class AuthorApp extends Component {
           <div>
             <div className={repoClass}>
             <Repo   env={this.props.env} rgba={rgba}
+                    inputFile={inputFile} outputSaveFile={outputSaveFile}
                     masks={masks} channels={channels} waypoints={waypoints}
                     groups={groups} url={url} uuid={uuid} maxLevel={maxLevel}
                     width={width} height={height} tilesize={tilesize}
@@ -214,7 +245,10 @@ class AuthorApp extends Component {
           onMinervaImage={this.onMinervaImage} 
           onStoryLoaded={this.onStoryLoaded}
           onSignout={this.onSignout}
-          username={this.state.username} />
+          username={this.state.username}
+          updateInputFile={this.updateInputFile}
+          hasServerError={this.state.hasServerError}
+        />
       );
     } else {
       return (

@@ -105,17 +105,25 @@ class ImageView extends Component {
     }
   }
 
-  getTiledImageById(id) {
+  getTiledImageById(id, removeCopies=true) {
     const { world } = this.viewer;
     const itemCount = world.getItemCount();
+    const outputList = [];
 
     for (let i in [...Array(itemCount).keys()]) {
       const tiledImage = world.getItemAt(i);
       const { many_channels } = tiledImage.source;
 
-      if (many_channels.find( (chan) => id == chan.unique_id))
-        return tiledImage;
+      if (many_channels.find( (chan) => id == chan.unique_id)) {
+        outputList.push(tiledImage);
+      }
     }
+    // Remove accidental duplicates
+    const output = outputList.shift(); 
+    outputList.forEach(tiledImage => {
+      return world.removeItem(tiledImage);
+    });
+    return output
   }
 
   redrawChannels(ids) {
@@ -153,13 +161,13 @@ class ImageView extends Component {
   }
 
   addTileSources(tileSources) {
-    tileSources.reduce((p, tileSource) => {
+    return tileSources.reduce((p, tileSource) => {
      return p.then(() => this.addChannel(tileSource));
     }, Promise.resolve());
   }
 
   addChannels(ids) {
-    this.addTileSources(this.makeTileSources(ids));
+    return this.addTileSources(this.makeTileSources(ids));
   }
 
   setChannel(channel) {
@@ -619,65 +627,69 @@ class ImageView extends Component {
     }
   }
 
+  updateChannels(viewer, uuid, channels) {
+    const { world } = viewer;
+    const ids = new Set(channels.keys());
+
+    if (viewer.uuid != uuid) {
+      // Update the whole image
+      world.removeAll();
+      viewer.uuid = uuid;
+      this.addChannels([...ids]);
+    }
+    else {
+      // Compare the channel ids
+      const old_ids = new Set(this.getTiledImageIds());
+
+      const redrawn = intersectSet(ids, old_ids);
+      const removed = differSet(old_ids, ids);
+      const added = differSet(ids, old_ids);
+
+      removed.forEach(id => {
+        const tiledImage = this.getTiledImageById(id);
+        if (tiledImage != undefined) {
+          const {source} = tiledImage;
+          if (source.many_channels.length <= 1) {
+            world.removeItem(tiledImage);
+          }
+          else {
+            source.many_channels = source.many_channels.filter((chan) => {
+              return chan.unique_id != id;
+            });
+            if (source.many_channels.length == 0) {
+              world.removeItem(tiledImage);
+            }
+          }
+        }
+      })
+
+      this.addChannels([...added]);
+      
+      // Redraw channels that differ
+      this.redrawChannels(redrawn.filter(id => {
+        const channel = this.getChannel(id);
+        const { color, range, maxRange } = channels.get(id);
+        // True if any property value differs
+        return (
+          channel.range[0] != range['min'] / maxRange |
+          channel.range[1] != range['max'] / maxRange |
+          channel.color[0] != color[0] |
+          channel.color[1] != color[1] |
+          channel.color[2] != color[2]
+        )
+      }));
+    }
+  }
+
   render() {
     const {viewer} = this;
     const {arrows} = this.props;
 
     // After first render
     if (viewer !== undefined) {
-      const { world } = viewer;
       const { uuid } = this.props.img;
       const { channels } = this.props;
-      const ids = new Set(channels.keys());
-
-      if (viewer.uuid != uuid) {
-        // Update the whole image
-        world.removeAll();
-        viewer.uuid = uuid;
-        this.addChannels([...ids]);
-      }
-      else {
-        // Compare the channel ids
-        const old_ids = new Set(this.getTiledImageIds());
-
-        const redrawn = intersectSet(ids, old_ids);
-        const removed = differSet(old_ids, ids);
-        const added = differSet(ids, old_ids);
-
-        removed.forEach(id => {
-          const tiledImage = this.getTiledImageById(id);
-          if (tiledImage != undefined) {
-            const {source} = tiledImage;
-            if (source.many_channels.length <= 1) {
-              world.removeItem(tiledImage);
-            }
-            else {
-              source.many_channels = source.many_channels.filter((chan) => {
-                return chan.unique_id != id;
-              });
-              if (source.many_channels.length == 0) {
-                world.removeItem(tiledImage);
-              }
-            }
-          }
-        })
-
-        this.addChannels([...added])
-        
-        // Redraw channels that differ
-        this.redrawChannels(redrawn.filter(id => {
-          const channel = this.getChannel(id);
-          const { color, range, maxRange } = channels.get(id);
-          // True if any property value differs
-          return (
-            channel.range[0] != range['min'] / maxRange |
-            channel.range[1] != range['max'] / maxRange |
-            channel.color[0] != color[0] |
-            channel.color[1] != color[1] |
-            channel.color[2] != color[2]
-          )
-        }));
-      }
+      this.updateChannels(viewer, uuid, channels);
     }
     const overlay_divs = [...Array(100).keys()].map((o,i) => {
       const el = "overlay-" + i;

@@ -1,6 +1,8 @@
 import React, { Component } from "react";
 import CreatableSelect from 'react-select/creatable';
 
+import debounce from 'debounce-async';
+import equal from 'fast-deep-equal/react';
 import MinervaImageView from "./minervaimageview";
 import SimpleImageView from "./simpleimageview";
 import FileBrowserModal from "../components/filebrowsermodal";
@@ -55,10 +57,124 @@ const hexToRgb = hex => {
   var result = /^#?([a-f\d]{2})([a-f\d]{2})([a-f\d]{2})$/i.exec(hex);
   return result ? [
     parseInt(result[1], 16),
-   	parseInt(result[2], 16),
+    parseInt(result[2], 16),
     parseInt(result[3], 16)
   ] : null;
 }
+
+const defaultMask = () => {
+  return {
+    cache_name: "",
+    name: "all cells",
+    color: [255, 255, 255],
+    map_ids: [],
+    map_path: "",
+    path: "",
+  };
+}
+
+const handleConcatStoryMasksPure = ({stories, activeStory}, mask_ids=[], newStory={}) => {
+  return handleSelectStoryMasksPure(
+    {stories, activeStory},
+    (newStory.masks || []).concat(mask_ids),
+    newStory
+  );
+}
+
+const handleSelectStoryMasksPure = ({stories, activeStory}, mask_ids=[], newStory={}) => {
+  const newStories = new Map([...stories,
+                              ...(new Map([
+                                [ activeStory, {...newStory, masks: mask_ids} ]
+                              ]))
+                            ]);
+  return {
+    stories: newStories
+  }
+}
+
+const handleMaskInsertPure = ({stories, masks, activeMaskId}, attributes={}) => {
+  const activeMask = {...(masks.get(activeMaskId) || defaultMask())};
+  activeMaskId = activeMaskId + 1;
+
+  const newMask = {
+    ...activeMask,
+    cache_name: "",
+    color: [255, 255, 255],
+    name: ""+(activeMaskId+1),
+    ...attributes
+  };
+
+  const newMasks = new Map([...[...masks].map(([k,v]) => {
+                              return [k < activeMaskId? k: k+1, v];
+                            }),
+                            ...(new Map([[activeMaskId, newMask]]))]);
+
+  const sortedMasks = new Map([...newMasks.entries()].sort((e1, e2) => e1[0] - e2[0]));
+
+  // Update story mask array with new ids
+  stories.forEach((story) => {
+    story.masks = story.masks.map((k) => {
+      return k < activeMaskId? k : k + 1;
+    }).filter(k => {
+      return newMasks.has(k)
+    })
+  })
+
+  return {
+    activeMaskId: activeMaskId,
+    masks: sortedMasks,
+    stories: stories
+  }
+}
+
+const handleUpdateAllMasksPure = ({masks}, newMask) => {
+  return {
+    masks: new Map([...masks].map(([a, b]) => {
+      return [a, {
+        ...b,
+        ...newMask
+      }];
+    }))
+  };
+}
+
+const handleUpdateMaskPure = (
+    {activeMaskId, masks, stories, storyMasksTempCache}, newMaskParams, clear
+) => {
+  const maskId = clear ? 0 : Math.max(0, activeMaskId);
+  const activeMask = masks.get(maskId) || { ...defaultMask(), name: ""+(maskId+1) };
+  const newMask = {
+    ...activeMask,
+    ...newMaskParams
+  };
+  const newStories = new Map();
+  const newStoryMasksTempCache = new Map();
+
+  if (clear && masks.size > 1) {
+    [...stories].forEach(([s_id, story]) => {
+      // Remove the masks from the actual stories, only to save the names in the cache
+      const cache_masks = story.masks.map(m=>masks.get(m)).filter(mask=> {
+        return mask.cache_name && mask.map_ids && mask.map_ids.length > 0;
+      });
+      const cache_names = cache_masks.map(mask => mask.cache_name);
+      if (cache_names.length > 0) {
+        storyMasksTempCache.set(s_id, cache_names);
+      }
+      newStories.set(s_id, {
+        ...story,
+        masks: story.masks.includes(0) ? [0] : []
+      });
+    });
+  }
+
+  return {
+    activeMaskId: maskId,
+    stories: new Map([...stories, ...newStories]),
+    masks: new Map([...(clear ? new Map() : masks), ...(new Map([[maskId, newMask]]))]),
+    storyMasksTempCache: (newStoryMasksTempCache.size > 0)? newStoryMasksTempCache: storyMasksTempCache
+  }
+}
+
 
 class Repo extends Component {
 
@@ -69,18 +185,22 @@ class Repo extends Component {
       rgba, uuid, url, warning} = props;
     const { channels, sample_info, waypoints, groups, masks} = props;
 
-		const defaultChanRender = new Map(channels.map((v,k) => {
-			return [k, {
-				maxRange: 65535,
-				value: k, id: k,
-				color: randColor(),
-				range: {min: 0, max: 32768},
+    const defaultChanRender = new Map(channels.map((v,k) => {
+      return [k, {
+        maxRange: 65535,
+        value: k, id: k,
+        color: randColor(),
+        range: {min: 0, max: 32768},
         visible: true
-			}];
+      }];
     }));
 
-		this.state = {
+    const lazyAutosaveDelay = 5000;
+
+    this.state = {
       error: null,
+      shownSavePath: false,
+      lastSaveTime: new Date(),
       isMaskMapLoading: false,
       invalidMaskMap: false,
       warning: warning,
@@ -93,13 +213,13 @@ class Repo extends Component {
       sampleText: sample_info.text,
       drawType: '',
       drawing: 0,
-			img: {
+      img: {
           uuid: uuid,
           width: width,
           height: height,
           maxLevel: maxLevel,
           tilesize: tilesize,
-					url: url 
+          url: url
       },
       imageName: props.imageName,
       rgba: rgba,
@@ -109,7 +229,7 @@ class Repo extends Component {
       renameModal: false,
       addGroupModal: false,
       needNewGroup: false,
-			activeArrow: 0,
+      activeArrow: 0,
       viewport: null,
       activeStory: 0,
       activeVisLabel: {
@@ -129,19 +249,19 @@ class Repo extends Component {
       saveProgressMax: 0,
       publishProgress: 0,
       publishProgressMax: 0,
-      storyMasksTempCache: new Map(), 
+      storyMasksTempCache: new Map(),
       stories: new Map(waypoints.map((v,k) => {
-				let wp = {
-					'name': v.name,
-        	'text': v.text,
-        	'pan': v.pan,
-        	'zoom': v.zoom,
+        let wp = {
+          'name': v.name,
+          'text': v.text,
+          'pan': v.pan,
+          'zoom': v.zoom,
           'masks': v.masks.filter(i => i < masks.length),
-        	'arrows': v.arrows,
-        	'overlays': v.overlays,
-        	'group': groups.findIndex(g => {
-						return g.label == v.group;
-					}),
+          'arrows': v.arrows,
+          'overlays': v.overlays,
+          'group': Math.max(0, groups.findIndex(g => {
+            return g.label == v.group;
+          })),
           'visLabels': new Map([
           [0, {value: 0, id: 0, label: 'VisScatterplot', colormapInvert: false,
                 data: '', x: '', y: '', cluster: -1, clusters: new Map([])
@@ -156,7 +276,7 @@ class Repo extends Component {
                 data: '', x: '', y: '', cluster: -1, clusters: new Map([])
                 }]
           ])
-				};
+        };
         ['VisScatterplot', 'VisCanvasScatterplot', 'VisMatrix', 'VisBarChart'].forEach((label, index) => {
           if (v[label]) {
             if (index < 2) {
@@ -187,45 +307,44 @@ class Repo extends Component {
       })),
       activeGroup: 0,
       storyUuid: props.storyUuid,
-      activeGroup: 0,
       maskPathStatus: new Map(),
       activeMaskId: masks.length? 0 : -1,
       masks: new Map(masks.map((v,k) => {
         const chan0 = v.channels[0];
         const mask = {
-          path: v.path,
-          name: v.label,
+          path: v.path || "",
+          name: v.label || "",
           map_ids: chan0.ids || [],
           map_path: v.map_path || "",
           cache_name: chan0.original_label || "",
-          color: hexToRgb(chan0.color)
+          color: hexToRgb(chan0.color || "#FFFFFF")
         }
         return [k, mask];
       }).filter(([k,mask]) => {
         return (k == 0 || mask.map_ids.length > 0);
       })),
       groups: new Map(groups.map((v,k) => {
-				return [k, {
-					activeIds: v.channels.map(chan => {
-						return chan.id;
-					}),
-					chanRender: new Map([...defaultChanRender,
-					...new Map(v.channels.map(chan => {
-						return [chan.id, {
-							color: hexToRgb(chan.color),
-							range: {
-								min: chan.min * 65535, 
-								max: chan.max * 65535
-							},
-							maxRange: 65535,
-							value: chan.id, id: chan.id,
+        return [k, {
+          activeIds: v.channels.map(chan => {
+            return chan.id;
+          }),
+          chanRender: new Map([...defaultChanRender,
+          ...new Map(v.channels.map(chan => {
+            return [chan.id, {
+              color: hexToRgb(chan.color),
+              range: {
+                min: chan.min * 65535,
+                max: chan.max * 65535
+              },
+              maxRange: 65535,
+              value: chan.id, id: chan.id,
               visible: true
-						}]
-					}))]),
-					label: v.label,
-					value: k
-				}]
-			})),
+            }]
+          }))]),
+          label: v.label,
+          value: k
+        }]
+      })),
       activeIds: channels.length < 2 ? [0] : [0, 1],
       chanLabel: new Map(channels.map((v,k) => {
         return [k, {
@@ -252,6 +371,7 @@ class Repo extends Component {
     // Bind
     this.dismissWarning = this.dismissWarning.bind(this);
     this.updateGroups = this.updateGroups.bind(this);
+    this.updateMaskError = this.updateMaskError.bind(this);
     this.openFileBrowser = this.openFileBrowser.bind(this);
     this.onFileSelected = this.onFileSelected.bind(this);
     this.openVisDataBrowser = this.openVisDataBrowser.bind(this);
@@ -267,7 +387,6 @@ class Repo extends Component {
     this.handleSelect = this.handleSelect.bind(this);
     this.handleSelectStory = this.handleSelectStory.bind(this);
     this.handleSelectStoryMasks = this.handleSelectStoryMasks.bind(this);
-    this.handleConcatStoryMasks = this.handleConcatStoryMasks.bind(this);
     this.handleSelectVis = this.handleSelectVis.bind(this);
     this.handleStoryName = this.handleStoryName.bind(this);
     this.handleStoryText = this.handleStoryText.bind(this);
@@ -292,7 +411,6 @@ class Repo extends Component {
     this.toggleSampleInfo = this.toggleSampleInfo.bind(this);
     this.submitSampleInfo = this.submitSampleInfo.bind(this);
     this.toggleModal = this.toggleModal.bind(this);
-    this.save = this.save.bind(this);
     this.share = this.share.bind(this);
     this.publish = this.publish.bind(this);
     this.deleteActiveGroup = this.deleteActiveGroup.bind(this);
@@ -310,9 +428,14 @@ class Repo extends Component {
     this.handleMaskRemove = this.handleMaskRemove.bind(this);
     this.deleteMask = this.deleteMask.bind(this);
     this.openMaskBrowser = this.openMaskBrowser.bind(this);
-    this.onMaskSelected = this.onMaskSelected.bind(this);
     this.openMaskMapBrowser = this.openMaskMapBrowser.bind(this);
     this.onMaskMapSelected = this.onMaskMapSelected.bind(this);
+    this.onMaskSelected = this.onMaskSelected.bind(this);
+
+    this.save = this.save.bind(this);
+    this.updateMaskMap = debounce(this.updateMaskMap, 1000).bind(this);
+    this.updateMaskPath = debounce(this.updateMaskPath, 1000).bind(this);
+    this.lazyAutosave = debounce(this.lazyAutosave, lazyAutosaveDelay).bind(this);
   }
 
   defaultStory() {
@@ -349,11 +472,30 @@ class Repo extends Component {
 
   componentDidMount() {
     this.labelRGBA();
-    this.setMaskPathStatusPolling(true);
+    this.updateMaskPath();
   }
 
-  componentWillUnmount() {
-    this.setMaskPathStatusPolling(false);
+  componentDidUpdate(oldProps, oldState) {
+    // Skip scheduling autosave on state that has no relation to autosave
+    const needed_conditions = [
+      (old, state) => !state.error,
+      (old, state) => !state.deleteMaskModal,
+      (old, state) => !state.deleteGroupModal,
+      (old, state) => !state.deleteStoryModal,
+      (old, state) => !state.deleteClusterModal
+    ].concat([
+      'lastSaveTime', 'isMaskMapLoading', 'invalidMaskMap', 'warning', 'showFileBrowser',
+      'showVisDataBrowser', 'showMaskBrowser', 'showMaskMapBrowser', 'drawType', 'drawing',
+      'textEdit', 'showModal', 'sampleInfo', 'renameModal', 'addGroupModal', 'needNewGroup',
+      'activeArrow', 'activeStory', 'saving', 'published', 'publishing', 'showPublishStoryModal',
+      'saveProgress', 'saveProgressMax', 'publishProgress', 'publishProgressMax',
+      'activeGroup', 'activeMaskId', 'rangeSliderComplete', 'shownSavePath'
+    ].map((key) => {
+      return (old, state) => old[key] == state[key]
+    }));
+    if (needed_conditions.every((fn)=>fn(oldState, this.state))) {
+      this.lazyAutosave(oldState, new Date());
+    }
   }
 
   labelRGBA() {
@@ -405,13 +547,13 @@ class Repo extends Component {
             label: 'Eosin'
           }]
         ])
-      })    
+      })
     }
   }
 
   handleViewport(viewport) {
     const {stories, activeStory, activeGroup} = this.state;
-    let newStory = stories.get(activeStory) || this.defaultStory();
+    let newStory = {...(stories.get(activeStory) || this.defaultStory())};
 
     this.setState({viewport: viewport});
     if (this.state.textEdit) {
@@ -435,8 +577,8 @@ class Repo extends Component {
     const newStory = stories.get(newActiveStory) || this.defaultStory();
     if (newStory && viewport) {
         const pan = new OpenSeadragon.Point(...newStory.pan);
-        viewport.zoomTo(newStory.zoom); 
-        viewport.panTo(pan); 
+        viewport.zoomTo(newStory.zoom);
+        viewport.panTo(pan);
     }
     this.setState({
       activeStory: newActiveStory,
@@ -504,7 +646,7 @@ class Repo extends Component {
 
     const newCluster = {
       name: (newLabel.cluster + 1),
-			color: hexToRgb("#FFFFFF"),
+      color: hexToRgb("#FFFFFF"),
     };
 
     const newClusters = new Map([...[...newLabel.clusters].map(([k,v]) => {
@@ -563,6 +705,7 @@ class Repo extends Component {
     }
     this.setState({
       stories: newStories,
+      deleteStoryModal: false,
       storyMasksTempCache: newStoryMasksTempCache,
       activeStory: newActiveStory,
       activeVisLabel: {
@@ -570,7 +713,6 @@ class Repo extends Component {
         data: '', x: '', y: '', cluster: -1, clusters: new Map([])
       }
     });
-    this.setState({deleteStoryModal: false})
   }
 
   handleStoryInsert() {
@@ -603,7 +745,7 @@ class Repo extends Component {
 
   handleStoryName(event) {
     const {stories, activeStory, activeGroup, viewport} = this.state;
-    let newStory = stories.get(activeStory) || this.defaultStory();
+    const newStory = {...(stories.get(activeStory) || this.defaultStory())};
     newStory.name = event.target.value;
 
     const newStories = new Map([...stories,
@@ -614,7 +756,7 @@ class Repo extends Component {
 
   handleStoryText(event) {
     const {stories, activeStory, activeGroup, viewport} = this.state;
-    let newStory = stories.get(activeStory) || this.defaultStory();
+    const newStory = {...(stories.get(activeStory) || this.defaultStory())};
     newStory.text = event.target.value;
 
     const newStories = new Map([...stories,
@@ -623,41 +765,41 @@ class Repo extends Component {
     this.setState({stories: newStories});
   }
 
-	toggleModal() {
-	  this.setState({
+  toggleModal() {
+    this.setState({
       showModal: !this.state.showModal
     });
-	}
+  }
 
   updateGroups(groups) {
     const maxChan = this.state.chanLabel.size - 1;
     let extraChan = false;
 
     const g = new Map(groups.map((v,k) => {
-			return [k, {
-				activeIds: v.channels.map(chan => {
+      return [k, {
+        activeIds: v.channels.map(chan => {
           if (chan.id > maxChan) {
             extraChan = true;
           }
-					return chan.id;
-				}),
-				chanRender: new Map([...this.state.chanRender,
-				...new Map(v.channels.map(chan => {
-					return [chan.id, {
-						color: hexToRgb(chan.color),
-						range: {
-							min: chan.min * 65535, 
-							max: chan.max * 65535
-						},
-						maxRange: 65535,
-						value: chan.id, id: chan.id,
+          return chan.id;
+        }),
+        chanRender: new Map([...this.state.chanRender,
+        ...new Map(v.channels.map(chan => {
+          return [chan.id, {
+            color: hexToRgb(chan.color),
+            range: {
+              min: chan.min * 65535,
+              max: chan.max * 65535
+            },
+            maxRange: 65535,
+            value: chan.id, id: chan.id,
             visible: true
-					}]
-				}))]),
-				label: v.label,
-				value: k
-			}]
-		}))
+          }]
+        }))]),
+        label: v.label,
+        value: k
+      }]
+    }))
     if (extraChan) {
       this.setState({
         error: 'Unsupported case of dat file with excess channels'
@@ -670,7 +812,7 @@ class Repo extends Component {
     }
   }
 
-	submitSampleInfo() {
+  submitSampleInfo() {
     fetch('http://127.0.0.1:2020/api/import/groups', {
       method: 'POST',
       body: JSON.stringify({
@@ -700,17 +842,17 @@ class Repo extends Component {
         this.updateGroups(data.groups);
       }
     });
-	}
+  }
 
-	toggleSampleInfo() {
-	  this.setState({
+  toggleSampleInfo() {
+    this.setState({
       sampleInfo: !this.state.sampleInfo
     });
     const filePath = this.filePath.current ? this.filePath.current.value : false;
     if (this.state.sampleInfo && !!filePath) {
       this.submitSampleInfo();
     }
-	}
+  }
 
   toggleTextEdit(value) {
     const {textEdit, activeStory} = this.state;
@@ -779,11 +921,13 @@ class Repo extends Component {
     }
     this.setState({invalidChannelGroupName: false});
 
-    let group = this.state.groups.get(this.state.activeGroup);
-    let newGroups = new Map(this.state.groups);
-    group.label = evt.target.value;
-    newGroups.set(this.state.activeGroup, group);
-    this.setState({groups: newGroups});
+    if (this.state.groups.has(this.state.activeGroup)) {
+      let group = {...this.state.groups.get(this.state.activeGroup)};
+      let newGroups = new Map(this.state.groups);
+      group.label = evt.target.value;
+      newGroups.set(this.state.activeGroup, group);
+      this.setState({groups: newGroups});
+    }
   }
 
   deleteActiveGroup() {
@@ -804,7 +948,7 @@ class Repo extends Component {
     }
     let selectedGroup = newGroups.get(newActiveGroup);
     let newActiveIds = selectedGroup ? selectedGroup.activeIds : [0, 1];
-    this.setState({groups: newGroups, 
+    this.setState({groups: newGroups,
       activeGroup: newActiveGroup,
       deleteGroupModal: false,
       activeIds: newActiveIds });
@@ -847,66 +991,14 @@ class Repo extends Component {
           ...(new Map([[this.state.activeStory, newStory]]))])
       })
     }
-}
-
-  handleUpdateAllMasks(newMask) {
-    this.setState({
-      masks: new Map([...this.state.masks].map(([a, b]) => {
-        return [a, {
-          ...b,
-          ...newMask
-        }];
-      }))
-    })
   }
 
-  handleUpdateMask(newMask, clear=false) {
-    const maskId = clear? 0 : Math.max(0, this.state.activeMaskId);
-    let activeMask = this.state.masks.get(maskId);
+  handleUpdateAllMasks(newMask) {
+    this.setState(handleUpdateAllMasksPure(this.state, newMask));
+  }
 
-    if (activeMask === undefined) {
-      activeMask = {
-        cache_name: "",
-        name: ""+(maskId+1),
-        color: [255, 255, 255],
-        map_ids: [],
-        map_path: "",
-        path: ""
-      };
-    };
-
-    newMask = {
-      ...activeMask,
-      ...newMask
-    };
-
-    if (clear) {
-      const storyMasksTempCache = new Map();
-      [...this.state.stories].forEach(([s_id, story]) => {
-        // Remove the masks from the actual stories, only to save the names in the cache
-        if (this.state.masks.size > 1) {
-          const cache_masks = story.masks.map(m=>this.state.masks.get(m)).filter(mask=> {
-            return mask.cache_name && mask.map_ids && mask.map_ids.length > 0;
-          });
-          const cache_names = cache_masks.map(mask => mask.cache_name);
-          if (cache_names.length > 0) {
-            storyMasksTempCache.set(s_id, cache_names);
-          }
-          this.handleSelectStoryMasks(story.masks.includes(0) ? [{id:0}] : [], {s_id});
-        }
-      });
-      if (storyMasksTempCache.size > 0) {
-        this.setState({
-          storyMasksTempCache
-        });
-      }
-    }
- 
-    this.setState({
-      activeMaskId: maskId,
-      masks: new Map([...(clear? new Map(): this.state.masks),
-                ...(new Map([[maskId, newMask]]))])
-    })
+  handleUpdateMask(newMaskParams, clear=false) {
+    this.setState(handleUpdateMaskPure(this.state, newMaskParams, clear));
   }
 
   handleMaskChange(maskId) {
@@ -916,45 +1008,12 @@ class Repo extends Component {
   }
 
   handleMaskInsert(attributes={}) {
-    let {stories} = this.state;
-    let activeMaskId = this.state.activeMaskId + 1;
-    let activeMask = this.state.masks.get(activeMaskId - 1);
-
-    if (activeMask === undefined) {
-      activeMask = {
-        map_ids: [],
-        map_path: "",
-        path: ""
-      };
-    }
-
-    const newMask = {
-      ...activeMask,
-      color: [255, 255, 255],
-      name: ""+(activeMaskId+1),
-      cache_name: "",
-      ...attributes
-    };
-    
-    const newMasks = new Map([...[...this.state.masks].map(([k,v]) => {
-                                return [k < activeMaskId? k: k+1, v];
-                              }),
-                              ...(new Map([[activeMaskId, newMask]]))]);
-
-    const sortedMasks = new Map([...newMasks.entries()].sort((e1, e2) => e1[0] - e2[0]));
-
-    // Update story mask array with new ids
-    stories.forEach((story) => {
-      story.masks = story.masks.map((k) => {
-        return k < activeMaskId? k : k + 1;
-      })
-    })
-
-    this.setState({
-      activeMaskId: activeMaskId,
-      masks: sortedMasks,
-      stories: stories
-    })
+    const newState = handleMaskInsertPure({
+      masks: this.state.masks,
+      stories: this.state.stories,
+      activeMaskId: this.state.activeMaskId
+    }, attributes);
+    this.setState(newState);
   }
 
   handleMaskRemove() {
@@ -995,13 +1054,12 @@ class Repo extends Component {
     }
 
     this.setState({
+      deleteMaskModal: false,
       activeMaskId: newMaskId,
       masks: newMasks,
       stories: stories
     });
-    this.setState({deleteMaskModal: false});
   }
-
 
   handleSelectGroup(g, action) {
     if (action.action === 'clear') {
@@ -1029,14 +1087,15 @@ class Repo extends Component {
   _handleSelectGroupForEditing(g) {
     let groups = this.state.groups;
     if (g.__isNew__) {
-      if (!this.validateChannelGroupLabel(g.label)) {
+      // New group values are strings
+      if (!this.validateChannelGroupLabel(g.value)) {
         return undefined;
       }
       const id = groups.size;
       const newGroup = {
         chanRender: this.state.chanRender,
         activeIds: this.state.activeIds,
-        label: g.label,
+        label: g.value,
         value: id
       }
 
@@ -1050,6 +1109,7 @@ class Repo extends Component {
       return id;
     }
     else {
+      // Old group values are indices
       this.setState({
         activeGroup: g.value,
         activeIds: g.activeIds
@@ -1072,7 +1132,7 @@ class Repo extends Component {
 
     if (group) {
       const newGroup = {
-        chanRender: group.chanRender, 
+        chanRender: group.chanRender,
         activeIds: activeIds,
         label: group.label,
         value: group.value
@@ -1087,33 +1147,11 @@ class Repo extends Component {
     }
   }
 
-  handleConcatStoryMasks(masks, params={}) {
-    const {stories} = this.state;
-    const maskArray = masks? masks : [];
-    const activeStory = 's_id' in params ? params.s_id : this.state.activeStory;
-    const newStory = stories.get(activeStory) || this.defaultStory();
-
-    this.handleSelectStoryMasks(
-      newStory.masks.map((id) => {
-        return {id: id};
-      }).concat(maskArray), params
-    )
-  }
-
-  handleSelectStoryMasks(masks, params={}) {
-    const {stories} = this.state;
-    const maskArray = masks? masks : [];
-    const activeStory = 's_id' in params ? params.s_id : this.state.activeStory;
-    const newStory = stories.get(activeStory) || this.defaultStory();
-
-    newStory.masks = maskArray.map(c => c.id);
-
-    const newStories = new Map([...stories,
-                              ...(new Map([[activeStory, newStory]]))]);
-
-    this.setState({
-      stories: newStories
-    })
+  handleSelectStoryMasks(mask_ids=[]) {
+    const newStory = this.state.stories.get(this.state.activeStory) || this.defaultStory();
+    this.setState(handleSelectStoryMasksPure(
+      this.state, mask_ids, newStory
+    ));
   }
 
   computeBounds(value, start, len) {
@@ -1137,14 +1175,14 @@ class Repo extends Component {
 
     const {stories, activeStory, activeGroup, viewport} = this.state;
     let newStory = stories.get(activeStory) || this.defaultStory();
-		const activeArrow = this.state.activeArrow;
+    const activeArrow = this.state.activeArrow;
 
-		if (newStory.arrows.length - 1 < activeArrow) {
-			return;
-		}
+    if (newStory.arrows.length - 1 < activeArrow) {
+      return;
+    }
 
     let angle = parseInt(event.target.value)
-    newStory.arrows[activeArrow].angle = isNaN(angle) ? '' : angle; 
+    newStory.arrows[activeArrow].angle = isNaN(angle) ? '' : angle;
 
     const newStories = new Map([...stories,
                               ...(new Map([[activeStory, newStory]]))]);
@@ -1158,13 +1196,13 @@ class Repo extends Component {
 
     const {stories, activeStory, activeGroup, viewport} = this.state;
     let newStory = stories.get(activeStory) || this.defaultStory();
-		const activeArrow = this.state.activeArrow;
+    const activeArrow = this.state.activeArrow;
 
-		if (newStory.arrows.length - 1 < activeArrow) {
-			return;
-		}
+    if (newStory.arrows.length - 1 < activeArrow) {
+      return;
+    }
 
-		newStory.arrows[activeArrow].hide = !newStory.arrows[activeArrow].hide;
+    newStory.arrows[activeArrow].hide = !newStory.arrows[activeArrow].hide;
 
     const newStories = new Map([...stories,
                               ...(new Map([[activeStory, newStory]]))]);
@@ -1176,7 +1214,7 @@ class Repo extends Component {
 
   handleRotation(event) {
     let angle = parseInt(event.target.value)
-    angle = isNaN(angle) ? 0 : angle; 
+    angle = isNaN(angle) ? 0 : angle;
 
     this.setState({
       rotation: angle
@@ -1205,13 +1243,13 @@ class Repo extends Component {
 
     const {stories, activeStory, activeGroup, viewport} = this.state;
     let newStory = stories.get(activeStory) || this.defaultStory();
-		const activeArrow = this.state.activeArrow;
+    const activeArrow = this.state.activeArrow;
 
-		if (newStory.arrows.length - 1 < activeArrow) {
-			return;
-		}
+    if (newStory.arrows.length - 1 < activeArrow) {
+      return;
+    }
 
-		newStory.arrows[activeArrow].text = event.target.value;
+    newStory.arrows[activeArrow].text = event.target.value;
 
     const newStories = new Map([...stories,
                               ...(new Map([[activeStory, newStory]]))]);
@@ -1230,11 +1268,11 @@ class Repo extends Component {
     let newStory = stories.get(activeStory) || this.defaultStory();
 
     newStory.arrows = newStory.arrows.concat([{
-				position: new_xy,
+        position: new_xy,
         hide: false,
         angle: '',
-				text: ''
-		}]);
+        text: ''
+    }]);
 
     const newStories = new Map([...stories,
                               ...(new Map([[activeStory, newStory]]))]);
@@ -1269,7 +1307,7 @@ class Repo extends Component {
     const {stories, activeStory, activeGroup, viewport} = this.state;
     let newStory = stories.get(activeStory) || this.defaultStory();
     const overlays = newStory.overlays;
-		const overlay = overlays.pop();
+    const overlay = overlays.pop();
 
     const xy = overlay.slice(0, 2);
     const wh = overlay.slice(2);
@@ -1293,21 +1331,21 @@ class Repo extends Component {
   addArrowText(i) {
     this.setState({
       showModal: true,
-			activeArrow: i
+      activeArrow: i
     })
   }
 
-	deleteArrow(i) {
+  deleteArrow(i) {
     const {stories, activeStory, activeArrow} = this.state;
     let newStory = stories.get(activeStory) || this.defaultStory();
 
-		newStory.arrows.splice(i, 1);
+    newStory.arrows.splice(i, 1);
 
-		if (i <= activeArrow) {
-			this.setState({
-				activeArrow: Math.max(0, activeArrow - 1)
-			})
-		}
+    if (i <= activeArrow) {
+      this.setState({
+        activeArrow: Math.max(0, activeArrow - 1)
+      })
+    }
 
     const newStories = new Map([...stories,
                               ...(new Map([[activeStory, newStory]]))]);
@@ -1315,21 +1353,21 @@ class Repo extends Component {
     this.setState({
       stories: newStories
     });
-	}
+  }
 
-	deleteOverlay(i) {
+  deleteOverlay(i) {
     const {stories, activeStory} = this.state;
     let newStory = stories.get(activeStory) || this.defaultStory();
 
-		newStory.overlays.splice(i, 1);
+    newStory.overlays.splice(i, 1);
 
-	  const newStories = new Map([...stories,
+    const newStories = new Map([...stories,
                               ...(new Map([[activeStory, newStory]]))]);
 
     this.setState({
       stories: newStories
     });
-	}
+  }
 
   interactor(viewer) {
     viewer.addHandler('canvas-click', function(e) {
@@ -1432,32 +1470,28 @@ class Repo extends Component {
     }
     const newChanLabel = new Map([...chanLabel,
                                  ...(new Map([[id, newLabel]]))]);
-
-    this.setState({
-      chanLabel: newChanLabel
-    });
-    if (group) {
-      const newGroup = {...group}
-      const newChanRender = new Map([...group.chanRender,
-                                 ...(new Map([[id, newRender]]))]);
-      newGroup['chanRender'] = newChanRender
-      const newGroups = new Map([...groups,
-                                ...(new Map([[activeGroup, newGroup]]))]);
-      this.setState({
-        groups: newGroups,
-      });
-    }
-
     const newChanRender = new Map([...chanRender,
                                ...(new Map([[id, newRender]]))]);
 
-    this.setState({
+    const newState = {
+      chanLabel: newChanLabel,
       chanRender: newChanRender,
       rangeSliderComplete: changeComplete
-    });
+    };
+
+    if (group) {
+      const newGroup = {...group}
+      newGroup['chanRender'] = new Map([...group.chanRender,
+                                 ...(new Map([[id, newRender]]))]);
+
+      newState['groups'] = new Map([...groups,
+                                ...(new Map([[activeGroup, newGroup]]))]);
+    }
+
+    this.setState(newState);
   }
 
-  createMaskOutput(masks) {
+  createMaskOutput({masks}) {
     return Array.from(masks.values()).map(v => {
       const channels = [{
           'original_label': v.cache_name || '',
@@ -1475,7 +1509,7 @@ class Repo extends Component {
     });
   }
 
-  createGroupOutput(groups, chanLabel) {
+  createGroupOutput({groups, chanLabel, rgba}) {
     return Array.from(groups.values()).map(v => {
       const channels = v.activeIds.map(id => {
         const chan = v.chanRender.get(id);
@@ -1485,10 +1519,10 @@ class Repo extends Component {
           'max': chan.range.max / chan.maxRange,
           'label': chanLabel.get(id).label,
           'id': id,
-        } 
+        }
       });
       let render = channels;
-      if (this.state.rgba) {
+      if (rgba) {
         render = Array.from(this.RGBAChannels().values()).map(rgba => {
           return {
             'color': rgbToHex(rgba.color),
@@ -1496,7 +1530,7 @@ class Repo extends Component {
             'max': rgba.range.max / rgba.maxRange,
             'label': rgba.label,
             'id': rgba.id,
-          } 
+          }
         });
       }
       let group_out = {
@@ -1514,10 +1548,10 @@ class Repo extends Component {
     });
   }
 
-  createStoryDefinition(waypoints, groups) {
+  createStoryDefinition(stories, groups) {
     const story_definition = {
       //'channels': [],
-      'waypoints': waypoints,
+      'waypoints': stories,
       'groups': groups,
       'sample_info': {
         'rotation': this.state.rotation,
@@ -1536,9 +1570,8 @@ class Repo extends Component {
     return story_definition;
   }
 
-  createWaypoints(waypoints) {
-    const {masks, groups} = this.state;
-    return Array.from(waypoints.values()).map(v => {
+  createWaypoints({stories, groups, masks}) {
+    return Array.from(stories.values()).map(v => {
       let wp = {
         'name': v.name,
         'text': v.text,
@@ -1547,7 +1580,7 @@ class Repo extends Component {
         'masks': v.masks,
         'arrows': v.arrows,
         'overlays': v.overlays,
-        'group': groups.get(v.group).label,
+        'group': groups.has(v.group) ? groups.get(v.group).label : undefined,
       }
       Array.from(v.visLabels.values()).forEach(visLabel => {
         if (visLabel.value < 2) {
@@ -1593,18 +1626,18 @@ class Repo extends Component {
   publish() {
 
     let minerva = this.props.env === 'cloud';
- 
+
     if (minerva) {
       this.setPublishStoryModal(true)
     }
     else {
       let {groups, masks} = this.state;
       const {stories, chanLabel} = this.state;
-      const {img} = this.state;
+      const {img, rgba} = this.state;
 
-      const mask_output = this.createMaskOutput(masks);
-      const group_output = this.createGroupOutput(groups, chanLabel);
-      const story_output = this.createWaypoints(stories);
+      const mask_output = this.createMaskOutput({masks});
+      const group_output = this.createGroupOutput({groups, chanLabel, rgba});
+      const story_output = this.createWaypoints({stories, groups, masks});
       const story_definition = this.createStoryDefinition(story_output, group_output);
 
       this.setState({publishing: true});
@@ -1612,7 +1645,7 @@ class Repo extends Component {
       let render = fetch('http://localhost:2020/api/render', {
         method: 'POST',
         body: JSON.stringify({
-					'masks': mask_output,
+          'masks': mask_output,
           'groups': group_output,
           'waypoints': story_output,
           'header': this.state.sampleText,
@@ -1633,63 +1666,122 @@ class Repo extends Component {
         this.setProgressPolling(false);
         this.getPublishProgress();
       }).catch(err => {
-        console.error(err);
         this.setState({publishing: false});
         this.setProgressPolling(false);
       })
     }
   }
 
-  save() {
+  getNonReadyMaskPaths({masks, maskPathStatus}) {
+    const unique_mask_paths = [...new Set([...masks].map(([key, value]) => value.path))]
+    // all mask paths that are not ready
+    return unique_mask_paths.filter(p => {
+      if (!p) {
+        return false;
+      }
+      const p_status = maskPathStatus.get(p)
+      return !(p_status? p_status.ready : false)
+    })
+  }
 
-    let {groups, masks} = this.state;
+  // This function is debounced
+  async lazyAutosave(oldState, autosaveTime) {
+    const outdated = autosaveTime <= this.state.lastSaveTime;
+    if (!outdated) {
+      const no_conditions = [
+        !!this.state.error, this.state.saving,
+        this.getNonReadyMaskPaths(this.state).length > 0,
+        this.state.invalidMaskMap, this.state.isMaskMapLoading
+      ]
+      const yes_conditions = [
+        (old, state) => old.rotation !== state.rotation,
+        (old, state) => old.imageName !== state.imageName,
+        (old, state) => old.sampleName !== state.sampleName,
+        (old, state) => old.sampleText !== state.sampleText,
+        (old, state) => old.authorName !== state.authorName,
+        (old, state) => old.invalidMaskMap && !state.invalidMaskMap,
+        (old, state) => {
+          const mask_out = this.createMaskOutput(state);
+          const old_mask_out = this.createMaskOutput(old);
+          return old_mask_out.length <= mask_out.length && !equal(old_mask_out, mask_out);
+        },
+        (old, state) => !equal(this.createWaypoints(old), this.createWaypoints(state)),
+        (old, state) => !equal(this.createGroupOutput(old), this.createGroupOutput(state))
+      ];
+      if (
+        !no_conditions.some(Boolean)
+        && yes_conditions.some((fn)=>fn(oldState, this.state))
+      ) {
+        console.log('Autosaving!')
+        return await this.save(true);
+      }
+    }
+    const outdated_error = outdated? ' Already saved' : '';
+    console.log(`Not autosaving!${outdated_error}`);
+    return null;
+  }
+
+  async save(is_autosave=false) {
+
+    let {groups, masks, saving, rgba} = this.state;
     const {stories, chanLabel} = this.state;
     const {img} = this.state;
-    let minerva = this.props.env === 'cloud';
-
-    const mask_output = this.createMaskOutput(masks);
-    const group_output = this.createGroupOutput(groups, chanLabel);
-    const story_output = this.createWaypoints(stories);
-    const story_definition = this.createStoryDefinition(story_output, group_output);
+    if (saving) {
+      return;
+    }
 
     this.setState({saving: true});
 
-    if (minerva) {
-      this.saveRenderingSettings(img.uuid, group_output).then(res => {
-        Client.saveStory(story_definition).then(res => {
-          this.setState({saving: false, storyUuid: res.uuid });
-        }).catch(err => {
-          console.error(err);
-          this.setState({saving: false});
-        });
-      });
-    }
-    else {
-			let save = fetch('http://localhost:2020/api/save', {
-				method: 'POST',
-				body: JSON.stringify({
-					'waypoints': story_output,
-					'groups': group_output,
-					'masks': mask_output,
-          'sample_info': {
-            'rotation': this.state.rotation,
-            'name': this.state.sampleName,
-            'text': this.state.sampleText
-          }
-				}),
-				headers: {
-					"Content-Type": "application/json"
-				}
-      })
+    let minerva = this.props.env === 'cloud';
 
-      save.then(res => {
-        setTimeout(() => {
-          this.setState({saving: false});
-        }, 3000);
-      }).catch(err => {
-        console.error(err);
-        this.setState({saving: false});
-      })
+    const mask_output = this.createMaskOutput({masks});
+    const group_output = this.createGroupOutput({groups, chanLabel, rgba});
+    const story_output = this.createWaypoints({stories, groups, masks});
+    const story_definition = this.createStoryDefinition(story_output, group_output);
+    const sample_info = {
+      'rotation': this.state.rotation,
+      'name': this.state.sampleName,
+      'text': this.state.sampleText
+    };
+
+    try {
+      if (minerva) {
+          if(!!is_autosave) {
+            throw Error('Cannot Autosave to Minerva Cloud');
+          }
+          await this.saveRenderingSettings(img.uuid, group_output);
+          const res = await Client.saveStory(story_definition);
+          this.setState({
+            saving: false,
+            storyUuid: res.uuid,
+            lastSaveTime: new Date()
+          });
+      }
+      else {
+        const res = await fetch('http://localhost:2020/api/save', {
+          method: 'POST',
+          body: JSON.stringify({
+            'is_autosave': !!is_autosave,
+            'waypoints': story_output,
+            'groups': group_output,
+            'masks': mask_output,
+            'sample_info': sample_info
+          }),
+          headers: {
+            "Content-Type": "application/json"
+          }
+        })
+
+        // Artificial delay to make saving show in UI
+        await new Promise(resolve => setTimeout(resolve, 1000));
+        this.setState({
+          saving: false,
+          lastSaveTime: new Date()
+        });
+      }
+    }
+    catch (err) {
+      this.setState({saving: false});
     }
   }
 
@@ -1704,18 +1796,18 @@ class Repo extends Component {
         groups: groups
       })
     }).catch(err => {
-      console.error(err);
       this.setState({saving: false});
     });
   }
 
   setProgressPolling(poll) {
+    if (this.progressInterval) {
+      clearInterval(this.progressInterval);
+    }
     if (poll) {
       this.progressInterval = setInterval(() => {
         this.getPublishProgress();
       }, 500);
-    } else {
-      clearInterval(this.progressInterval);
     }
   }
 
@@ -1725,7 +1817,7 @@ class Repo extends Component {
     }).then(progress => {
       if (progress.progress >= progress.max && progress.max != 0) {
         this.setState({
-          published: true 
+          published: true
         })
       }
       this.setState({
@@ -1747,7 +1839,7 @@ class Repo extends Component {
   }
 
   onFileSelected(file, folder=null) {
-    this.setState({ 
+    this.setState({
       showFileBrowser: false
     });
     if (file && file.path) {
@@ -1760,7 +1852,7 @@ class Repo extends Component {
   }
 
   onVisDataSelected(file) {
-    this.setState({ 
+    this.setState({
       showVisDataBrowser: false
     });
     if (file && file.path) {
@@ -1776,10 +1868,115 @@ class Repo extends Component {
     this.setState({ showMaskMapBrowser: true});
   }
 
+  // This function is debounced
+  async updateMaskMap() {
+
+    const mask_0 = {
+      ...(this.state.masks.get(0) || defaultMask())
+    };
+    const { map_path } = mask_0;
+    const needsLoading = !!map_path;
+
+    this.setState({
+      invalidMaskMap: false,
+      isMaskMapLoading: needsLoading
+    }, this.updateMaskError);
+
+    if (!needsLoading) {
+      return;
+    }
+
+    // Double encoded URI component is required for flask
+    const key = encodeURIComponent(encodeURIComponent(map_path));
+
+    try {
+      const url = `http://localhost:2020/api/mask_subsets/${key}`;
+      const response = await fetch(url, {
+        headers: {
+          'pragma': 'no-cache',
+          'cache-control': 'no-store'
+        }
+      });
+      const {storyMasksTempCache, stories} = this.state;
+      const res = handleFetchErrors(response);
+      const data = (await res.json()) || {};
+      const subsets = "mask_subsets" in data ? data.mask_subsets : [];
+      const colors = "subset_colors" in data ? data.subset_colors : [];
+      const subset_name_set = new Set();
+      const newMaskState = subsets.reduce((newState, [key, ids], idx) => {
+        const color = idx < colors.length? colors[idx]: [255, 255, 255];
+        subset_name_set.add(key);
+        if (ids.length > 0) {
+          return {
+            masks: new Map([
+              ...newState.masks,
+              [
+                newState.masks.size, {
+                  ...mask_0,
+                  map_ids: ids,
+                  color: color,
+                  cache_name: key,
+                  name: key
+                }
+              ]
+            ])
+          };
+        }
+        return newState;
+      }, {
+        masks: new Map([[0, mask_0]]),
+      });
+      const newStoryMaskState = [...storyMasksTempCache].reduce((newState, [s_id, cache_name_list]) => {
+        // Reset Story Masks from cache
+        return cache_name_list.reduce((newestState, cache_name) => {
+          if (subset_name_set.has(cache_name)) {
+            const story = newestState.stories.get(s_id);
+            const is_same = ([idx, mask]) => mask.cache_name == cache_name;
+            const m_id = ([...newestState.masks].find(is_same) || [])[0];
+            if (!!story && !!m_id && !story.masks.includes(m_id)) {
+              return {
+                ...handleConcatStoryMasksPure({
+                  stories: newestState.stories,
+                  activeStory: s_id
+                }, [m_id], story),
+                masks: newestState.masks
+              }
+            }
+          }
+          return newestState;
+        }, newState);
+      }, {
+        masks: newMaskState.masks,
+        stories: new Map([...stories])
+      });
+      const newState = {
+        ...newStoryMaskState,
+        invalidMaskMap: false,
+        isMaskMapLoading: false,
+        activeMaskId: newMaskState.masks.size - 1
+      };
+      return this.setState(newState, this.updateMaskError);
+    }
+    catch (error) {
+      const newState = {
+        invalidMaskMap: true,
+        isMaskMapLoading: false
+      };
+      return this.setState(newState, this.updateMaskError);
+    }
+  }
+
+
   async fetchMaskPathStatus(mask_path) {
+    if (!mask_path) {
+      return {
+        invalid: true,
+        ready: false,
+        path: '',
+      }
+    }
     // Double encoded URI component is required for flask
     const key = encodeURIComponent(encodeURIComponent(mask_path))
-
     const response =  await fetch(`http://localhost:2020/api/validate/u32/${key}`, {
       headers: {
         'pragma': 'no-cache',
@@ -1792,7 +1989,6 @@ class Repo extends Component {
       return res.json();
     }
     catch (error) {
-      console.error(error)
       return {
         invalid: true,
         ready: false,
@@ -1801,24 +1997,18 @@ class Repo extends Component {
     }
   }
 
-  async updateMaskPathStatus() {
+  updateMaskError() {
     const { masks, maskPathStatus, invalidMaskMap} = this.state;
-    const unique_mask_paths = [...new Set([...masks].map(([key, value]) => value.path))]
-    // Only fetch new status for paths that are not ready
-    const non_ready_mask_paths = unique_mask_paths.filter(p => {
-      const p_status = maskPathStatus.get(p)
-      return !(p_status? p_status.ready : false)
-    })
-
-    const newMaskPathStatus = new Map(
-      (await Promise.all(non_ready_mask_paths.map(this.fetchMaskPathStatus))).map((d,i) => {
-        return [non_ready_mask_paths[i], d]
-      })
-    )
-    const invalid_new_mask_paths = non_ready_mask_paths.filter(p => {
-      const p_status = newMaskPathStatus.get(p)
+    const nonReadyMaskPaths = this.getNonReadyMaskPaths({masks, maskPathStatus});
+    const invalid_new_mask_paths = nonReadyMaskPaths.filter(p => {
+      const p_status = maskPathStatus.get(p);
       return p_status? p_status.invalid : true
     })
+    const valid_new_mask_paths = nonReadyMaskPaths.filter(p => {
+      const p_status = maskPathStatus.get(p);
+      return p_status? !p_status.invalid : false
+    })
+
     let new_error = null
     if (invalid_new_mask_paths.length) {
       const s = invalid_new_mask_paths.length === 1 ? '' : 's'
@@ -1834,145 +2024,71 @@ class Repo extends Component {
       const csv_error = 'invalid mask cell state CSV';
       new_error = new_error ? `${new_error} and ${csv_error}`: csv_error;
     }
-    
     this.setState({
-      error: new_error,
-      maskPathStatus: new Map([
-        ...maskPathStatus,
-        ...newMaskPathStatus
-      ])
-    })
+      error: new_error
+    }, ()=> {
+      // We're still waiting for the mask to convert
+      if (valid_new_mask_paths.length) {
+        const mask_0 = [...masks].find(([i, mask]) => {
+          return valid_new_mask_paths.includes(mask.path);
+        });
+        if (mask_0 !== undefined) {
+          this.updateMaskPath(mask_0.path);
+        }
+      }
+    });
   }
 
-  setMaskPathStatusPolling(poll) {
-    if (poll) {
-      this.maskPathStatusInterval = setInterval(() => {
-        this.updateMaskPathStatus();
-      }, 3000);
-    } else {
-      clearInterval(this.maskPathStatusInterval);
-    }
+  // This function is debounced
+  async updateMaskPath() {
+    const { masks, maskPathStatus } = this.state;
+    const nonReadyMaskPaths = this.getNonReadyMaskPaths({masks, maskPathStatus});
+    const newMaskPathStatus = new Map([
+      ...maskPathStatus,
+      ...(await Promise.all(nonReadyMaskPaths.map(this.fetchMaskPathStatus))).map((d,i) => {
+        return [nonReadyMaskPaths[i], d]
+      })
+    ]);
+
+    this.setState({
+      maskPathStatus: newMaskPathStatus
+    }, this.updateMaskError)
   }
 
-  async onMaskMapSelected(file, params={}) {
-    this.setState({ 
+  onMaskMapSelected(file, params={}) {
+    this.setState({
       showMaskMapBrowser: false
     });
-    const {masks} = this.state;
-    let mask = masks.get(0);
+    const file_path = file && file.path ? file.path : '';
 
-    if (mask === undefined) {
-      mask = {
-        cache_name: "",
-        name: "all cells",
-        color: [255, 255, 255],
-        map_ids: [],
-        map_path: "",
-        path: ""
-      };
-    }
+    const newState = handleUpdateMaskPure(this.state, {
+      cache_name: "",
+      name: "all cells",
+      map_path: file_path,
+    }, true);
 
-    if (file && file.path) {
-
-      if (file.path != mask.map_path) {
-        this.handleUpdateMask({
-          ...mask,
-          ...params,
-          cache_name: "",
-          name: "all cells",
-          map_path: file.path
-        }, true);
-      }
-
-      this.setState({
-        invalidMaskMap: false,
-        isMaskMapLoading: true
-      });
-
-      // Double encoded URI component is required for flask
-      const key = encodeURIComponent(encodeURIComponent(file.path));
-
-      try {
-        const url = `http://localhost:2020/api/mask_subsets/${key}`;
-        const response = await fetch(url, {
-          headers: {
-            'pragma': 'no-cache',
-            'cache-control': 'no-store'
-          }
-        });
-        const {storyMasksTempCache} = this.state;
-        const res = handleFetchErrors(response);
-        const data = (await res.json()) || {};
-        const subsets = "mask_subsets" in data ? data.mask_subsets : [];
-        const colors = "subset_colors" in data ? data.subset_colors : [];
-        const subset_name_set = new Set();
-        subsets.forEach(([key, ids], idx) => {
-          const color = idx < colors.length? colors[idx]: [255, 255, 255];
-          subset_name_set.add(key);
-          if (ids.length > 0) {
-            this.handleMaskInsert({
-              map_ids: ids,
-              color: color,
-              cache_name: key,
-              name: key
-            });
-          }
-        });
-        this.setState({
-          isMaskMapLoading: false
-        });
-        [...storyMasksTempCache].forEach(([s_id, cache_name_list]) => {
-          const story = this.state.stories.get(s_id);
-          // Reset Story Masks from cache
-          cache_name_list.forEach((cache_name) => {
-            if (subset_name_set.has(cache_name)) {
-              const is_same = ([idx, mask]) => mask.cache_name == cache_name;
-              const m_id = ([...this.state.masks].find(is_same) || [])[0];
-              if (m_id != undefined && !story.masks.includes(m_id)) {
-                this.handleConcatStoryMasks([{id: m_id}], {s_id});
-              }
-            }
-          });
-        });
-      }
-      catch (error) {
-        console.error(error)
-        this.handleUpdateMask({
-          ...mask,
-          cache_name: "",
-          name: "all cells",
-          map_path: file.path,
-        }, true);
-        this.setState({
-          invalidMaskMap: true,
-          isMaskMapLoading: false
-        });
-      }
-    }
+    this.setState(newState, this.updateMaskMap);
   }
 
   onMaskSelected(file) {
-    this.setState({ 
+    this.setState({
       showMaskBrowser: false
     });
+    const file_path = file && file.path ? file.path : '';
 
-    if (file && file.path) {
-      if (this.state.masks.get(0) === undefined) {
-        this.handleUpdateMask({
-          cache_name: "",
-          name: "all cells",
-          color: [255, 255, 255],
-          map_ids: [],
-          map_path: "",
-          path: file.path
-        }, true);
-      }
-      else {
-        this.handleUpdateAllMasks({
-          path: file.path
-        });
-      }
+    let newState = {};
+    if (this.state.masks.get(0) === undefined) {
+      newState = handleUpdateMaskPure(this.state, {
+        path: file_path
+      }, true);
     }
+    else {
+      newState = handleUpdateAllMasksPure(this.state, {
+        path: file_path
+      });
+    }
+
+    this.setState(newState, this.updateMaskPath);
   }
 
   dismissWarning() {
@@ -1980,9 +2096,9 @@ class Repo extends Component {
   }
 
   preview() {
-    let {groups, chanLabel} = this.state;
-      const group_output = this.createGroupOutput(groups, chanLabel);
-      const story_output = this.createWaypoints(this.state.stories);
+    let {groups, chanLabel, stories, masks, rgba} = this.state;
+      const group_output = this.createGroupOutput({groups, chanLabel, rgba});
+      const story_output = this.createWaypoints({stories, groups, masks});
       const story_definition = this.createStoryDefinition(story_output, group_output);
       this.props.onPreview(true, story_definition);
   }
@@ -2078,6 +2194,9 @@ class Repo extends Component {
   render() {
     const { rgba } = this.state;
     let minerva = this.props.env === 'cloud';
+    const {inputFile, outputSaveFile} = this.props;
+    const mustShowSavePath = !this.state.shownSavePath && (inputFile !== outputSaveFile);
+
     const { activeVisLabel } = this.state;
     const { img, groups, chanLabel, textEdit } = this.state;
     const { chanRender, activeIds, activeGroup } = this.state;
@@ -2089,7 +2208,7 @@ class Repo extends Component {
     const activeChanLabel = new Map(activeIds.map(a => [a, chanLabel.get(a)]))
     const activeChannels = new Map(activeIds.map(a => [a, {
       ...activeChanLabel.get(a), ...activeChanRender.get(a)
-    } ])) 
+    } ]))
 
 
     let visibleChannels = new Map(
@@ -2103,15 +2222,14 @@ class Repo extends Component {
 
     const {maskPathStatus} = this.state;
     const {stories, activeStory, masks, activeMaskId} = this.state;
-    const story = stories.get(activeStory) || this.defaultStory(); 
-
+    const story = stories.get(activeStory) || this.defaultStory();
     visibleChannels = new Map([ ...visibleChannels,
       ...(new Map(story.masks.map((k) => {
         let mask_k = `mask_${k}`;
         let mask = masks.get(k);
         mask.range = {
           max: 16777215,
-          min: 0 
+          min: 0
         };
         mask.u32 = true;
         // mask.map_ids = mask.map_ids;
@@ -2122,7 +2240,7 @@ class Repo extends Component {
         mask.value = mask_k;
         mask.label = mask_k;
         mask.id = mask_k;
-        return [mask_k, mask] 
+        return [mask_k, mask]
       }).filter(([mask_k, mask]) => {
         // Only show masks that are ready
         const m_status = maskPathStatus.get(mask.path)
@@ -2136,19 +2254,19 @@ class Repo extends Component {
     const storyMasks = story.masks;
     const overlays = story.overlays;
     const arrows = story.arrows;
-		const activeArrow = this.state.activeArrow;
-		let arrowText = '';
-		if (arrows.length > 0) {
-			arrowText = arrows[activeArrow].text;
-		}
-		let arrowAngle = '';
-		if (arrows.length > 0) {
-			arrowAngle = arrows[activeArrow].angle;
-		}
-		let arrowHidden = false;
-		if (arrows.length > 0) {
-			arrowHidden = arrows[activeArrow].hide;
-		}
+    const activeArrow = this.state.activeArrow;
+    let arrowText = '';
+    if (arrows.length > 0) {
+      arrowText = arrows[activeArrow].text;
+    }
+    let arrowAngle = '';
+    if (arrows.length > 0) {
+      arrowAngle = arrows[activeArrow].angle;
+    }
+    let arrowHidden = false;
+    if (arrows.length > 0) {
+      arrowHidden = arrows[activeArrow].hide;
+    }
 
     let viewer;
     if (minerva) {
@@ -2183,23 +2301,23 @@ class Repo extends Component {
       />
     }
 
-    let saveButton = null;
+    const saveButton = (
+      <button className="ui button primary"
+        onClick={this.save}
+        disabled={this.state.saving}
+        title="Save story">
+          <FontAwesomeIcon icon={faSave} />&nbsp;
+        Save&nbsp;
+        <ClipLoader animation="border"
+        size={12} color={"#FFFFFF"}
+        loading={this.state.saving}/>
+      </button>
+    );
+
     let publishButton = null;
     if (group != undefined) {
-      saveButton = (
-        <button className="ui button primary" 
-          onClick={this.save} 
-          disabled={this.state.saving} 
-          title="Save story">
-            <FontAwesomeIcon icon={faSave} />&nbsp;
-          Save&nbsp;
-          <ClipLoader animation="border"
-          size={12} color={"#FFFFFF"}
-          loading={this.state.saving}/>
-        </button>
-      );
       publishButton = (
-        <button className="ui button primary" disabled={this.state.publishing} 
+        <button className="ui button primary" disabled={this.state.publishing}
           onClick={this.publish}
           title="Publish story">
         <FontAwesomeIcon icon={faBullhorn} />&nbsp;
@@ -2221,11 +2339,10 @@ class Repo extends Component {
         data-tooltip={this.state.shareTooltip} data-position="bottom center">
           <FontAwesomeIcon icon={faShare} />&nbsp;
       Share
-      </button> 
+      </button>
     );
     if (this.props.env === 'local') {
       // Hide buttons which are not implemented in local environment yet
-      // TODO - Implement rendering in backend and show previewButton 
       previewButton = null;
       shareButton = null;
       if (this.state.published) {
@@ -2311,31 +2428,31 @@ class Repo extends Component {
 
       <div className="container-fluid Repo">
         {viewer}
-				<Modal toggle={this.toggleModal}
-					show={this.state.showModal}>
+        <Modal toggle={this.toggleModal}
+          show={this.state.showModal}>
             <button className="ui button compact" onClick={this.handleArrowHide}>
             {arrowHidden? 'Show Arrow' : 'Hide Arrow'}
             </button>
             <form className="ui form" onSubmit={this.toggleModal}>
-              <input type='text' placeholder='Arrow Angle' 
+              <input type='text' placeholder='Arrow Angle'
               value={arrowAngle} onChange={this.handleArrowAngle}
               />
               <input type='range' min="0" max="360" style={{ "width": "100%"}}
               value={arrowAngle} onChange={this.handleArrowAngle}
               />
-						  <textarea placeholder='Arrow Description' value={arrowText}
-						  onChange={this.handleArrowText} />
+              <textarea placeholder='Arrow Description' value={arrowText}
+              onChange={this.handleArrowText} />
             </form>
-				</Modal>
+        </Modal>
 
-				<Modal toggle={this.toggleSampleInfo}
-					show={this.state.sampleInfo}>
+        <Modal toggle={this.toggleSampleInfo}
+          show={this.state.sampleInfo}>
             <form className="ui form">
               <input type='text' placeholder='Sample Name'
               value={this.state.sampleName} onChange={this.handleSampleName}
               />
-						  <textarea placeholder='Sample Description' value={this.state.sampleText}
-						  onChange={this.handleSampleText} />
+              <textarea placeholder='Sample Description' value={this.state.sampleText}
+              onChange={this.handleSampleText} />
               <input type='text' placeholder='Author Name'
                 value={this.state.authorName} onChange={this.handleAuthorName } />
               <div className="field">
@@ -2350,13 +2467,13 @@ class Repo extends Component {
                 <input ref={this.filePath} className='full-width-input' id="filepath" name="filepath" type="text" placeholder='Channel groups json file'/>
                 <button type="button" onClick={this.openFileBrowser} className="ui button">Browse</button>
                 <FileBrowserModal open={this.state.showFileBrowser} close={this.onFileSelected}
-                  title="Select a json file" 
-                  onFileSelected={this.onFileSelected} 
+                  title="Select a json file"
+                  onFileSelected={this.onFileSelected}
                   filter={["dat", "json"]}
                   />
               </div>
             </form>
-				</Modal>
+        </Modal>
 
         <div className="row justify-content-between">
           <div className="col-md-6 col-lg-6 col-xl-4 bg-trans">
@@ -2366,13 +2483,13 @@ class Repo extends Component {
             <div className="pb-2">
               {groupBar}
             </div>
-            <Controls 
+            <Controls
               minerva={minerva}
               rgba={this.state.rgba}
               stories={this.state.stories}
-							addArrowText={this.addArrowText}
-							deleteArrow={this.deleteArrow}
-							deleteOverlay={this.deleteOverlay}
+              addArrowText={this.addArrowText}
+              deleteArrow={this.deleteArrow}
+              deleteOverlay={this.deleteOverlay}
               drawType = {this.state.drawType}
               arrowClick = {this.arrowClick}
               lassoClick = {this.lassoClick}
@@ -2390,8 +2507,8 @@ class Repo extends Component {
               handleStoryChange={this.handleStoryChange}
               handleStoryInsert={this.handleStoryInsert}
               handleStoryRemove={this.handleStoryRemove}
-							overlays={overlays}
-							arrows={arrows}
+              overlays={overlays}
+              arrows={arrows}
               storyName={storyName}
               storyText={storyText}
               storyMasks={storyMasks}
@@ -2415,15 +2532,49 @@ class Repo extends Component {
               showMaskBrowser={this.state.showMaskBrowser}
               openMaskBrowser={this.openMaskBrowser}
               onMaskSelected={this.onMaskSelected}
+              onMaskMapSelected={this.onMaskMapSelected}
               showMaskMapBrowser={this.state.showMaskMapBrowser}
               openMaskMapBrowser={this.openMaskMapBrowser}
-              onMaskMapSelected={this.onMaskMapSelected}
               isMaskMapLoading={this.state.isMaskMapLoading}
               invalidMaskMap={this.state.invalidMaskMap}
               toggleTextEdit={this.toggleTextEdit}
             />
             <Confirm
-              header="Delete channel group" 
+              header="Save file location"
+              content={
+                <div className="content">
+                  <div>
+                    The current Minerva Author session using data loaded from:
+                  </div>
+                  <br/>
+                  <div>
+                    {inputFile}
+                  </div>
+                  <br/>
+                  <div>
+                    will be saved as
+                  </div>
+                  <br/>
+                  <div>
+                    {outputSaveFile}
+                  </div>
+                  <br/>
+                  <div>
+                    every time you click "save".
+                  </div>
+                </div>
+              }
+              cancelButton={null}
+              confirmButton="OK"
+              open={mustShowSavePath}
+              onConfirm={()=>{
+                this.setState({
+                  shownSavePath: true
+                })
+              }}
+            />
+            <Confirm
+              header="Delete channel group"
               content="Are you sure?"
               confirmButton="Delete"
               size="small"
@@ -2463,7 +2614,7 @@ class Repo extends Component {
           { this.renderErrors() }
           { this.renderExitButton() }
           { minerva ? (
-            <PublishStoryModal storyUuid={this.state.storyUuid} 
+            <PublishStoryModal storyUuid={this.state.storyUuid}
               onClose={() => this.setPublishStoryModal(false)}
               active={this.state.showPublishStoryModal} />
             ) : ''
@@ -2482,7 +2633,7 @@ class Repo extends Component {
           <label className="ui label">Add group</label>
            <Popup
             trigger={<input type="text" onChange={this.handleAddGroup} />}
-            open={this.state.invalidChannelGroupName} 
+            open={this.state.invalidChannelGroupName}
             content='Channel group name must be unique and contain only letters, numbers, space, dash or underscore.'
             position='top center'
           />
@@ -2505,7 +2656,7 @@ class Repo extends Component {
           <label className="ui label">Rename group</label>
           <Popup
             trigger={<input type="text" value={group.label} onChange={this.handleGroupRename} />}
-            open={this.state.invalidChannelGroupName} 
+            open={this.state.invalidChannelGroupName}
             content='Channel group name can contain only letters, numbers, space, dash or underscore.'
             position='top center'
         />

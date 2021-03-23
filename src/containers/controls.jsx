@@ -31,9 +31,9 @@ const colorStyles = {
   option: (styles, { data, isDisabled, isFocused, isSelected }) => {
     const hex_color = "#"+rgbToHex(data.color);
     const is_on = (isSelected || isFocused);
-    const fg_color = chroma.blend(hex_color, '222', 'multiply').css();
-    const bg_color_on = chroma.blend(hex_color, 'ccc', 'multiply').alpha(0.8).css();
-    const bg_color_off = chroma.blend(hex_color, 'fff', 'multiply').alpha(0.5).css();
+    const fg_color = "black";
+    const bg_color_off = chroma(hex_color).brighten(2).alpha(0.8).css();
+    const bg_color_on = chroma(hex_color).brighten(3).saturate(3).css();
     const bg_color = is_on? bg_color_on : bg_color_off;
     return {
       ...styles,
@@ -41,14 +41,15 @@ const colorStyles = {
       backgroundColor: bg_color,
       ':active': {
         ...styles[':active'],
+        color: fg_color,
         backgroundColor: bg_color,
       },
     };
   },
   multiValue: (styles, { data }) => {
     const hex_color = "#"+rgbToHex(data.color);
-    const fg_color = chroma.blend(hex_color, '222', 'multiply').css();
-    const bg_color_off = chroma.blend(hex_color, 'fff', 'multiply').alpha(0.5).css();
+    const fg_color = "black";
+    const bg_color_off = chroma(hex_color).brighten(2).alpha(0.8).css();
     return {
       ...styles,
       color: fg_color,
@@ -57,8 +58,8 @@ const colorStyles = {
   },
   multiValueLabel: (styles, { data }) => {
     const hex_color = "#"+rgbToHex(data.color);
-    const fg_color = chroma.blend(hex_color, '222', 'multiply').css();
-    const bg_color_off = chroma.blend(hex_color, 'fff', 'multiply').alpha(0.5).css();
+    const fg_color = "black";
+    const bg_color_off = chroma(hex_color).brighten(2).alpha(0.8).css();
     return{
       ...styles,
       color: fg_color,
@@ -67,15 +68,15 @@ const colorStyles = {
   },
   multiValueRemove: (styles, { data }) => {
     const hex_color = "#"+rgbToHex(data.color);
-    const bg_color_on = chroma.blend(hex_color, 'ddd', 'multiply').css();
-    const bg_color_off = chroma.blend(hex_color, 'fff', 'multiply').alpha(0.5).css();
+    const bg_color_on = chroma(hex_color).darken(2).css();
+    const bg_color_off = chroma(hex_color).alpha(0.5).css();
     return {
       ...styles,
       color: 'black',
       backgroundColor: bg_color_off,
       ':hover': {
         backgroundColor: bg_color_on,
-        color: 'black',
+        color: 'white',
       }
     };
   },
@@ -100,7 +101,7 @@ class Controls extends Component {
     const {handleStoryRemove, handleStoryChange, overlays, arrows} = this.props;
     const {arrowClick, lassoClick, boxClick, drawType} = this.props;
     const {masks, activeMaskId, handleUpdateMask, maskPathStatus} = this.props;
-    const {handleMaskChange, handleMaskInsert, handleMaskRemove} = this.props;
+    const {handleMaskChange, handleMaskRemove} = this.props;
     const {showMaskBrowser, openMaskBrowser, onMaskSelected} = this.props;
     const {showMaskMapBrowser, openMaskMapBrowser, onMaskMapSelected} = this.props;
     const is_mask_map_loading = this.props.isMaskMapLoading;
@@ -202,11 +203,6 @@ class Controls extends Component {
         )
     }
 
-    let plusButton = false ? (
-      <button className="ui button compact" onClick={handleMaskInsert} title="Add mask">
-        <FontAwesomeIcon icon={faPlus} />
-      </button>
-    ) : '';
     const mask_color_picker = activeMask.map_ids.length > 0 ? (
       <div>
           Mask Color:
@@ -277,7 +273,6 @@ class Controls extends Component {
               }}>
                 <FontAwesomeIcon icon={faArrowLeft} />
               </button>
-              {plusButton}
               <button className="ui button compact" title="Next mask" onClick={()=>{
                 handleMaskChange(Math.min(activeMaskId + 1, activeMasks.size - 1))
               }}>
@@ -460,7 +455,7 @@ class Controls extends Component {
                   color:"#4fbcff"
                 }}
                 onClick={() => {
-                  handleSelectStoryMasks(all_group_masks);
+                  handleSelectStoryMasks(all_group_masks.map(mask=>mask.id));
                 }}
               >
               &nbsp;Show all cell states
@@ -500,7 +495,9 @@ class Controls extends Component {
             <Select
               isMulti={true}
               styles={colorStyles}
-              onChange={handleSelectStoryMasks}
+              onChange={(masks) => {
+                return handleSelectStoryMasks((masks || []).map(mask=>mask.id));
+              }}
               value={story_masks}
               options={all_masks}
             />

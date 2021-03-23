@@ -13,7 +13,10 @@ class Import extends Component {
           <img className="minerva-author-logo" src="image/Minerva-Author_HorizLogo_RGB.svg"></img>
         </div>
           { this.props.env === 'local' ?
-            <ImportForm />
+            <ImportForm
+              hasServerError={this.props.hasServerError}
+              updateInputFile={this.props.updateInputFile}
+            />
           : 
             <CloudImportForm onToken={this.props.onToken} 
               onMinervaImage={this.props.onMinervaImage} 

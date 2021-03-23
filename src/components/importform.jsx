@@ -3,6 +3,7 @@ import ClipLoader from "react-spinners/ClipLoader";
 import FileBrowserModal from "./filebrowsermodal";
 import "regenerator-runtime/runtime";
 import 'semantic-ui-css/semantic.min.css';
+import { Confirm } from 'semantic-ui-react';
 import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
 import { faExclamationCircle, faCheckCircle, faAngleLeft, faFileAlt} from "@fortawesome/free-solid-svg-icons";
 import Loader from "../components/loader";
@@ -15,6 +16,8 @@ class ImportForm extends Component {
     this.state = {
       loading: false,
       error: null,
+      askAutosaveLogic: false,
+      autosaveLogic: "ask",
       showFileBrowser: false,
       showMarkerBrowser: false,
       currentFileFolder: null,
@@ -36,9 +39,28 @@ class ImportForm extends Component {
 
   }
 
+  handleError(err) {
+    let err_code = null;
+    if (err.includes(" ERR: ")) {
+      const err_split = err.split(" ERR: ");
+      if (err_split.length == 2) {
+        err_code = err_split[0];
+        err = err_split[1];
+      }
+    }
+    if (err_code == "AUTO ASK") {
+      this.setState({ askAutosaveLogic: true });
+      err = null;
+    }
+    this.setState({ loading: false, error: err });
+    console.error(err);
+  }
+
   handleSubmit(event) {
     event.preventDefault();
     const data = new FormData(event.target);
+    data.set("autosave_logic", this.state.autosaveLogic);
+    this.props.updateInputFile(data.get("filepath"));
 
     this.setState({
       loading: true,
@@ -52,12 +74,11 @@ class ImportForm extends Component {
       this.setState({ loading: false });
       if (!response.ok) {
         response.json().then(data => {
-          this.setState({ error: data.error}); 
+          this.handleError(data.error);
         });
       }
     }).catch(err => {
-      this.setState({ loading: false, error: err });
-      console.error(err);
+      this.handleError(err);
     });
   }
 
@@ -106,10 +127,65 @@ class ImportForm extends Component {
   }
 
   render() {
+    const confirmServerError = this.props.hasServerError;
+    const confirmAutosave = !confirmServerError && this.state.askAutosaveLogic;
     return (
       <div>
         { this.renderLocalFields() }
         <ErrorFooter message={this.state.error} />
+        <Confirm
+          header="Unable to connect to Minerva Author" 
+          content={
+            <div className="content">
+              <div>
+                It is possible the Minerva Author executable has stopped running.
+              </div>
+              <br/>
+              <div>
+                Reopen the Minerva Author executable, and <strong>reload this tab</strong>.
+              </div>
+            </div>
+          }
+          cancelButton={null}
+          confirmButton="Reload this tab"
+          size="small"
+          open={confirmServerError}
+          onConfirm={() => {
+            window.location.reload();
+          }}
+        />
+        <Confirm
+          header="Autosave Detected" 
+          content={
+            <div className="content">
+              <div>
+                Minerva Author automatically saved the most recent progress before closing.
+              </div>
+              <br/>
+              <div>
+                <strong>Do you want to load the automatically saved data?</strong>
+              </div>
+            </div>
+          }
+          cancelButton="No, ignore it!"
+          confirmButton="Yes, load it!"
+          size="small"
+          open={confirmAutosave}
+          onCancel={() => { 
+            this.setState({
+              autosaveLogic: "skip",
+              askAutosaveLogic: false,
+              error: "Click 'Import' again to load without autosave."
+            })
+          }}
+          onConfirm={() => {
+            this.setState({
+              autosaveLogic: "load",
+              askAutosaveLogic: false,
+              error: "Click 'Import' again to load from the autosave."
+            })
+          }}
+        />
       </div>
     )
   }
