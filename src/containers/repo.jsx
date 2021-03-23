@@ -195,7 +195,7 @@ class Repo extends Component {
       }];
     }));
 
-    const lazyAutosaveDelay = 5000;
+    const lazyAutosaveDelay = 10000;
 
     this.state = {
       error: null,
@@ -1807,7 +1807,7 @@ class Repo extends Component {
     if (poll) {
       this.progressInterval = setInterval(() => {
         this.getPublishProgress();
-      }, 500);
+      }, 2000);
     }
   }
 
