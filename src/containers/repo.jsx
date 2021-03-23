@@ -2303,7 +2303,7 @@ class Repo extends Component {
 
     const saveButton = (
       <button className="ui button primary"
-        onClick={this.save}
+        onClick={()=>this.save(false)}
         disabled={this.state.saving}
         title="Save story">
           <FontAwesomeIcon icon={faSave} />&nbsp;
