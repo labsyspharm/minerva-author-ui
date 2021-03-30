@@ -22,6 +22,24 @@ import PublishStoryModal from "../components/publishstorymodal";
 
 const validNameRegex = /^([a-zA-Z0-9 _-]+)$/;
 
+const moveIndex = (arr, oldIndex, newIndex) => {
+  const direction = Math.sign(newIndex - oldIndex);
+  const maximum = Math.max(newIndex, oldIndex);
+  const minimum = Math.min(newIndex, oldIndex);
+  // Return a new array if the indices are in scope
+  if (minimum >= 0 && maximum < arr.length) {
+    return [...arr.keys()].map((idx)=>{
+      if (idx >= minimum && idx <= maximum) {
+        if (idx == newIndex) {
+          return arr[oldIndex];
+        }
+        return arr[idx + direction];
+      }
+      return arr[idx];
+    });
+  }
+}
+
 const randInt = n => Math.floor(Math.random() * n);
 const randColor = () => {
   return [
@@ -67,6 +85,7 @@ const defaultMask = () => {
     cache_name: "",
     name: "all cells",
     color: [255, 255, 255],
+    map_state: "State",
     map_ids: [],
     map_path: "",
     path: "",
@@ -153,12 +172,17 @@ const handleUpdateMaskPure = (
   if (clear && masks.size > 1) {
     [...stories].forEach(([s_id, story]) => {
       // Remove the masks from the actual stories, only to save the names in the cache
-      const cache_masks = story.masks.map(m=>masks.get(m)).filter(mask=> {
+      const cache_mask_objs = story.masks.map(m=>masks.get(m)).filter(mask=> {
         return mask.cache_name && mask.map_ids && mask.map_ids.length > 0;
       });
-      const cache_names = cache_masks.map(mask => mask.cache_name);
-      if (cache_names.length > 0) {
-        storyMasksTempCache.set(s_id, cache_names);
+      const cache_masks = cache_mask_objs.map(mask => {
+        return {
+          map_state: mask.map_state,
+          cache_name: mask.cache_name
+        };
+      });
+      if (cache_masks.length > 0) {
+        storyMasksTempCache.set(s_id, cache_masks);
       }
       newStories.set(s_id, {
         ...story,
@@ -193,6 +217,22 @@ class Repo extends Component {
         range: {min: 0, max: 32768},
         visible: true
       }];
+    }));
+
+    const validMasks = new Map(masks.map((v,k) => {
+      const chan0 = v.channels[0];
+      const mask = {
+        path: v.path || "",
+        name: v.label || "",
+        map_ids: chan0.ids || [],
+        map_path: v.map_path || "",
+        cache_name: chan0.original_label || "",
+        map_state: chan0.state_label || "State",
+        color: hexToRgb(chan0.color || "#FFFFFF")
+      }
+      return [k, mask];
+    }).filter(([k,mask]) => {
+      return (k == 0 || mask.map_ids.length > 0);
     }));
 
     const lazyAutosaveDelay = 10000;
@@ -256,9 +296,9 @@ class Repo extends Component {
           'text': v.text,
           'pan': v.pan,
           'zoom': v.zoom,
-          'masks': v.masks.filter(i => i < masks.length),
           'arrows': v.arrows,
           'overlays': v.overlays,
+          'masks': v.masks.filter(i => validMasks.has(i)),
           'group': Math.max(0, groups.findIndex(g => {
             return g.label == v.group;
           })),
@@ -308,21 +348,8 @@ class Repo extends Component {
       activeGroup: 0,
       storyUuid: props.storyUuid,
       maskPathStatus: new Map(),
-      activeMaskId: masks.length? 0 : -1,
-      masks: new Map(masks.map((v,k) => {
-        const chan0 = v.channels[0];
-        const mask = {
-          path: v.path || "",
-          name: v.label || "",
-          map_ids: chan0.ids || [],
-          map_path: v.map_path || "",
-          cache_name: chan0.original_label || "",
-          color: hexToRgb(chan0.color || "#FFFFFF")
-        }
-        return [k, mask];
-      }).filter(([k,mask]) => {
-        return (k == 0 || mask.map_ids.length > 0);
-      })),
+      activeMaskId: validMasks.size? 0 : -1,
+      masks: validMasks,
       groups: new Map(groups.map((v,k) => {
         return [k, {
           activeIds: v.channels.map(chan => {
@@ -385,7 +412,9 @@ class Repo extends Component {
     this.boxClick = this.boxClick.bind(this);
     this.handleChange = this.handleChange.bind(this);
     this.handleSelect = this.handleSelect.bind(this);
+    this.handleSortChannels = this.handleSortChannels.bind(this);
     this.handleSelectStory = this.handleSelectStory.bind(this);
+    this.handleSortStoryMasks = this.handleSortStoryMasks.bind(this);
     this.handleSelectStoryMasks = this.handleSelectStoryMasks.bind(this);
     this.handleSelectVis = this.handleSelectVis.bind(this);
     this.handleStoryName = this.handleStoryName.bind(this);
@@ -1147,11 +1176,34 @@ class Repo extends Component {
     }
   }
 
-  handleSelectStoryMasks(mask_ids=[]) {
-    const newStory = this.state.stories.get(this.state.activeStory) || this.defaultStory();
+  handleSortChannels({oldIndex, newIndex}) {
+    const { activeIds } = this.state;
+    const newActiveIds = moveIndex(activeIds, oldIndex, newIndex);
+    if (newActiveIds) {
+      this.handleSelect(newActiveIds.map(id => {
+        return {id};
+      }));
+    }
+  }
+
+  handleSelectStoryMasks(masks) {
+    const {stories, activeStory} = this.state;
+    const mask_ids = (masks || []).map(mask=>mask.id);
+    const newStory = stories.get(activeStory) || this.defaultStory();
     this.setState(handleSelectStoryMasksPure(
       this.state, mask_ids, newStory
     ));
+  }
+
+  handleSortStoryMasks({oldIndex, newIndex}) {
+    const {stories, activeStory} = this.state;
+    const story = stories.get(activeStory) || this.defaultStory();
+    const newMaskIds = moveIndex(story.masks || [], oldIndex, newIndex);
+    if (newMaskIds) {
+      this.handleSelectStoryMasks(newMaskIds.map(id => {
+        return {id};
+      }));
+    }
   }
 
   computeBounds(value, start, len) {
@@ -1494,6 +1546,7 @@ class Repo extends Component {
   createMaskOutput({masks}) {
     return Array.from(masks.values()).map(v => {
       const channels = [{
+          'state_label': v.map_state || 'State',
           'original_label': v.cache_name || '',
           'color': rgbToHex(v.color),
           'label': v.name,
@@ -1902,10 +1955,15 @@ class Repo extends Component {
       const data = (await res.json()) || {};
       const subsets = "mask_subsets" in data ? data.mask_subsets : [];
       const colors = "subset_colors" in data ? data.subset_colors : [];
-      const subset_name_set = new Set();
+      const map_states = "mask_states" in data ? data.mask_states : [];
+      const mask_state_name_map = new Map();
       const newMaskState = subsets.reduce((newState, [key, ids], idx) => {
+        const map_states_idx = Math.min(idx, map_states.length - 1);
         const color = idx < colors.length? colors[idx]: [255, 255, 255];
-        subset_name_set.add(key);
+        const map_state = map_states.length ? map_states[map_states_idx] : 'State';
+        const mask_state_name_set = mask_state_name_map.get(map_state) || new Set();
+        mask_state_name_set.add(key);
+        mask_state_name_map.set(map_state, mask_state_name_set);
         if (ids.length > 0) {
           return {
             masks: new Map([
@@ -1914,8 +1972,9 @@ class Repo extends Component {
                 newState.masks.size, {
                   ...mask_0,
                   map_ids: ids,
-                  color: color,
+                  map_state: map_state,
                   cache_name: key,
+                  color: color,
                   name: key
                 }
               ]
@@ -1926,20 +1985,33 @@ class Repo extends Component {
       }, {
         masks: new Map([[0, mask_0]]),
       });
-      const newStoryMaskState = [...storyMasksTempCache].reduce((newState, [s_id, cache_name_list]) => {
+      const newStoryMaskState = [...storyMasksTempCache].reduce((newState, [s_id, cache_masks]) => {
         // Reset Story Masks from cache
-        return cache_name_list.reduce((newestState, cache_name) => {
-          if (subset_name_set.has(cache_name)) {
-            const story = newestState.stories.get(s_id);
-            const is_same = ([idx, mask]) => mask.cache_name == cache_name;
-            const m_id = ([...newestState.masks].find(is_same) || [])[0];
-            if (!!story && !!m_id && !story.masks.includes(m_id)) {
-              return {
-                ...handleConcatStoryMasksPure({
-                  stories: newestState.stories,
-                  activeStory: s_id
-                }, [m_id], story),
-                masks: newestState.masks
+        return cache_masks.reduce((newestState, {map_state, cache_name}) => {
+          let flex_map_state = map_state;
+          if (!mask_state_name_map.has(map_state)) {
+            // Treat as synonyms when reloading cache
+            flex_map_state = {
+              'State1': 'State',
+              'State': 'State1'
+            }[map_state] || map_state;
+          }
+          // Check if cached state has been loaded
+          if (mask_state_name_map.has(flex_map_state)) {
+            const mask_state_name_set = mask_state_name_map.get(flex_map_state);
+            // Check if cached name has been loaded
+            if (mask_state_name_set.has(cache_name)) {
+              const story = newestState.stories.get(s_id);
+              const is_same = ([idx, mask]) => mask.cache_name == cache_name;
+              const m_id = ([...newestState.masks].find(is_same) || [])[0];
+              if (!!story && !!m_id && !story.masks.includes(m_id)) {
+                return {
+                  ...handleConcatStoryMasksPure({
+                    stories: newestState.stories,
+                    activeStory: s_id
+                  }, [m_id], story),
+                  masks: newestState.masks
+                }
               }
             }
           }
@@ -2223,10 +2295,14 @@ class Repo extends Component {
     const {maskPathStatus} = this.state;
     const {stories, activeStory, masks, activeMaskId} = this.state;
     const story = stories.get(activeStory) || this.defaultStory();
+    const storyMasks = story.masks.filter((k) => masks.has(k));
+    const maskOrder = storyMasks.map((k) => {
+      return `mask_${k}`;
+    });
     visibleChannels = new Map([ ...visibleChannels,
-      ...(new Map(story.masks.map((k) => {
-        let mask_k = `mask_${k}`;
-        let mask = masks.get(k);
+      ...(new Map(storyMasks.map((k) => {
+        const mask_k = `mask_${k}`;
+        const mask = masks.get(k);
         mask.range = {
           max: 16777215,
           min: 0
@@ -2251,7 +2327,6 @@ class Repo extends Component {
     const visLabels =  story.visLabels;
     const storyName = story.name;
     const storyText = story.text;
-    const storyMasks = story.masks;
     const overlays = story.overlays;
     const arrows = story.arrows;
     const activeArrow = this.state.activeArrow;
@@ -2293,6 +2368,7 @@ class Repo extends Component {
     else {
       viewer = <ImageView className="ImageView"
         img={ img }
+        maskOrder={ maskOrder }
         channels={ visibleChannels }
         overlays={ overlays } arrows={ arrows }
         handleViewport={ this.handleViewport }
@@ -2497,9 +2573,11 @@ class Repo extends Component {
               handleChange={this.handleChange}
               handleSelect={this.handleSelect}
               handleSelectStory={this.handleSelectStory}
+              handleSortStoryMasks={this.handleSortStoryMasks}
               handleSelectStoryMasks={this.handleSelectStoryMasks}
               chanLabel={chanLabel}
               activeChanLabel={activeChanLabel}
+              handleSortChannels={this.handleSortChannels}
               activeChannels={activeChannels}
               textEdit={textEdit}
               handleStoryName={this.handleStoryName}

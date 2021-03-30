@@ -1,6 +1,11 @@
 import React, { Component } from "react";
 
-import Select from 'react-select';
+import Select, { components } from 'react-select';
+import {
+  SortableContainer,
+  SortableElement,
+  sortableHandle,
+} from 'react-sortable-hoc';
 import chroma from 'chroma-js';
 
 import Overlays from "./overlays";
@@ -15,6 +20,19 @@ import {faCrosshairs} from "@fortawesome/free-solid-svg-icons";
 import {faPlus} from "@fortawesome/free-solid-svg-icons";
 
 import '../style/controls'
+
+const SortableSelect = SortableContainer(Select);
+const SortableMultiValue = SortableElement(props => {
+  const onMouseDown = e => {
+    e.preventDefault();
+    e.stopPropagation();
+  };
+  const innerProps = { ...props.innerProps, onMouseDown };
+  return <components.MultiValue {...props} innerProps={innerProps} />;
+});
+const SortableMultiValueLabel = sortableHandle(props => (
+  <components.MultiValueLabel {...props} />
+));
 
 const intToHex = c => {
   var hex = c.toString(16);
@@ -92,7 +110,8 @@ class Controls extends Component {
 
     const {addArrowText, rgba, minerva} = this.props;
     const {deleteOverlay, deleteArrow, toggleTextEdit} = this.props;
-    const {activeStory, handleSelectStory, handleSelectStoryMasks} = this.props;
+    const {activeStory, handleSelectStory} = this.props;
+    const {handleSortStoryMasks, handleSelectStoryMasks} = this.props;
     const {handleClusterChange, handleClusterInsert, handleClusterRemove} = this.props;
     const {showVisDataBrowser, openVisDataBrowser, onVisDataSelected} = this.props;
     const {visLabels, activeVisLabel, handleSelectVis} = this.props;
@@ -107,11 +126,21 @@ class Controls extends Component {
     const is_mask_map_loading = this.props.isMaskMapLoading;
     const invalid_mask_map = this.props.invalidMaskMap;
 
+    const defaultMaskStates = [...masks].reduce((existing, [k,v]) => {
+      if (!existing.has(v.name)) {
+        existing.set(v.name, v.map_state);
+      }
+      return existing; 
+    }, new Map());
+
     const activeMasks = new Map([...masks].map(([k,v])=>{
+                                  const v_name = defaultMaskStates.get(v.name) != v.map_state ? (
+                                    `${v.name} (${v.map_state})` 
+                                  ) : v.name;
                                   return [k, {
                                     ...v,
                                     value: k, id: k,
-                                    label: '#' + (k+1) + (v.name? ': ' + v.name : '')
+                                    label: `#${k+1}`+ (v_name? `: ${v_name}` : '')
                                   }]
                                 }))
     const activeStoryMasks = new Map(storyMasks.map(a => [a, activeMasks.get(a)]))
@@ -440,7 +469,53 @@ class Controls extends Component {
           Masks:
           </a>
       );
-      if (all_group_masks.length > 2 && story_group_masks.length < all_group_masks.length) {
+      const all_map_states = all_group_masks.reduce((all_list, mask) => {
+        if (!all_list.includes(mask.map_state)) {
+          return all_list.concat([mask.map_state]);
+        }
+        return all_list;
+      }, []);
+      const current_map_state = story_group_masks.reduce((current, mask) => {
+        if (current === undefined || current === mask.map_state) {
+          return mask.map_state;
+        }
+        return '';
+      }, undefined);
+      const _get_ideal_group_masks = (_idx) => {
+        const ideal_map_state = all_map_states[_idx] || '';
+        const ideal_group_masks = all_group_masks.filter((mask) => {
+          return mask.map_state == ideal_map_state;
+        });
+        if (all_map_states.length < 2) {
+          return {
+            ideal_group_masks
+          };
+        }
+        return {
+          ideal_map_state,
+          ideal_group_masks
+        };
+      }
+      const get_ideal_group_masks = (idx) => {
+        // Assume the first map state if no masks selected
+        const _idx = (story_group_masks.length == 0) ? 0 : idx;
+        const current = _get_ideal_group_masks(_idx);
+        // Move to the next map state if already selected all in current
+        if (current.ideal_group_masks.length == story_group_masks.length) {
+          if (all_map_states.length < 2) {
+            return {
+              ideal_group_masks: []
+            }
+          }
+          return _get_ideal_group_masks((_idx + 1) % all_map_states.length);
+        }
+        return current;
+      }
+      const current_map_state_idx = all_map_states.findIndex((x)=>x===current_map_state);
+      const {ideal_map_state, ideal_group_masks} = get_ideal_group_masks(current_map_state_idx);
+      const map_state_status = ideal_map_state ? ` (${ideal_map_state})` : '';
+
+      if (ideal_group_masks.length > 0) {
         story_masks_header = (
           <div className="row">
             <div className="col-6 font-white">
@@ -455,10 +530,10 @@ class Controls extends Component {
                   color:"#4fbcff"
                 }}
                 onClick={() => {
-                  handleSelectStoryMasks(all_group_masks.map(mask=>mask.id));
+                  handleSelectStoryMasks(ideal_group_masks);
                 }}
               >
-              &nbsp;Show all cell states
+              &nbsp;Show all states{map_state_status}
               </a>
             </div>
           </div>
@@ -492,14 +567,23 @@ class Controls extends Component {
         <div>
           {story_masks_header}
           <div className="width-100">
-            <Select
+            <SortableSelect
+              // needed as per https://github.com/clauderic/react-sortable-hoc/pull/352
+              getHelperDimensions={({ node }) => node.getBoundingClientRect()}
+              onSortEnd={handleSortStoryMasks}
+              useDragHandle={true}
+              axis="xy"
+              // Select Options
               isMulti={true}
               styles={colorStyles}
-              onChange={(masks) => {
-                return handleSelectStoryMasks((masks || []).map(mask=>mask.id));
-              }}
+              onChange={handleSelectStoryMasks}
               value={story_masks}
               options={all_masks}
+              components={{
+                MultiValue: SortableMultiValue,
+                MultiValueLabel: SortableMultiValueLabel,
+              }}
+            />
             />
           </div>
         </div>
@@ -594,14 +678,26 @@ class Controls extends Component {
     const {activeChanLabel, chanLabel} = this.props;
     const {activeChannels} = this.props;
 
+    const {handleSortChannels} = this.props;
+
     return (
       <div className="row">
         <div className="col">
-        <Select
+        <SortableSelect
+          // needed as per https://github.com/clauderic/react-sortable-hoc/pull/352
+          getHelperDimensions={({ node }) => node.getBoundingClientRect()}
+          onSortEnd={handleSortChannels}
+          useDragHandle={true}
+          axis="xy"
+          // Select Options
           isMulti={true}
           onChange={handleSelect}
           value={Array.from(activeChanLabel.values())}
           options={Array.from(chanLabel.values())}
+          components={{
+            MultiValue: SortableMultiValue,
+            MultiValueLabel: SortableMultiValueLabel,
+          }}
         />
         <div>
           <ChannelControls className="ChannelControls"

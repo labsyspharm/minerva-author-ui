@@ -130,8 +130,13 @@ class ImageView extends Component {
     const { world } = this.viewer;
     const { channels } = this.props;
 
+    const values = [...channels].reduce((vals, [id, value]) => {
+      if (ids.includes(id)) {
+        return vals.concat([value]);
+      }
+      return vals;
+    }, []);
     // Update each channel's tiledImage
-    const values = [...channels.values()];
     values.map(this.setChannel, this);
   }
 
@@ -459,9 +464,9 @@ class ImageView extends Component {
 
       seaGL.addHandler('gl-loaded', function(program) {
         // Turn on additive blending
-        this.gl.enable(this.gl.BLEND);
-        this.gl.blendEquation(this.gl.FUNC_ADD);
-        this.gl.blendFunc(this.gl.ONE, this.gl.ONE);
+        //this.gl.enable(this.gl.BLEND);
+        //this.gl.blendEquation(this.gl.FUNC_ADD);
+        //this.gl.blendFunc(this.gl.ONE, this.gl.ONE);
 
         // Uniform variable for coloring
         this.u_tile_color = this.gl.getUniformLocation(program, 'u_tile_color');
@@ -627,9 +632,14 @@ class ImageView extends Component {
     }
   }
 
-  updateChannels(viewer, uuid, channels) {
+  updateChannels(viewer, uuid, channels, maskOrder) {
     const { world } = viewer;
     const ids = new Set(channels.keys());
+    // Only check the order of masks that have an associated id map
+    const maskMapOrder = maskOrder.filter((id) => {
+      const map_ids = (channels.get(id) || {}).map_ids || [];
+      return map_ids.length > 0; 
+    }).reverse();
 
     if (viewer.uuid != uuid) {
       // Update the whole image
@@ -663,7 +673,40 @@ class ImageView extends Component {
         }
       })
 
-      this.addChannels([...added]);
+      // Sort the masks in proper order
+      this.addChannels([...added]).then(()=> {
+        if (!maskMapOrder.length) {
+          console.log('No mask maps!')
+          return;
+        }
+        const mask_map_id_0 = maskMapOrder[0];
+        const tiledImage = this.getTiledImageById(mask_map_id_0);
+        const {many_channels} = tiledImage.source || {};
+        if (!many_channels) {
+          console.log('Huh?')
+          return;
+        }
+        let is_same_order = many_channels.length == maskMapOrder.length;
+        const manyChannelsMap = new Map(many_channels.map((chan, idx)=> {
+          if (is_same_order && maskMapOrder[idx] != chan.unique_id) {
+            is_same_order = false; 
+          }
+          return [chan.unique_id, chan];
+        }));
+        // No need to change mask map list
+        if (is_same_order) {
+          console.log('Same order')
+          return;
+        }
+        // Use only the channels that are in the mask map order
+        tiledImage.source.many_channels = maskMapOrder.reduce((new_chans, id) => {
+          if (manyChannelsMap.has(id)) {
+            new_chans.push(manyChannelsMap.get(id));
+          }
+          return new_chans;
+        }, []);
+        tiledImage._needsDraw = true;
+      });
       
       // Redraw channels that differ
       this.redrawChannels(redrawn.filter(id => {
@@ -688,8 +731,8 @@ class ImageView extends Component {
     // After first render
     if (viewer !== undefined) {
       const { uuid } = this.props.img;
-      const { channels } = this.props;
-      this.updateChannels(viewer, uuid, channels);
+      const { channels, maskOrder } = this.props;
+      this.updateChannels(viewer, uuid, channels, maskOrder);
     }
     const overlay_divs = [...Array(100).keys()].map((o,i) => {
       const el = "overlay-" + i;
