@@ -676,14 +676,12 @@ class ImageView extends Component {
       // Sort the masks in proper order
       this.addChannels([...added]).then(()=> {
         if (!maskMapOrder.length) {
-          console.log('No mask maps!')
           return;
         }
         const mask_map_id_0 = maskMapOrder[0];
         const tiledImage = this.getTiledImageById(mask_map_id_0);
         const {many_channels} = tiledImage.source || {};
         if (!many_channels) {
-          console.log('Huh?')
           return;
         }
         let is_same_order = many_channels.length == maskMapOrder.length;
@@ -695,7 +693,6 @@ class ImageView extends Component {
         }));
         // No need to change mask map list
         if (is_same_order) {
-          console.log('Same order')
           return;
         }
         // Use only the channels that are in the mask map order
