@@ -324,7 +324,7 @@ class ImageView extends Component {
           return this.gl.canvas;
       }
       seaGL.vShader = 'vert.glsl';
-      seaGL.fShader = 'frag.glsl?cache=v1.7';
+      seaGL.fShader = 'frag_v1_7_1.glsl';
 
       seaGL.addHandler('tile-drawing',  function(callback, e) {
 
