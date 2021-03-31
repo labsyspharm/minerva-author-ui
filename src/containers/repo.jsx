@@ -324,10 +324,11 @@ class Repo extends Component {
               wp.visLabels.get(index).data = v[label].data;
               wp.visLabels.get(index).x = v[label].axes.x;
               wp.visLabels.get(index).y = v[label].axes.y;
-              wp.visLabels.get(index).clusters = new Map(clusters.labels.split(',').map((l, i) => {
+              wp.visLabels.get(index).clusters = new Map(clusters.labels.split(',').map((i_name, i) => {
+                const i_color = hexToRgb(clusters.colors.split(',')[i] || '') || [255, 255, 255];
                 return [i, {
-                  name: l,
-                  color: hexToRgb(clusters.colors.split(',')[i])
+                  name: i_name,
+                  color: i_color
                 }]
               }))
               if (wp.visLabels.get(index).clusters.size) {
