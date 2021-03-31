@@ -62,6 +62,6 @@
     "semantic-ui-css": "^2.4.1",
     "semantic-ui-react": "^0.88.2",
     "styled-components": "^5.1.0",
-    "viawebgl": "git://github.com/thejohnhoffer/viaWebGL.git#aff376b69b3ff4170cabeddee4c54d19e2f80d10"
+    "viawebgl": "git://github.com/thejohnhoffer/viaWebGL.git#77512066c66a23a641ec05f78d5c9c494b15d52f"
   }
 }
