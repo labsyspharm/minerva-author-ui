@@ -49,6 +49,29 @@ const randColor = () => {
   ][randInt(16)]
 }
 
+const formatChanRender = (chan) => {
+  return {
+    color: hexToRgb(chan.color),
+    range: {
+      min: chan.min * 65535,
+      max: chan.max * 65535
+    },
+    maxRange: 65535,
+    value: chan.id, id: chan.id,
+    visible: true
+  };
+};
+
+const createChanRender = (groups, defaultChanRender) => {
+  return groups.reverse().reduce((chan_render, v) => {
+    return new Map([...chan_render,
+      ...new Map(v.channels.map(chan => {
+        return [chan.id, formatChanRender(chan)]
+      }))
+    ]);
+  }, defaultChanRender);
+}
+
 const normalize = (viewer, pixels) => {
   const vp = viewer.viewport;
   const norm = vp.viewerElementToViewportCoordinates;
@@ -209,16 +232,18 @@ class Repo extends Component {
       rgba, uuid, url, warning} = props;
     const { channels, sample_info, waypoints, groups, masks} = props;
 
-    const defaultChanRender = new Map(channels.map((v,k) => {
-      return [k, {
-        maxRange: 65535,
-        value: k, id: k,
-        color: randColor(),
-        range: {min: 0, max: 32768},
-        visible: true
-      }];
-    }));
-
+    const defaultChanRender = createChanRender(groups,
+      new Map(channels.map((chan, k) => {
+        return [k, {
+          maxRange: 65535,
+          value: k, id: k,
+          color: randColor(),
+          range: {min: 0, max: 32768},
+          visible: true
+        }];
+      }))
+    );
+    
     const validMasks = new Map(masks.map((v,k) => {
       const chan0 = v.channels[0];
       const mask = {
@@ -356,19 +381,7 @@ class Repo extends Component {
           activeIds: v.channels.map(chan => {
             return chan.id;
           }),
-          chanRender: new Map([...defaultChanRender,
-          ...new Map(v.channels.map(chan => {
-            return [chan.id, {
-              color: hexToRgb(chan.color),
-              range: {
-                min: chan.min * 65535,
-                max: chan.max * 65535
-              },
-              maxRange: 65535,
-              value: chan.id, id: chan.id,
-              visible: true
-            }]
-          }))]),
+          chanRender: createChanRender([v], defaultChanRender),
           label: v.label,
           value: k
         }]
@@ -813,19 +826,7 @@ class Repo extends Component {
           }
           return chan.id;
         }),
-        chanRender: new Map([...this.state.chanRender,
-        ...new Map(v.channels.map(chan => {
-          return [chan.id, {
-            color: hexToRgb(chan.color),
-            range: {
-              min: chan.min * 65535,
-              max: chan.max * 65535
-            },
-            maxRange: 65535,
-            value: chan.id, id: chan.id,
-            visible: true
-          }]
-        }))]),
+        chanRender: createChanRender([v], this.state.chanRender),
         label: v.label,
         value: k
       }]
@@ -837,6 +838,7 @@ class Repo extends Component {
     }
     else {
       this.setState({
+        chanRender: createChanRender(groups, this.state.chanRender),
         groups: g
       })
     }
@@ -1601,6 +1603,7 @@ class Repo extends Component {
       return group_out;
     });
   }
+  
 
   createStoryDefinition(stories, groups) {
     const story_definition = {
