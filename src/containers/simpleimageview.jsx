@@ -5,29 +5,10 @@ import SvgArrow from '../components/svgarrow.jsx'
 import '../style/imageview';
 import styled from 'styled-components';
 
-const IntToHex = c => {
-  var hex = c.toString(16);
-  return hex.length == 1 ? "0" + hex : hex;
-}
-
-const rgbToHex = rgb => {
-  const [r, g, b] = rgb;
-  return IntToHex(r) + IntToHex(g) + IntToHex(b);
-}
-
-const differSet = (a, b) => [...a].filter(i => !b.has(i));
-const intersectSet = (a, b) => [...a].filter(b.has.bind(b));
-
 class MinervaImageView extends Component {
 
   constructor() {
     super();
-
-    this.state = {
-      old_channels: new Map([])
-    }
-
-    this.items = [];
   }
 
   makeTileSource() {
@@ -57,18 +38,14 @@ class MinervaImageView extends Component {
     }
   }
 
-  addChannels(pan, zoom) {
+  addChannels() {
     const {viewer} = this;
     const makeTileSource = this.makeTileSource.bind(this);
     const {img, channels} = this.props;
-    console.log('Add image at index ', this.state.index);
     viewer.addTiledImage({
       tileSource: makeTileSource(),
       width: img.width / img.height,
     });
-    this.setState({
-      old_channels: channels
-    })
   }
 
   componentDidMount() {
@@ -94,9 +71,7 @@ class MinervaImageView extends Component {
     });
     interactor(this.viewer);
 
-    const pan = this.viewer.viewport.getCenter();
-    const zoom = this.viewer.viewport.getZoom();
-    this.addChannels(pan, zoom);
+    this.addChannels();
     const world = this.viewer.world;
     world.addHandler('add-item', function(e) {
       e.item.setWidth(img.width / img.height);
@@ -250,52 +225,11 @@ class MinervaImageView extends Component {
       }
     }
     const {viewport} = viewer;
-    const tinyzoom = 1.00000001;
-    viewport.zoomTo(viewport.getZoom()*tinyzoom);
   }
 
   render() {
     const {viewer} = this;
     const {arrows} = this.props;
-
-    // After first render
-    if (viewer !== undefined) {
-      const { world } = viewer;
-      const { uuid } = this.props.img;
-      const { channels } = this.props;
-      const { old_channels } = this.state;
-      const ids = new Set(channels.keys());
-      const old_ids = new Set(old_channels.keys())
-      const redrawn = intersectSet(ids, old_ids);
-      const removed = differSet(old_ids, ids);
-      const added = differSet(ids, old_ids);
-      const changed = redrawn.filter(id => {
-        const old_channel = old_channels.get(id);
-        const channel = channels.get(id);
-        return (
-          old_channel.range.min != channel.range.min ||
-          old_channel.range.max != channel.range.max ||
-          old_channel.color[0] != channel.color[0] ||
-          old_channel.color[1] != channel.color[1] ||
-          old_channel.color[2] != channel.color[2]
-        )
-      })
-
-      if (viewer.uuid != uuid || removed.length || added.length
-          || changed.length) {
-        // Update the whole image
-        // Use timeout to prevent excessive requests to Minerva tile-render endpoint
-        if (this.updateTimeout) {
-          clearTimeout(this.updateTimeout);
-        }
-        this.updateTimeout = setTimeout(() => {
-          const pan = viewer.viewport.getCenter();
-          const zoom = viewer.viewport.getZoom();
-          viewer.uuid = uuid;
-          this.addChannels(pan, zoom);
-        }, 300);
-      }
-    }
 
     const overlay_divs = [...Array(100).keys()].map((o,i) => {
       const el = "overlay-" + i;

@@ -287,8 +287,6 @@ class MinervaImageView extends Component {
       }
     }
     const {viewport} = viewer;
-    const tinyzoom = 1.00000001;
-    viewport.zoomTo(viewport.getZoom()*tinyzoom);
   }
 
   render() {
