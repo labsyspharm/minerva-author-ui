@@ -14,8 +14,8 @@ class Import extends Component {
         </div>
           { this.props.env === 'local' ?
             <ImportForm
-              hasServerError={this.props.hasServerError}
               updateInputFile={this.props.updateInputFile}
+              importCallback={this.props.importCallback}
             />
           : 
             <CloudImportForm onToken={this.props.onToken} 

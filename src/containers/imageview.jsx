@@ -34,20 +34,30 @@ class ImageView extends Component {
     }
 
     const getTileName = (x, y, level, channel) => {
-      return channel + "/" + level + "_" + x + "_" + y + ".png";
+      const channel_and_level = (channel === null) ? (
+        `${level}`
+      ) : (
+        `${channel}/${level}`
+      );
+      return `${channel_and_level}_${x}_${y}.png`;
     }
 
     const getTileUrl = function(l, x, y) {
       const level = this.maxLevel - l;
       const url = this.many_channels_url;
-      const channel = this.many_channels_id;
+      const key = this.many_channels_id;
+      // Masks (u32) have no channel parameter
+      // Images (u16) have only one channel id
+      const channel = this.u32 ? null : (
+        this.many_channels[0].unique_id
+      );
 
       let name = getTileName(x, y, level, channel);
       // Prevent cache mistakes
       if (this.many_channels[0].map_ids.length > 0) {
         name += '?map';
       }
-      return url + '/' + name;
+      return `${url}/${key}/${name}`;
     }
 
     return {
@@ -55,7 +65,7 @@ class ImageView extends Component {
       getTileUrl: getTileUrl,
       // Custom parameters
       u32: u32,
-      many_channels_id: u32 === true ? key : id,
+      many_channels_id: key,
       many_channels_url: url,
       many_channels: [{
         unique_id: id,

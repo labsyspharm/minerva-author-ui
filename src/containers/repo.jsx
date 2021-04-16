@@ -230,7 +230,8 @@ class Repo extends Component {
 
     const { width, height, maxLevel, tilesize,
       rgba, uuid, url, warning} = props;
-    const { channels, sample_info, waypoints, groups, masks} = props;
+    const { imageFile, markerFile, session } = props;
+    const { channels, sampleInfo, waypoints, groups, masks} = props;
 
     const defaultChanRender = createChanRender(groups,
       new Map(channels.map((chan, k) => {
@@ -273,9 +274,12 @@ class Repo extends Component {
       showVisDataBrowser: false,
       showMaskBrowser: false,
       showMaskMapBrowser: false,
-      rotation: sample_info.rotation,
-      sampleName: sample_info.name,
-      sampleText: sample_info.text,
+      rotation: sampleInfo.rotation,
+      sampleName: sampleInfo.name,
+      sampleText: sampleInfo.text,
+      markerFile: markerFile,
+      imageFile: imageFile,
+      session: session,
       drawType: '',
       drawing: 0,
       img: {
@@ -290,7 +294,7 @@ class Repo extends Component {
       rgba: rgba,
       textEdit: false,
       showModal: false,
-      sampleInfo: false,
+      showSampleInfo: false,
       renameModal: false,
       addGroupModal: false,
       needNewGroup: false,
@@ -529,7 +533,7 @@ class Repo extends Component {
     ].concat([
       'lastSaveTime', 'isMaskMapLoading', 'invalidMaskMap', 'warning', 'showFileBrowser',
       'showVisDataBrowser', 'showMaskBrowser', 'showMaskMapBrowser', 'drawType', 'drawing',
-      'textEdit', 'showModal', 'sampleInfo', 'renameModal', 'addGroupModal', 'needNewGroup',
+      'textEdit', 'showModal', 'showSampleInfo', 'renameModal', 'addGroupModal', 'needNewGroup',
       'activeArrow', 'activeStory', 'saving', 'published', 'publishing', 'showPublishStoryModal',
       'saveProgress', 'saveProgressMax', 'publishProgress', 'publishProgressMax',
       'activeGroup', 'activeMaskId', 'rangeSliderComplete', 'shownSavePath'
@@ -878,10 +882,10 @@ class Repo extends Component {
 
   toggleSampleInfo() {
     this.setState({
-      sampleInfo: !this.state.sampleInfo
+      showSampleInfo: !this.state.showSampleInfo
     });
     const filePath = this.filePath.current ? this.filePath.current.value : false;
-    if (this.state.sampleInfo && !!filePath) {
+    if (this.state.showSampleInfo && !!filePath) {
       this.submitSampleInfo();
     }
   }
@@ -1699,9 +1703,12 @@ class Repo extends Component {
 
       this.setState({publishing: true});
 
-      let render = fetch('http://localhost:2020/api/render', {
+      const {session, imageFile} = this.state;
+      const render_url = `localhost:2020/api/render/${session}`;
+      let render = fetch('http://'+render_url, {
         method: 'POST',
         body: JSON.stringify({
+          'in_file': imageFile,
           'masks': mask_output,
           'groups': group_output,
           'waypoints': story_output,
@@ -1782,7 +1789,7 @@ class Repo extends Component {
 
     let {groups, masks, saving, rgba} = this.state;
     const {stories, chanLabel} = this.state;
-    const {img} = this.state;
+    const {img, session} = this.state;
     if (saving) {
       return;
     }
@@ -1815,14 +1822,18 @@ class Repo extends Component {
           });
       }
       else {
-        const res = await fetch('http://localhost:2020/api/save', {
+        const {session, markerFile, imageFile} = this.state;
+        const save_url = `localhost:2020/api/save/${session}`;
+        const res = await fetch('http://'+save_url, {
           method: 'POST',
           body: JSON.stringify({
             'is_autosave': !!is_autosave,
             'waypoints': story_output,
             'groups': group_output,
             'masks': mask_output,
-            'sample_info': sample_info
+            'sample_info': sample_info,
+            'csv_file': markerFile,
+            'in_file': imageFile
           }),
           headers: {
             "Content-Type": "application/json"
@@ -1869,7 +1880,9 @@ class Repo extends Component {
   }
 
   getPublishProgress() {
-    fetch('http://127.0.0.1:2020/api/render/progress').then(response => {
+    const {session} = this.state;
+    const progress_url = `localhost:2020/api/render/${session}/progress`;
+    fetch('http://'+progress_url).then(response => {
       return response.json();
     }).then(progress => {
       if (progress.progress >= progress.max && progress.max != 0) {
@@ -2270,7 +2283,7 @@ class Repo extends Component {
   render() {
     const { rgba } = this.state;
     let minerva = this.props.env === 'cloud';
-    const {inputFile, outputSaveFile} = this.props;
+    const {imageFile, inputFile, outputSaveFile} = this.props;
     const mustShowSavePath = !this.state.shownSavePath && (inputFile !== outputSaveFile);
 
     const { activeVisLabel } = this.state;
@@ -2283,7 +2296,8 @@ class Repo extends Component {
     }
     const activeChanLabel = new Map(activeIds.map(a => [a, chanLabel.get(a)]))
     const activeChannels = new Map(activeIds.map(a => [a, {
-      ...activeChanLabel.get(a), ...activeChanRender.get(a)
+      ...activeChanLabel.get(a), ...activeChanRender.get(a),
+      key: encodeURIComponent(encodeURIComponent(imageFile))
     } ]))
 
 
@@ -2426,8 +2440,11 @@ class Repo extends Component {
       previewButton = null;
       shareButton = null;
       if (this.state.published) {
+
+        const {session} = this.state;
+        const story_url = 'http://'+`localhost:2020/story/${session}`;
         previewButton = (
-          <button className="ui button teal" onClick={() => window.open("/story")} title="Preview story">
+          <button className="ui button teal" onClick={() => window.open(story_url)} title="Preview story">
             <FontAwesomeIcon icon={faEye} />&nbsp;
              Preview
           </button>
@@ -2526,7 +2543,7 @@ class Repo extends Component {
         </Modal>
 
         <Modal toggle={this.toggleSampleInfo}
-          show={this.state.sampleInfo}>
+          show={this.state.showSampleInfo}>
             <form className="ui form">
               <input type='text' placeholder='Sample Name'
               value={this.state.sampleName} onChange={this.handleSampleName}

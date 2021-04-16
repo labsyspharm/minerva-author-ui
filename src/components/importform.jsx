@@ -16,6 +16,7 @@ class ImportForm extends Component {
     this.state = {
       loading: false,
       error: null,
+      hasServerError: false,
       askAutosaveLogic: false,
       autosaveLogic: "ask",
       showFileBrowser: false,
@@ -56,7 +57,7 @@ class ImportForm extends Component {
     console.error(err);
   }
 
-  handleSubmit(event) {
+  handleSubmit(event, importCallback) {
     event.preventDefault();
     const data = new FormData(event.target);
     data.set("autosave_logic", this.state.autosaveLogic);
@@ -72,11 +73,14 @@ class ImportForm extends Component {
       body: data,
     }).then(response => {
       this.setState({ loading: false });
-      if (!response.ok) {
-        response.json().then(data => {
+      response.json().then(data => {
+        if(!response.ok) {
           this.handleError(data.error);
-        });
-      }
+        }
+        else {
+          importCallback(data);
+        }
+      });
     }).catch(err => {
       this.handleError(err);
     });
@@ -127,11 +131,12 @@ class ImportForm extends Component {
   }
 
   render() {
-    const confirmServerError = this.props.hasServerError;
+    // TODO:set server error when no response from server
+    const confirmServerError = this.state.hasServerError;
     const confirmAutosave = !confirmServerError && this.state.askAutosaveLogic;
     return (
       <div>
-        { this.renderLocalFields() }
+        { this.renderLocalFields(this.props.importCallback) }
         <ErrorFooter message={this.state.error} />
         <Confirm
           header="Unable to connect to Minerva Author" 
@@ -190,11 +195,13 @@ class ImportForm extends Component {
     )
   }
 
-  renderLocalFields() {
+  renderLocalFields(importCallback) {
     let imageHome = this.state.currentFileFolder ? this.state.currentFileFolder : this.state.currentMarkerFolder;
     let markerHome = this.state.currentMarkerFolder ? this.state.currentMarkerFolder : this.state.currentFileFolder;
     return (
-      <form className="ui form" onSubmit={this.handleSubmit}>
+      <form className="ui form" onSubmit={(event) => {
+            this.handleSubmit(event, importCallback);
+          }}>
           <label htmlFor="filepath">Enter path to image or story: </label>
           <div className="field">
           <div className="ui action input">

@@ -29,7 +29,9 @@ class AuthorApp extends Component {
       preview: false,
       minerva: false,
       signedIn: false,
-      hasServerError: false,
+      session: null,
+      imageFile: '',
+      markerFile: '',
       outputSaveFile: '',
       inputFile: '',
       rgba: false,
@@ -39,7 +41,7 @@ class AuthorApp extends Component {
       storyUuid: null,
       story: null,
       imageName: null,
-      sample_info: {
+      sampleInfo: {
         'name': '',
         'text': '',
         "rotation":0
@@ -53,6 +55,7 @@ class AuthorApp extends Component {
     }
 
     this.onToken = this.onToken.bind(this);
+    this.importCallback = this.importCallback.bind(this);
     this.onMinervaImage = this.onMinervaImage.bind(this);
     this.onStoryLoaded = this.onStoryLoaded.bind(this);
     this.onPreview = this.onPreview.bind(this);
@@ -78,64 +81,30 @@ class AuthorApp extends Component {
     });
   }
 
-  async forceResetServerState() {
-    return fetch('http://localhost:2020/', {
-      headers: {
-        'pragma': 'no-cache',
-        'cache-control': 'no-store'
-      }
-    });
-  }
+  importCallback(import_result) {
+    const { loaded } = this.state;
+    if (loaded === false) {
+      const {output_save_file, input_image_file} = import_result;
+      const {sample_info, marker_csv_file} = import_result;
 
-  async getImportResult() {
-    return fetch('http://localhost:2020/api/import', {
-      headers: {
-        'pragma': 'no-cache',
-        'cache-control': 'no-store'
-      }
-    }).then(async res => {
-      return res.json();
-    });
-  }
-
-  async componentDidMount() {
-    if (this.props.env === 'local') {
-      try {
-        await this.forceResetServerState();
-        const import_interval = setInterval(async () => {
-          const { loaded } = this.state;
-          if (loaded === false) {
-            const import_result = await this.getImportResult();
-            const output_save_file = import_result.output_save_file;
-            const sample_info = import_result.sample_info;
-
-            this.setState({
-              outputSaveFile: output_save_file || this.state.outputSaveFile,
-              sample_info: sample_info || this.state.sample_info,
-              waypoints: import_result.waypoints,
-              groups: import_result.groups,
-              masks: import_result.masks,
-              loaded: import_result.loaded,
-              channels: import_result.channels,
-              tilesize: import_result.tilesize,
-              maxLevel: import_result.maxLevel,
-              width: import_result.width,
-              height: import_result.height,
-              rgba: import_result.rgba,
-              warning: import_result.warning,
-              hasServerError: false
-            });
-          }
-          else {
-            clearInterval(import_interval);
-          }
-        }, 3000);
-      } catch (e) {
-        console.log(e);
-        this.setState({
-          hasServerError: true
-        })
-      }
+      this.setState({
+        outputSaveFile: output_save_file || this.state.outputSaveFile,
+        sampleInfo: sample_info || this.state.sampleInfo,
+        imageFile: input_image_file,
+        markerFile: marker_csv_file,
+        waypoints: import_result.waypoints,
+        groups: import_result.groups,
+        masks: import_result.masks,
+        loaded: import_result.loaded,
+        channels: import_result.channels,
+        tilesize: import_result.tilesize,
+        maxLevel: import_result.maxLevel,
+        width: import_result.width,
+        height: import_result.height,
+        rgba: import_result.rgba,
+        warning: import_result.warning,
+        session: import_result.session
+      });
     }
   }
 
@@ -161,7 +130,7 @@ class AuthorApp extends Component {
   onStoryLoaded(story) {
     console.log('Story loaded: ', story);
     this.setState({
-      sample_info: story.sample_info,
+      sampleInfo: story.sample_info,
       waypoints: story.waypoints,
       groups: story.groups,
       storyUuid: story.uuid,
@@ -207,8 +176,10 @@ class AuthorApp extends Component {
 
   render() {
     const {loaded, width, height, tilesize, maxLevel, rgba, url, uuid, storyUuid, story, imageName} = this.state;
-    const {channels, sample_info, waypoints, groups, warning, masks} = this.state;
+    const {channels, sampleInfo, waypoints, groups, warning, masks} = this.state;
     const {inputFile, outputSaveFile} = this.state;
+    const {imageFile, markerFile} = this.state;
+    const {session} = this.state;
 
     if (loaded) {
       let repoClass = this.state.preview ? "repo-div" : "repo-div show";
@@ -217,13 +188,15 @@ class AuthorApp extends Component {
           <div>
             <div className={repoClass}>
             <Repo   env={this.props.env} rgba={rgba}
+                    imageFile={imageFile} markerFile={markerFile}
                     inputFile={inputFile} outputSaveFile={outputSaveFile}
                     masks={masks} channels={channels} waypoints={waypoints}
                     groups={groups} url={url} uuid={uuid} maxLevel={maxLevel}
                     width={width} height={height} tilesize={tilesize}
-                    sample_info={sample_info} warning={warning} storyUuid={storyUuid}
+                    sampleInfo={sampleInfo} warning={warning} storyUuid={storyUuid}
                     imageName={imageName} story={story}
                     onPreview={this.onPreview}
+                    session={session}
               />
             </div>
             
@@ -247,7 +220,7 @@ class AuthorApp extends Component {
           onSignout={this.onSignout}
           username={this.state.username}
           updateInputFile={this.updateInputFile}
-          hasServerError={this.state.hasServerError}
+          importCallback={this.importCallback}
         />
       );
     } else {
