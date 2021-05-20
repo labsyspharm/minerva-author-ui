@@ -230,7 +230,8 @@ class Repo extends Component {
 
     const { width, height, maxLevel, tilesize,
       rgba, uuid, url, warning} = props;
-    const { imageFile, markerFile, session } = props;
+    const { imageFile, markerFile } = props;
+    const { out_name, root_dir, session } = props;
     const { channels, sampleInfo, waypoints, groups, masks} = props;
 
     const defaultChanRender = createChanRender(groups,
@@ -271,6 +272,7 @@ class Repo extends Component {
       invalidMaskMap: false,
       warning: warning,
       showFileBrowser: false,
+      showSaveAsBrowser: false,
       showVisDataBrowser: false,
       showMaskBrowser: false,
       showMaskMapBrowser: false,
@@ -279,6 +281,8 @@ class Repo extends Component {
       sampleText: sampleInfo.text,
       markerFile: markerFile,
       imageFile: imageFile,
+      out_name: out_name,
+      root_dir: root_dir,
       session: session,
       drawType: '',
       drawing: 0,
@@ -292,9 +296,9 @@ class Repo extends Component {
       },
       imageName: props.imageName,
       rgba: rgba,
-      textEdit: false,
+      textTab: rgba? 'STORY' : 'GROUP',
       showModal: false,
-      showSampleInfo: false,
+      showSaveAsModal: false,
       renameModal: false,
       addGroupModal: false,
       needNewGroup: false,
@@ -310,6 +314,7 @@ class Repo extends Component {
       deleteClusterModal: false,
       deleteMaskModal: false,
       saving: false,
+      savingAs: false,
       published: false,
       publishing: false,
       showPublishStoryModal: false,
@@ -412,13 +417,16 @@ class Repo extends Component {
       this.state.authorName = props.story.author_name;
     }
 
-    this.filePath = React.createRef();
     // Bind
     this.dismissWarning = this.dismissWarning.bind(this);
     this.updateGroups = this.updateGroups.bind(this);
     this.updateMaskError = this.updateMaskError.bind(this);
     this.openFileBrowser = this.openFileBrowser.bind(this);
     this.onFileSelected = this.onFileSelected.bind(this);
+    this.toggleSaveAsModal = this.toggleSaveAsModal.bind(this);
+    this.openSaveAsBrowser = this.openSaveAsBrowser.bind(this);
+    this.onSetRootDir = this.onSetRootDir.bind(this);
+    this.onSetOutName = this.onSetOutName.bind(this);
     this.openVisDataBrowser = this.openVisDataBrowser.bind(this);
     this.onVisDataSelected = this.onVisDataSelected.bind(this);
     this.interactor = this.interactor.bind(this);
@@ -454,9 +462,8 @@ class Repo extends Component {
     this.deleteCluster = this.deleteCluster.bind(this);
     this.handleSelectGroup = this.handleSelectGroup.bind(this);
     this.handleViewport = this.handleViewport.bind(this);
-    this.toggleTextEdit = this.toggleTextEdit.bind(this);
-    this.toggleSampleInfo = this.toggleSampleInfo.bind(this);
-    this.submitSampleInfo = this.submitSampleInfo.bind(this);
+    this.toggleTextTab = this.toggleTextTab.bind(this);
+    this.importGroups = this.importGroups.bind(this);
     this.toggleModal = this.toggleModal.bind(this);
     this.share = this.share.bind(this);
     this.publish = this.publish.bind(this);
@@ -531,10 +538,10 @@ class Repo extends Component {
       (old, state) => !state.deleteStoryModal,
       (old, state) => !state.deleteClusterModal
     ].concat([
-      'lastSaveTime', 'isMaskMapLoading', 'invalidMaskMap', 'warning', 'showFileBrowser',
+      'lastSaveTime', 'isMaskMapLoading', 'invalidMaskMap', 'warning', 'showFileBrowser', 
       'showVisDataBrowser', 'showMaskBrowser', 'showMaskMapBrowser', 'drawType', 'drawing',
-      'textEdit', 'showModal', 'showSampleInfo', 'renameModal', 'addGroupModal', 'needNewGroup',
-      'activeArrow', 'activeStory', 'saving', 'published', 'publishing', 'showPublishStoryModal',
+      'textTab', 'showSaveAsModal', 'showModal', 'renameModal', 'addGroupModal', 'needNewGroup', 'showSaveAsBrowser',
+      'activeArrow', 'activeStory', 'saving', 'savingAs', 'published', 'publishing', 'showPublishStoryModal',
       'saveProgress', 'saveProgressMax', 'publishProgress', 'publishProgressMax',
       'activeGroup', 'activeMaskId', 'rangeSliderComplete', 'shownSavePath'
     ].map((key) => {
@@ -603,7 +610,7 @@ class Repo extends Component {
     let newStory = {...(stories.get(activeStory) || this.defaultStory())};
 
     this.setState({viewport: viewport});
-    if (this.state.textEdit) {
+    if (this.state.textTab === 'STORY') {
 
       newStory.zoom = viewport.getZoom();
       newStory.pan = [
@@ -848,11 +855,15 @@ class Repo extends Component {
     }
   }
 
-  submitSampleInfo() {
+  importGroups(event) {
+    const filePath = event.target.value;
+    if (!!filePath) {
+      return;
+    }
     fetch('http://127.0.0.1:2020/api/import/groups', {
       method: 'POST',
       body: JSON.stringify({
-        'filepath': this.filePath.current.value
+        'filepath': filePath
       }),
       headers: {
         "Content-Type": "application/json"
@@ -880,24 +891,14 @@ class Repo extends Component {
     });
   }
 
-  toggleSampleInfo() {
+  toggleTextTab(value) {
+    const {activeStory} = this.state;
     this.setState({
-      showSampleInfo: !this.state.showSampleInfo
-    });
-    const filePath = this.filePath.current ? this.filePath.current.value : false;
-    if (this.state.showSampleInfo && !!filePath) {
-      this.submitSampleInfo();
-    }
-  }
-
-  toggleTextEdit(value) {
-    const {textEdit, activeStory} = this.state;
-    this.setState({
-      textEdit: value,
+      textTab: value,
       publishProgress: 0,
       publishProgressMax: 0
     })
-    if (!textEdit) {
+    if (value === 'STORY') {
       this.handleStoryChange(activeStory);
     }
   }
@@ -1108,9 +1109,9 @@ class Repo extends Component {
   }
 
   _handleSelectGroupForWaypoint(id) {
-    const {activeStory, textEdit, viewport} = this.state;
+    const {activeStory, textTab, viewport} = this.state;
     let newStory = this.state.stories.get(activeStory) || this.defaultStory();
-    if ((id !== undefined) && textEdit) {
+    if ((id !== undefined) && textTab === 'STORY') {
 
       newStory.group = id;
 
@@ -1684,6 +1685,35 @@ class Repo extends Component {
     });
   }
 
+  apiRender(render_url) {
+    const{groups, masks} = this.state;
+    const {rgba, imageFile} = this.state;
+    const {root_dir, out_name} = this.state;
+    const {stories, chanLabel} = this.state;
+    const mask_output = this.createMaskOutput({masks});
+    const group_output = this.createGroupOutput({groups, chanLabel, rgba});
+    const story_output = this.createWaypoints({stories, groups, masks});
+    return fetch('http://'+render_url, {
+      method: 'POST',
+      body: JSON.stringify({
+        'in_file': imageFile,
+        'root_dir': root_dir,
+        'out_name': out_name,
+        'masks': mask_output,
+        'groups': group_output,
+        'waypoints': story_output,
+        'header': this.state.sampleText,
+        'rotation': this.state.rotation,
+        'image': {
+          'description': this.state.sampleName
+        }
+      }),
+      headers: {
+        "Content-Type": "application/json"
+      }
+    })
+  }
+
   publish() {
 
     let minerva = this.props.env === 'cloud';
@@ -1692,40 +1722,12 @@ class Repo extends Component {
       this.setPublishStoryModal(true)
     }
     else {
-      let {groups, masks} = this.state;
-      const {stories, chanLabel} = this.state;
-      const {img, rgba} = this.state;
-
-      const mask_output = this.createMaskOutput({masks});
-      const group_output = this.createGroupOutput({groups, chanLabel, rgba});
-      const story_output = this.createWaypoints({stories, groups, masks});
-      const story_definition = this.createStoryDefinition(story_output, group_output);
-
       this.setState({publishing: true});
-
-      const {session, imageFile} = this.state;
-      const render_url = `localhost:2020/api/render/${session}`;
-      let render = fetch('http://'+render_url, {
-        method: 'POST',
-        body: JSON.stringify({
-          'in_file': imageFile,
-          'masks': mask_output,
-          'groups': group_output,
-          'waypoints': story_output,
-          'header': this.state.sampleText,
-          'rotation': this.state.rotation,
-          'image': {
-            'description': this.state.sampleName
-          }
-        }),
-        headers: {
-          "Content-Type": "application/json"
-        }
-      })
-
       this.setProgressPolling(true);
 
-      render.then(res => {
+      const {session} = this.state;
+      const render_url = `localhost:2020/api/render/${session}`;
+      this.apiRender(render_url).then(res => {
         this.setState({publishing: false});
         this.setProgressPolling(false);
         this.getPublishProgress();
@@ -1776,16 +1778,18 @@ class Repo extends Component {
         !no_conditions.some(Boolean)
         && yes_conditions.some((fn)=>fn(oldState, this.state))
       ) {
-        console.log('Autosaving!')
         return await this.save(true);
       }
     }
     const outdated_error = outdated? ' Already saved' : '';
-    console.log(`Not autosaving!${outdated_error}`);
     return null;
   }
 
-  async save(is_autosave=false) {
+  async saveAs() {
+    return await this.save(false, true);
+  }
+
+  async save(is_autosave=false, save_as=false) {
 
     let {groups, masks, saving, rgba} = this.state;
     const {stories, chanLabel} = this.state;
@@ -1794,7 +1798,10 @@ class Repo extends Component {
       return;
     }
 
-    this.setState({saving: true});
+    this.setState({
+      saving: true,
+      savingAs: save_as
+    });
 
     let minerva = this.props.env === 'cloud';
 
@@ -1817,12 +1824,14 @@ class Repo extends Component {
           const res = await Client.saveStory(story_definition);
           this.setState({
             saving: false,
+            savingAs: false,
             storyUuid: res.uuid,
             lastSaveTime: new Date()
           });
       }
       else {
-        const {session, markerFile, imageFile} = this.state;
+        const {markerFile, imageFile} = this.state;
+        const {out_name, root_dir, session} = this.state;
         const save_url = `localhost:2020/api/save/${session}`;
         const res = await fetch('http://'+save_url, {
           method: 'POST',
@@ -1833,7 +1842,9 @@ class Repo extends Component {
             'masks': mask_output,
             'sample_info': sample_info,
             'csv_file': markerFile,
-            'in_file': imageFile
+            'in_file': imageFile,
+            'root_dir': root_dir,
+            'out_name': out_name
           }),
           headers: {
             "Content-Type": "application/json"
@@ -1844,12 +1855,16 @@ class Repo extends Component {
         await new Promise(resolve => setTimeout(resolve, 1000));
         this.setState({
           saving: false,
+          savingAs: false,
           lastSaveTime: new Date()
         });
       }
     }
     catch (err) {
-      this.setState({saving: false});
+      this.setState({
+        saving: false,
+        savingAs: false
+      });
     }
   }
 
@@ -1864,7 +1879,10 @@ class Repo extends Component {
         groups: groups
       })
     }).catch(err => {
-      this.setState({saving: false});
+      this.setState({
+        saving: false,
+        savingAs: false
+      });
     });
   }
 
@@ -1904,6 +1922,38 @@ class Repo extends Component {
     return "Create Group: " + label;
   }
 
+  toggleSaveAsModal() {
+    const {showSaveAsModal} = this.state;
+    this.setState({ showSaveAsModal: !showSaveAsModal}, () => {
+      if (!this.state.showSaveAsModal) {
+        this.saveAs();
+      }
+    });
+  }
+
+  openSaveAsBrowser() {
+    this.setState({ showSaveAsBrowser: true});
+  }
+
+  onSetOutName(dir_name) {
+    if (dir_name) {
+      this.setState({
+        out_name: dir_name
+      })
+    }
+  }
+
+  onSetRootDir(file, folder=null) {
+    this.setState({
+      showSaveAsBrowser: false
+    });
+    if (file && file.path) {
+      this.setState({
+        root_dir: file.path
+      })
+    }
+  }
+
   openFileBrowser() {
     this.setState({ showFileBrowser: true});
   }
@@ -1913,7 +1963,11 @@ class Repo extends Component {
       showFileBrowser: false
     });
     if (file && file.path) {
-      this.filePath.current.value = file.path;
+      this.importGroups({
+        target: {
+          value: file.path
+        }
+      });
     }
   }
 
@@ -2186,10 +2240,10 @@ class Repo extends Component {
 
   preview() {
     let {groups, chanLabel, stories, masks, rgba} = this.state;
-      const group_output = this.createGroupOutput({groups, chanLabel, rgba});
-      const story_output = this.createWaypoints({stories, groups, masks});
-      const story_definition = this.createStoryDefinition(story_output, group_output);
-      this.props.onPreview(true, story_definition);
+    const group_output = this.createGroupOutput({groups, chanLabel, rgba});
+    const story_output = this.createWaypoints({stories, groups, masks});
+    const story_definition = this.createStoryDefinition(story_output, group_output);
+    this.props.onPreview(true, story_definition);
   }
 
   setPublishStoryModal(active) {
@@ -2287,7 +2341,7 @@ class Repo extends Component {
     const mustShowSavePath = !this.state.shownSavePath && (inputFile !== outputSaveFile);
 
     const { activeVisLabel } = this.state;
-    const { img, groups, chanLabel, textEdit } = this.state;
+    const { img, groups, chanLabel, textTab } = this.state;
     const { chanRender, activeIds, activeGroup } = this.state;
     const group = groups.get(activeGroup);
     let activeChanRender = new Map(activeIds.map(a => [a, chanRender.get(a)]))
@@ -2395,6 +2449,19 @@ class Repo extends Component {
       />
     }
 
+    const saveAsButton = (
+      <button className="ui button primary"
+        onClick={()=>this.toggleSaveAsModal()}
+        disabled={this.state.saving}
+        title="Save story as">
+          <FontAwesomeIcon icon={faSave} />&nbsp;
+        Save As&nbsp;
+        <ClipLoader animation="border"
+        size={12} color={"#FFFFFF"}
+        loading={this.state.saving && this.state.savingAs}/>
+      </button>
+    );
+
     const saveButton = (
       <button className="ui button primary"
         onClick={()=>this.save(false)}
@@ -2404,7 +2471,7 @@ class Repo extends Component {
         Save&nbsp;
         <ClipLoader animation="border"
         size={12} color={"#FFFFFF"}
-        loading={this.state.saving}/>
+        loading={this.state.saving && !this.state.savingAs}/>
       </button>
     );
 
@@ -2439,12 +2506,16 @@ class Repo extends Component {
       // Hide buttons which are not implemented in local environment yet
       previewButton = null;
       shareButton = null;
-      if (this.state.published) {
-
+      if (group != undefined) {
         const {session} = this.state;
         const story_url = 'http://'+`localhost:2020/story/${session}`;
+        const preview_url = `localhost:2020/api/preview/${session}`;
         previewButton = (
-          <button className="ui button teal" onClick={() => window.open(story_url)} title="Preview story">
+          <button className="ui button teal" onClick={() => {
+            this.apiRender(preview_url).then(res => {
+              window.open(story_url);
+            });
+          }} title="Preview story">
             <FontAwesomeIcon icon={faEye} />&nbsp;
              Preview
           </button>
@@ -2456,44 +2527,39 @@ class Repo extends Component {
       publishButton = null;
     }
 
-    let editGroupsButton = this.state.textEdit ? "ui button" : "ui button active";
-    let editStoryButton = this.state.textEdit ? "ui button active" : "ui button";
+    let editGroupsButton = textTab === 'GROUP' ? "ui button active" : "ui button";
+    let editStoryButton = textTab === 'STORY' ? "ui button active" : "ui button";
+    let editInfoButton = textTab === 'INFO' ? "ui button active" : "ui button";
 
-    let tabBar = '';
-    if (!rgba) {
-      tabBar = (
-        <div className="row">
+    const fileTabs = (
+      <span className="ui buttons">
+        {saveButton}
+        {saveAsButton}
+        {publishButton}
+        {previewButton}
+        {shareButton}
+      </span>
+    );
+    const tabBar = (
+      <div className="row">
+        {fileTabs}
         <span className="ui buttons">
-          <button className="ui button" onClick={() => this.toggleSampleInfo()}>
-              Sample Info
+          <button className={editInfoButton} onClick={() => this.toggleTextTab('INFO')}>
+            Sample Info
           </button>
-          <button className={editGroupsButton} onClick={() => this.toggleTextEdit(false)}>
-            Edit Groups
-          </button>
-          <button className={editStoryButton} onClick={() => this.toggleTextEdit(true)}>
+          {
+          rgba ? '' : (
+            <button className={editGroupsButton} onClick={() => this.toggleTextTab('GROUP')}>
+              Edit Groups
+            </button>
+          )
+          }
+          <button className={editStoryButton} onClick={() => this.toggleTextTab('STORY')}>
             Edit Story
           </button>
-          {previewButton}
-          {shareButton}
-          {saveButton}
-          {publishButton}
         </span>
-        </div>
-      )
-    }
-    else {
-      tabBar = (
-        <span className="ui buttons">
-          <button className="ui button" onClick={() => this.toggleSampleInfo()}>
-              Sample Info
-          </button>
-          {previewButton}
-          {shareButton}
-          {saveButton}
-          {publishButton}
-        </span>
-      )
-    }
+      </div>
+    );
 
     let groupBar = ''
     if (!rgba) {
@@ -2521,6 +2587,40 @@ class Repo extends Component {
       )
     }
 
+    const sampleInfoForm = (
+      <form className="ui form">
+        <input type='text' placeholder='Sample Name'
+        value={this.state.sampleName} onChange={this.handleSampleName}
+        />
+        <textarea placeholder='Sample Description' value={this.state.sampleText}
+        onChange={this.handleSampleText} />
+        <input type='text' placeholder='Author Name'
+          value={this.state.authorName} onChange={this.handleAuthorName } />
+        <div className="font-white mt-2">
+          Image Rotation:
+        </div>
+        <div className="field">
+           <input type='text' placeholder='Rotation'
+            value={this.state.rotation? this.state.rotation : ''}
+           onChange={this.handleRotation}
+           />
+           <input type="range" className="image-rotation-range" min="-180" max="180" value={this.state.rotation} onChange={this.handleRotation} id="myRange"></input>
+        </div>
+        <div className="font-white mt-2">
+          Import Channel Groups:
+        </div>
+        <div className="ui action input">
+          <input type="text" onChange={this.importGroups} placeholder='Channel groups json file'/>
+          <button type="button" onClick={this.openFileBrowser} className="ui button">Browse</button>
+          <FileBrowserModal open={this.state.showFileBrowser} close={this.onFileSelected}
+            title="Select a json file"
+            onFileSelected={this.onFileSelected}
+            filter={["dat", "json"]}
+            />
+        </div>
+      </form>
+    );
+
     return (
 
       <div className="container-fluid Repo">
@@ -2541,35 +2641,37 @@ class Repo extends Component {
               onChange={this.handleArrowText} />
             </form>
         </Modal>
-
-        <Modal toggle={this.toggleSampleInfo}
-          show={this.state.showSampleInfo}>
-            <form className="ui form">
-              <input type='text' placeholder='Sample Name'
-              value={this.state.sampleName} onChange={this.handleSampleName}
-              />
-              <textarea placeholder='Sample Description' value={this.state.sampleText}
-              onChange={this.handleSampleText} />
-              <input type='text' placeholder='Author Name'
-                value={this.state.authorName} onChange={this.handleAuthorName } />
-              <div className="field">
-                <label>Rotation (degrees)</label>
-               <input type='text' placeholder='Rotation'
-                value={this.state.rotation? this.state.rotation : ''}
-               onChange={this.handleRotation}
-               />
-               <input type="range" className="image-rotation-range" min="-180" max="180" value={this.state.rotation} onChange={this.handleRotation} id="myRange"></input>
+        <Modal toggle={this.toggleSaveAsModal}
+          show={this.state.showSaveAsModal}
+          confirmButton="Save As"
+        >
+          <form>
+            <div className="mt-2">
+              Parent Directory:
+            </div>
+            <div className="row">
+              <div className="col-12 ui action input">
+                <input type="text" style={{width: "75%"}} value={this.state.root_dir}
+                  onChange={(e) => this.onSetRootDir({path: e.target.value})} placeholder='Parent directory'/>
+                <button type="button" onClick={this.openSaveAsBrowser} className="ui button">Browse</button>
+                <FileBrowserModal open={this.state.showSaveAsBrowser} close={this.onSetRootDir}
+                  title="Select a parent folder for saving"
+                  onFileSelected={this.onSetRootDir}
+                  home={this.state.root_dir}
+                  selectDir={true}
+                />
               </div>
-              <div className="ui action input">
-                <input ref={this.filePath} className='full-width-input' id="filepath" name="filepath" type="text" placeholder='Channel groups json file'/>
-                <button type="button" onClick={this.openFileBrowser} className="ui button">Browse</button>
-                <FileBrowserModal open={this.state.showFileBrowser} close={this.onFileSelected}
-                  title="Select a json file"
-                  onFileSelected={this.onFileSelected}
-                  filter={["dat", "json"]}
-                  />
+            </div>
+            <div className="mt-2">
+              Output name:
+            </div>
+            <div className="row">
+              <div className="col-12 ui action input">
+                <input type="text" style={{width: "75%"}} value={this.state.out_name}
+                  onChange={(e) => this.onSetOutName(e.target.value)} placeholder='Output directory'/>
               </div>
-            </form>
+            </div>
+          </form>
         </Modal>
 
         <div className="row justify-content-between">
@@ -2600,7 +2702,8 @@ class Repo extends Component {
               activeChanLabel={activeChanLabel}
               handleSortChannels={this.handleSortChannels}
               activeChannels={activeChannels}
-              textEdit={textEdit}
+              textTab={textTab}
+              sampleInfoForm={sampleInfoForm}
               handleStoryName={this.handleStoryName}
               handleStoryText={this.handleStoryText}
               handleStoryChange={this.handleStoryChange}
@@ -2636,7 +2739,7 @@ class Repo extends Component {
               openMaskMapBrowser={this.openMaskMapBrowser}
               isMaskMapLoading={this.state.isMaskMapLoading}
               invalidMaskMap={this.state.invalidMaskMap}
-              toggleTextEdit={this.toggleTextEdit}
+              toggleTextTab={this.toggleTextTab}
             />
             <Confirm
               header="Save file location"

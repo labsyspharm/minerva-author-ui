@@ -21,9 +21,7 @@ class Preview extends Component {
   }
 
   componentDidMount() {
-    console.log(this.props.story);
     let exhibit = this.buildExhibit(this.props.story);
-    console.log(JSON.stringify(exhibit, null, 2));
     MinervaBrowser.build_page({
       exhibit: exhibit,
       id: this.browserRef.current.id,
@@ -53,7 +51,6 @@ class Preview extends Component {
   }
 
   buildExhibit(story) {
-    console.log(story);
     let Exhibit = {};
     Exhibit.Name = story.sample_info.name;
     Exhibit.Header = story.sample_info.text;

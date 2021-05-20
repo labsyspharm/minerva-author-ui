@@ -109,13 +109,13 @@ class Controls extends Component {
   render() {
 
     const {addArrowText, rgba, minerva} = this.props;
-    const {deleteOverlay, deleteArrow, toggleTextEdit} = this.props;
+    const {deleteOverlay, deleteArrow, toggleTextTab} = this.props;
     const {activeStory, handleSelectStory} = this.props;
     const {handleSortStoryMasks, handleSelectStoryMasks} = this.props;
     const {handleClusterChange, handleClusterInsert, handleClusterRemove} = this.props;
     const {showVisDataBrowser, openVisDataBrowser, onVisDataSelected} = this.props;
     const {visLabels, activeVisLabel, handleSelectVis} = this.props;
-    const {stories, storyName, storyMasks, storyText, textEdit} = this.props;
+    const {stories, storyName, storyMasks, storyText, textTab} = this.props;
     const {handleStoryInsert, handleStoryName, handleStoryText} = this.props;
     const {handleStoryRemove, handleStoryChange, overlays, arrows} = this.props;
     const {arrowClick, lassoClick, boxClick, drawType} = this.props;
@@ -222,7 +222,7 @@ class Controls extends Component {
                 color:"#4fbcff"
               }}
               onClick={() => {
-                toggleTextEdit(true);
+                toggleTextTab('STORY');
               }}
             >
             "Edit Story"
@@ -463,7 +463,7 @@ class Controls extends Component {
               color:"#4fbcff"
             }}
             onClick={() => {
-              toggleTextEdit(false);
+              toggleTextTab('GROUP');
             }}
           >
           Masks:
@@ -604,111 +604,116 @@ class Controls extends Component {
         </div>
       )
     }
-    if (textEdit || rgba) {
+    if (textTab === 'STORY') {
       return (
-			<div className="ui form">
-				<div className="row">
-					<div className="col no-right-padding">
-						<div className="">
-              <div className="row">
-                <div className="col-5">
-                  <div className="font-white">
-                    Waypoints:
+        <div className="ui form">
+          <div className="row">
+            <div className="col no-right-padding">
+              <div className="">
+                <div className="row">
+                  <div className="col-5">
+                    <div className="font-white">
+                      Waypoints:
+                    </div>
+                    <div className="width-100">
+                      <Select
+                        onChange={handleSelectStory}
+                        value={activeStoryLabel}
+                        options={Array.from(storyLabels.values())}
+                      />
+                    </div>
                   </div>
-                  <div className="width-100">
-                    <Select
-                      onChange={handleSelectStory}
-                      value={activeStoryLabel}
-                      options={Array.from(storyLabels.values())}
-                    />
+                  <div className="pt-2 pl-0 col-7">
+                    <button className="ui button compact" title="Previous waypoint" onClick={()=>{
+                      handleStoryChange(Math.max(0, activeStory - 1))
+                    }}>
+                      <FontAwesomeIcon icon={faArrowLeft} />
+                    </button>
+                    <button className="ui button compact" onClick={handleStoryInsert} title="Add waypoint">
+                      <FontAwesomeIcon icon={faPlus} />
+                    </button>
+                    <button className="ui button compact" title="Next waypoint" onClick={()=>{
+                      handleStoryChange(activeStory + 1)
+                    }}>
+                      <FontAwesomeIcon icon={faArrowRight} />
+                    </button>
+                    <button className="ui button red compact" title="Delete waypoint" onClick={handleStoryRemove}>
+                      X
+                    </button>
                   </div>
-                </div>
-                <div className="pt-2 pl-0 col-7">
-                  <button className="ui button compact" title="Previous waypoint" onClick={()=>{
-                    handleStoryChange(Math.max(0, activeStory - 1))
-                  }}>
-                    <FontAwesomeIcon icon={faArrowLeft} />
-                  </button>
-                  <button className="ui button compact" onClick={handleStoryInsert} title="Add waypoint">
-                    <FontAwesomeIcon icon={faPlus} />
-                  </button>
-                  <button className="ui button compact" title="Next waypoint" onClick={()=>{
-                    handleStoryChange(activeStory + 1)
-                  }}>
-                    <FontAwesomeIcon icon={faArrowRight} />
-                  </button>
-                  <button className="ui button red compact" title="Delete waypoint" onClick={handleStoryRemove}>
-                    X
-                  </button>
                 </div>
               </div>
-						</div>
-						<input className="width-100" type="text" placeholder="Waypoint Name" value={storyName} onChange={handleStoryName}></input>
-            <textarea className="width-100 height-20vh" placeholder="Waypoint Description" value={storyText} onChange={handleStoryText}></textarea>
-            {storyMaskControls}
-            {visControls}
-					</div>
-					<div className="col-1 p-0">
-						<div className="btn-group-vertical">
-							<span id="arrow-switch" className="nav-item arrow-switch">
-							<a className="btn" onClick={arrowClick} title="Add arrow">
-									<FontAwesomeIcon icon={faLocationArrow}
-										color={(drawType == 'arrow')? 'blue': 'white'}
-									/>
-							</a>
-							</span>
-							<span id="draw-switch" className="nav-item draw-switch">
-							<a className="btn" onClick={boxClick} title="Add rectangle">
-									<FontAwesomeIcon icon={faCrosshairs}
-										color={(drawType == 'box')? 'blue': 'white'}
-									/>
-							</a>
-							</span>
-						</div>
-					</div>
-				</div>
-				<Overlays deleteOverlay={deleteOverlay}
-				deleteArrow={deleteArrow} addArrowText={addArrowText}
-				overlays={overlays} arrows={arrows}></Overlays>
-			</div>
+              <input className="width-100" type="text" placeholder="Waypoint Name" value={storyName} onChange={handleStoryName}></input>
+              <textarea className="width-100 height-20vh" placeholder="Waypoint Description" value={storyText} onChange={handleStoryText}></textarea>
+              {storyMaskControls}
+              {visControls}
+            </div>
+            <div className="col-1 p-0">
+              <div className="btn-group-vertical">
+                <span id="arrow-switch" className="nav-item arrow-switch">
+                <a className="btn" onClick={arrowClick} title="Add arrow">
+                    <FontAwesomeIcon icon={faLocationArrow}
+                      color={(drawType == 'arrow')? 'blue': 'white'}
+                    />
+                </a>
+                </span>
+                <span id="draw-switch" className="nav-item draw-switch">
+                <a className="btn" onClick={boxClick} title="Add rectangle">
+                    <FontAwesomeIcon icon={faCrosshairs}
+                      color={(drawType == 'box')? 'blue': 'white'}
+                    />
+                </a>
+                </span>
+              </div>
+            </div>
+          </div>
+          <Overlays deleteOverlay={deleteOverlay}
+          deleteArrow={deleteArrow} addArrowText={addArrowText}
+          overlays={overlays} arrows={arrows}></Overlays>
+        </div>
       )
     }
+    else if (textTab === 'GROUP') {
+      const {handleSelect, handleChange} = this.props;
+      const {activeChanLabel, chanLabel} = this.props;
+      const {activeChannels} = this.props;
 
-    const {handleSelect, handleChange} = this.props;
-    const {activeChanLabel, chanLabel} = this.props;
-    const {activeChannels} = this.props;
+      const {handleSortChannels} = this.props;
 
-    const {handleSortChannels} = this.props;
-
-    return (
-      <div className="row">
-        <div className="col">
-        <SortableSelect
-          // needed as per https://github.com/clauderic/react-sortable-hoc/pull/352
-          getHelperDimensions={({ node }) => node.getBoundingClientRect()}
-          onSortEnd={handleSortChannels}
-          useDragHandle={true}
-          axis="xy"
-          // Select Options
-          isMulti={true}
-          onChange={handleSelect}
-          value={Array.from(activeChanLabel.values())}
-          options={Array.from(chanLabel.values())}
-          components={{
-            MultiValue: SortableMultiValue,
-            MultiValueLabel: SortableMultiValueLabel,
-          }}
-        />
-        <div>
-          <ChannelControls className="ChannelControls"
-            channels={ activeChannels }
-            handleChange={ handleChange }
+      return (
+        <div className="row">
+          <div className="col">
+          <SortableSelect
+            // needed as per https://github.com/clauderic/react-sortable-hoc/pull/352
+            getHelperDimensions={({ node }) => node.getBoundingClientRect()}
+            onSortEnd={handleSortChannels}
+            useDragHandle={true}
+            axis="xy"
+            // Select Options
+            isMulti={true}
+            onChange={handleSelect}
+            value={Array.from(activeChanLabel.values())}
+            options={Array.from(chanLabel.values())}
+            components={{
+              MultiValue: SortableMultiValue,
+              MultiValueLabel: SortableMultiValueLabel,
+            }}
           />
+          <div>
+            <ChannelControls className="ChannelControls"
+              channels={ activeChannels }
+              handleChange={ handleChange }
+            />
+          </div>
+          {maskData}
+          </div>
         </div>
-        {maskData}
-        </div>
-      </div>
-    );
+      );
+    }
+    else {
+      const {sampleInfoForm} = this.props;
+      return sampleInfoForm;
+    }
   }
 }
 

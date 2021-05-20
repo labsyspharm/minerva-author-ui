@@ -103,7 +103,9 @@ class AuthorApp extends Component {
         height: import_result.height,
         rgba: import_result.rgba,
         warning: import_result.warning,
-        session: import_result.session
+        session: import_result.session,
+        out_name: import_result.out_name,
+        root_dir: import_result.root_dir
       });
     }
   }
@@ -179,7 +181,7 @@ class AuthorApp extends Component {
     const {channels, sampleInfo, waypoints, groups, warning, masks} = this.state;
     const {inputFile, outputSaveFile} = this.state;
     const {imageFile, markerFile} = this.state;
-    const {session} = this.state;
+    const {out_name, root_dir, session} = this.state;
 
     if (loaded) {
       let repoClass = this.state.preview ? "repo-div" : "repo-div show";
@@ -196,6 +198,8 @@ class AuthorApp extends Component {
                     sampleInfo={sampleInfo} warning={warning} storyUuid={storyUuid}
                     imageName={imageName} story={story}
                     onPreview={this.onPreview}
+                    out_name={out_name}
+                    root_dir={root_dir}
                     session={session}
               />
             </div>

@@ -213,7 +213,10 @@ export default class FileBrowser extends React.Component {
     }
 
     renderSelectButton(item) {
-        if (item.isDir) {
+        if (item.isDir && !this.props.selectDir) {
+            return null;
+        }
+        if (!item.isDir && this.props.selectDir) {
             return null;
         }
         if (this.props.filter) {

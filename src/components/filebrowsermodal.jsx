@@ -18,6 +18,7 @@ export default class FileBrowserModal extends React.Component {
                 </Modal.Header>
                 <Modal.Content>
                     <FileBrowser onFileSelected={this.props.onFileSelected} 
+                        selectDir={this.props.selectDir} 
                         filter={this.props.filter} 
                         home={this.props.home} />
                 </Modal.Content>
