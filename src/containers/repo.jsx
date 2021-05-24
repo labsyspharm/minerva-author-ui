@@ -40,6 +40,18 @@ const moveIndex = (arr, oldIndex, newIndex) => {
   }
 }
 
+const browseFile = (path) => {
+  return fetch('http://' + `127.0.0.1:2020/api/filebrowser?path=${path}`, {
+    headers: {
+      'pragma': 'no-cache',
+      'cache-control': 'no-cache'
+    }
+  })
+  .then(response => {
+    return response.json();
+  });
+}
+
 const randInt = n => Math.floor(Math.random() * n);
 const randColor = () => {
   return [
@@ -273,6 +285,7 @@ class Repo extends Component {
       warning: warning,
       showFileBrowser: false,
       showSaveAsBrowser: false,
+      showPublishBrowser: false,
       showVisDataBrowser: false,
       showMaskBrowser: false,
       showMaskMapBrowser: false,
@@ -281,6 +294,14 @@ class Repo extends Component {
       sampleText: sampleInfo.text,
       markerFile: markerFile,
       imageFile: imageFile,
+      pub_cache_out_name: out_name,
+      pub_cache_root_dir: root_dir,
+      pub_out_name: out_name,
+      pub_root_dir: root_dir,
+      out_exists: false,
+      pub_out_exists: false,
+      cache_out_name: out_name,
+      cache_root_dir: root_dir,
       out_name: out_name,
       root_dir: root_dir,
       session: session,
@@ -423,10 +444,13 @@ class Repo extends Component {
     this.updateMaskError = this.updateMaskError.bind(this);
     this.openFileBrowser = this.openFileBrowser.bind(this);
     this.onFileSelected = this.onFileSelected.bind(this);
-    this.toggleSaveAsModal = this.toggleSaveAsModal.bind(this);
+    this.setSaveAsModal = this.setSaveAsModal.bind(this);
     this.openSaveAsBrowser = this.openSaveAsBrowser.bind(this);
+    this.openPublishBrowser = this.openPublishBrowser.bind(this);
     this.onSetRootDir = this.onSetRootDir.bind(this);
     this.onSetOutName = this.onSetOutName.bind(this);
+    this.onSetPubRootDir = this.onSetPubRootDir.bind(this);
+    this.onSetPubOutName = this.onSetPubOutName.bind(this);
     this.openVisDataBrowser = this.openVisDataBrowser.bind(this);
     this.onVisDataSelected = this.onVisDataSelected.bind(this);
     this.interactor = this.interactor.bind(this);
@@ -540,10 +564,14 @@ class Repo extends Component {
     ].concat([
       'lastSaveTime', 'isMaskMapLoading', 'invalidMaskMap', 'warning', 'showFileBrowser', 
       'showVisDataBrowser', 'showMaskBrowser', 'showMaskMapBrowser', 'drawType', 'drawing',
-      'textTab', 'showSaveAsModal', 'showModal', 'renameModal', 'addGroupModal', 'needNewGroup', 'showSaveAsBrowser',
-      'activeArrow', 'activeStory', 'saving', 'savingAs', 'published', 'publishing', 'showPublishStoryModal',
+      'textTab', 'showModal', 'renameModal', 'addGroupModal', 'needNewGroup', 'showSaveAsBrowser',
+      'activeArrow', 'activeStory', 'saving', 'savingAs', 'published', 'publishing',
       'saveProgress', 'saveProgressMax', 'publishProgress', 'publishProgressMax',
-      'activeGroup', 'activeMaskId', 'rangeSliderComplete', 'shownSavePath'
+      'activeGroup', 'activeMaskId', 'rangeSliderComplete', 'shownSavePath',
+      'showSaveAsModal', 'showPublishStoryModal', 'showPublishBrowser',
+      'pub_out_name', 'pub_root_dir', 'pub_cache_out_name', 'pub_cache_root_dir',
+      'out_name', 'root_dir', 'cache_out_name', 'cache_root_dir',
+      'out_exists', 'pub_out_exists'
     ].map((key) => {
       return (old, state) => old[key] == state[key]
     }));
@@ -1715,24 +1743,25 @@ class Repo extends Component {
   }
 
   publish() {
-
     let minerva = this.props.env === 'cloud';
-
-    if (minerva) {
-      this.setPublishStoryModal(true)
-    }
-    else {
+    if (!minerva) {
       this.setState({publishing: true});
       this.setProgressPolling(true);
 
-      const {session} = this.state;
+      const {out_name, root_dir, session} = this.state;
       const render_url = `localhost:2020/api/render/${session}`;
       this.apiRender(render_url).then(res => {
-        this.setState({publishing: false});
+        this.setState({
+          error: null,
+          publishing: false
+        });
         this.setProgressPolling(false);
         this.getPublishProgress();
       }).catch(err => {
-        this.setState({publishing: false});
+        this.setState({
+          error: `Unable to publish to ${root_dir}/${out_name}`,
+          publishing: false
+        });
         this.setProgressPolling(false);
       })
     }
@@ -1833,31 +1862,40 @@ class Repo extends Component {
         const {markerFile, imageFile} = this.state;
         const {out_name, root_dir, session} = this.state;
         const save_url = `localhost:2020/api/save/${session}`;
-        const res = await fetch('http://'+save_url, {
-          method: 'POST',
-          body: JSON.stringify({
-            'is_autosave': !!is_autosave,
-            'waypoints': story_output,
-            'groups': group_output,
-            'masks': mask_output,
-            'sample_info': sample_info,
-            'csv_file': markerFile,
-            'in_file': imageFile,
-            'root_dir': root_dir,
-            'out_name': out_name
-          }),
-          headers: {
-            "Content-Type": "application/json"
-          }
-        })
+        try {
+          const res = await fetch('http://'+save_url, {
+            method: 'POST',
+            body: JSON.stringify({
+              'is_autosave': !!is_autosave,
+              'waypoints': story_output,
+              'groups': group_output,
+              'masks': mask_output,
+              'sample_info': sample_info,
+              'csv_file': markerFile,
+              'in_file': imageFile,
+              'root_dir': root_dir,
+              'out_name': out_name
+            }),
+            headers: {
+              "Content-Type": "application/json"
+            }
+          })
 
-        // Artificial delay to make saving show in UI
-        await new Promise(resolve => setTimeout(resolve, 1000));
-        this.setState({
-          saving: false,
-          savingAs: false,
-          lastSaveTime: new Date()
-        });
+          // Artificial delay to make saving show in UI
+          await new Promise(resolve => setTimeout(resolve, 1000));
+          this.setState({
+            saving: false,
+            savingAs: false,
+            lastSaveTime: new Date()
+          });
+        }
+        catch (err) {
+          this.setState({
+            error: `Unable to save to ${root_dir}/${out_name}`,
+            savingAs: false,
+            saving: false,
+          });
+        }
       }
     }
     catch (err) {
@@ -1922,25 +1960,101 @@ class Repo extends Component {
     return "Create Group: " + label;
   }
 
-  toggleSaveAsModal() {
-    const {showSaveAsModal} = this.state;
-    this.setState({ showSaveAsModal: !showSaveAsModal}, () => {
-      if (!this.state.showSaveAsModal) {
-        this.saveAs();
+  setPublishStoryModal(showPublishStoryModal, publish=false) {
+    this.setState({showPublishStoryModal: showPublishStoryModal}, ()=> {
+      const ok_path = this.state.pub_root_dir && this.state.pub_out_name;
+      const minerva = this.props.env === 'cloud';
+      if (!showPublishStoryModal) {
+        if (publish && ok_path) {
+          this.publish();
+        }
+        else {
+          this.setState({
+            pub_root_dir: this.state.pub_cache_root_dir,
+            pub_out_name: this.state.pub_cache_out_name
+          });
+        }
+      }
+      else {
+        this.onSetPubOutName(this.state.pub_out_name);
+        this.onSetPubRootDir(this.state.pub_root_dir);
+        this.setState({
+          pub_cache_root_dir: this.state.pub_root_dir,
+          pub_cache_out_name: this.state.pub_out_name
+        });
       }
     });
+  }
+
+  setSaveAsModal(showSaveAsModal, save=false) {
+    this.setState({ showSaveAsModal: showSaveAsModal}, () => {
+      const ok_path = this.state.root_dir && this.state.out_name;
+      if (!showSaveAsModal) {
+        if (save && ok_path) {
+          this.saveAs();
+        }
+        else {
+          this.setState({
+            root_dir: this.state.cache_root_dir,
+            out_name: this.state.cache_out_name
+          });
+        }
+      }
+      else {
+        this.onSetOutName(this.state.out_name);
+        this.onSetRootDir(this.state.root_dir);
+        this.setState({
+          cache_root_dir: this.state.root_dir,
+          cache_out_name: this.state.out_name
+        });
+      }
+    });
+  }
+
+  openPublishBrowser() {
+    this.setState({ showPublishBrowser: true});
+  }
+
+  checkPathExists(root, path) {
+    return browseFile(root).then((result)=> {
+      return (result.entries || []).map(v=>v.name).includes(path);
+    })
+  }
+
+  onSetPubOutName(out_name) {
+    this.checkPathExists(this.state.pub_root_dir, out_name).then((exists)=> {
+      this.setState({
+        pub_out_name: out_name,
+        pub_out_exists: exists
+      });
+    });
+  }
+
+  onSetPubRootDir(file, folder=null) {
+    this.setState({
+      showPublishBrowser: false
+    });
+    if (file && file.path) {
+      this.checkPathExists(file.path, this.state.pub_out_name).then((exists)=> {
+        this.setState({
+          pub_root_dir: file.path,
+          pub_out_exists: exists
+        });
+      });
+    }
   }
 
   openSaveAsBrowser() {
     this.setState({ showSaveAsBrowser: true});
   }
 
-  onSetOutName(dir_name) {
-    if (dir_name) {
+  onSetOutName(out_name) {
+    this.checkPathExists(this.state.root_dir, out_name).then((exists)=> {
       this.setState({
-        out_name: dir_name
-      })
-    }
+        out_name: out_name,
+        out_exists: exists
+      });
+    });
   }
 
   onSetRootDir(file, folder=null) {
@@ -1948,9 +2062,12 @@ class Repo extends Component {
       showSaveAsBrowser: false
     });
     if (file && file.path) {
-      this.setState({
-        root_dir: file.path
-      })
+      this.checkPathExists(file.path, this.state.out_name).then((exists)=> {
+        this.setState({
+          root_dir: file.path,
+          out_exists: exists
+        });
+      });
     }
   }
 
@@ -2246,10 +2363,6 @@ class Repo extends Component {
     this.props.onPreview(true, story_definition);
   }
 
-  setPublishStoryModal(active) {
-    this.setState({showPublishStoryModal: active});
-  }
-
   share() {
     let baseUrl = document.location.protocol +"//"+ document.location.host + document.location.pathname
     let url = baseUrl + `?story=${this.state.storyUuid}`;
@@ -2451,7 +2564,7 @@ class Repo extends Component {
 
     const saveAsButton = (
       <button className="ui button primary"
-        onClick={()=>this.toggleSaveAsModal()}
+        onClick={()=>this.setSaveAsModal(true, false)}
         disabled={this.state.saving}
         title="Save story as">
           <FontAwesomeIcon icon={faSave} />&nbsp;
@@ -2479,7 +2592,7 @@ class Repo extends Component {
     if (group != undefined) {
       publishButton = (
         <button className="ui button primary" disabled={this.state.publishing}
-          onClick={this.publish}
+          onClick={() => this.setPublishStoryModal(true, false)}
           title="Publish story">
         <FontAwesomeIcon icon={faBullhorn} />&nbsp;
          Publish&nbsp;
@@ -2621,6 +2734,28 @@ class Repo extends Component {
       </form>
     );
 
+    const saveWarning = this.state.out_exists ? (
+    <div>
+      <div className="row">
+        <div className="col-12">
+          <FontAwesomeIcon icon={faExclamationCircle} />
+          <strong>Warning</strong>: saving will overwrite existing .story.json.
+        </div>
+      </div>
+    </div>
+    ) : '';
+
+    const publishWarning = this.state.pub_out_exists ? (
+    <div>
+      <div className="row">
+        <div className="col-12">
+          <FontAwesomeIcon icon={faExclamationCircle} />
+          <strong>Warning</strong>: publishing will write into existing directory.
+        </div>
+      </div>
+    </div>
+    ) : '';
+
     return (
 
       <div className="container-fluid Repo">
@@ -2641,38 +2776,100 @@ class Repo extends Component {
               onChange={this.handleArrowText} />
             </form>
         </Modal>
-        <Modal toggle={this.toggleSaveAsModal}
-          show={this.state.showSaveAsModal}
-          confirmButton="Save As"
+
+        <Confirm
+          header="Save Story As"
+          content={
+            <div style={{padding:"2em"}}>
+              <div className="mt-2">
+                Parent Directory:
+              </div>
+              <div className="row">
+                <div className="col-12 ui action input">
+                  <input type="text" style={{width: "75%"}} value={this.state.root_dir}
+                    onChange={(e) => this.onSetRootDir({path: e.target.value})} placeholder='Parent directory'/>
+                  <button type="button" onClick={this.openSaveAsBrowser} className="ui button">Browse</button>
+                  <FileBrowserModal open={this.state.showSaveAsBrowser} close={this.onSetRootDir}
+                    title="Select a parent folder for saving"
+                    onFileSelected={this.onSetRootDir}
+                    home={this.state.root_dir}
+                    selectDir={true}
+                  />
+                </div>
+              </div>
+              <div className="mt-2">
+                Output name:
+              </div>
+              <div className="row">
+                <div className="col-12 ui action input">
+                  <input type="text" style={{width: "75%"}} value={this.state.out_name}
+                    onChange={(e) => this.onSetOutName(e.target.value)} placeholder='Output name'/>
+                </div>
+              </div>
+              {saveWarning} 
+            </div>
+          }
+          cancelButton="Cancel"
+          confirmButton={
+            (this.state.root_dir && this.state.out_name) ? 
+            "Save As" : null
+          }
+          onConfirm={() => this.setSaveAsModal(false, true)}
+          onCancel={() => this.setSaveAsModal(false, false)}
+          open={this.state.showSaveAsModal}
         >
-          <form>
-            <div className="mt-2">
-              Parent Directory:
-            </div>
-            <div className="row">
-              <div className="col-12 ui action input">
-                <input type="text" style={{width: "75%"}} value={this.state.root_dir}
-                  onChange={(e) => this.onSetRootDir({path: e.target.value})} placeholder='Parent directory'/>
-                <button type="button" onClick={this.openSaveAsBrowser} className="ui button">Browse</button>
-                <FileBrowserModal open={this.state.showSaveAsBrowser} close={this.onSetRootDir}
-                  title="Select a parent folder for saving"
-                  onFileSelected={this.onSetRootDir}
-                  home={this.state.root_dir}
-                  selectDir={true}
-                />
-              </div>
-            </div>
-            <div className="mt-2">
-              Output name:
-            </div>
-            <div className="row">
-              <div className="col-12 ui action input">
-                <input type="text" style={{width: "75%"}} value={this.state.out_name}
-                  onChange={(e) => this.onSetOutName(e.target.value)} placeholder='Output directory'/>
-              </div>
-            </div>
-          </form>
-        </Modal>
+        </Confirm>
+
+        {
+          (minerva)? (
+            <PublishStoryModal storyUuid={this.state.storyUuid}
+              onClose={() => this.setPublishStoryModal(false, false)}
+              active={this.state.showPublishStoryModal} />
+          ) : (
+            <Confirm
+              header="Publish"
+              content={
+                <div style={{padding:"2em"}}>
+                  <div className="mt-2">
+                    Parent Directory:
+                  </div>
+                  <div className="row">
+                    <div className="col-12 ui action input">
+                      <input type="text" style={{width: "75%"}} value={this.state.pub_root_dir}
+                        onChange={(e) => this.onSetPubRootDir({path: e.target.value})} placeholder='Parent directory'/>
+                      <button type="button" onClick={this.openPublishBrowser} className="ui button">Browse</button>
+                      <FileBrowserModal open={this.state.showPublishBrowser} close={this.onSetPubRootDir}
+                        title="Select a parent folder for saving"
+                        onFileSelected={this.onSetPubRootDir}
+                        home={this.state.pub_root_dir}
+                        selectDir={true}
+                      />
+                    </div>
+                  </div>
+                  <div className="mt-2">
+                    Output directory:
+                  </div>
+                  <div className="row">
+                    <div className="col-12 ui action input">
+                      <input type="text" style={{width: "75%"}} value={this.state.pub_out_name}
+                        onChange={(e) => this.onSetPubOutName(e.target.value)} placeholder='Output directory'/>
+                    </div>
+                  </div>
+                  {publishWarning} 
+                </div>
+              }
+              cancelButton="Cancel"
+              confirmButton={
+                (this.state.pub_root_dir && this.state.pub_out_name) ? 
+                "Publish" : null
+              }
+              onConfirm={() => this.setPublishStoryModal(false, true)}
+              onCancel={() => this.setPublishStoryModal(false, false)}
+              open={this.state.showPublishStoryModal}
+            >
+            </Confirm>
+          )
+        }
 
         <div className="row justify-content-between">
           <div className="col-md-6 col-lg-6 col-xl-4 bg-trans">
@@ -2815,12 +3012,6 @@ class Repo extends Component {
           { this.renderWarning() }
           { this.renderErrors() }
           { this.renderExitButton() }
-          { minerva ? (
-            <PublishStoryModal storyUuid={this.state.storyUuid}
-              onClose={() => this.setPublishStoryModal(false)}
-              active={this.state.showPublishStoryModal} />
-            ) : ''
-          }
         </div>
       </div>
     );
