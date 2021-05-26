@@ -47,7 +47,7 @@ var webpackConfig = {
     // }
   },
   output: {
-    path: path.join(__dirname, "/docs"),
+    path: path.join(__dirname, "/build"),
     publicPath: "/",
     filename: "bundle.[hash].js"
   },
@@ -66,7 +66,7 @@ var webpackConfig = {
     })
   ],
   devServer: {
-    contentBase: "./docs",
+    contentBase: "./build",
     hot: true,
     proxy: {
       "/dev/**": {
