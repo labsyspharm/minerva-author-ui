@@ -110,6 +110,7 @@ class Controls extends Component {
   render() {
 
     const {addArrowText, rgba, minerva} = this.props;
+    const {maskOpacity, handleOpacityChange} = this.props;
     const {deleteOverlay, deleteArrow, toggleTextTab} = this.props;
     const {activeStory, handleSelectStory} = this.props;
     const {handleSortStoryMasks, handleSelectStoryMasks} = this.props;
@@ -242,11 +243,7 @@ class Controls extends Component {
         />
       </div>
     ) : '';
-    let maskOpacity = 0.5;
-    let handleOpacityChange = (value) => {
-      // assign this value to mask Opacity
-      // TODO
-    };
+
     let maskData = minerva ? '' : (
       <div className="ui form">
           <div className="row">

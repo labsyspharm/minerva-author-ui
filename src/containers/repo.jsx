@@ -423,6 +423,7 @@ class Repo extends Component {
           label: v,
         }];
       })),
+      maskOpacity: 0.5,
       chanRender: defaultChanRender
     };
 
@@ -500,6 +501,7 @@ class Repo extends Component {
     this.labelRGBA = this.labelRGBA.bind(this);
     this.defaultStory = this.defaultStory.bind(this);
     this.handleUpdateAllMasks = this.handleUpdateAllMasks.bind(this);
+    this.handleOpacityChange = this.handleOpacityChange.bind(this);
     this.handleUpdateMask = this.handleUpdateMask.bind(this);
     this.handleMaskChange = this.handleMaskChange.bind(this);
     this.handleMaskInsert = this.handleMaskInsert.bind(this);
@@ -1060,6 +1062,11 @@ class Repo extends Component {
 
   handleUpdateAllMasks(newMask) {
     this.setState(handleUpdateAllMasksPure(this.state, newMask));
+  }
+
+  handleOpacityChange(value) {
+    // use setState to assign this value to maskOpacity
+    this.setState({maskOpacity: value});
   }
 
   handleUpdateMask(newMaskParams, clear=false) {
@@ -2937,6 +2944,8 @@ class Repo extends Component {
               isMaskMapLoading={this.state.isMaskMapLoading}
               invalidMaskMap={this.state.invalidMaskMap}
               toggleTextTab={this.toggleTextTab}
+              maskOpacity={this.state.maskOpacity}
+              handleOpacityChange={this.handleOpacityChange}
             />
             <Confirm
               header="Save file location"
