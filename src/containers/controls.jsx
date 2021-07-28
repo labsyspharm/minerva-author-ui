@@ -9,6 +9,7 @@ import {
 import chroma from 'chroma-js';
 
 import Overlays from "./overlays";
+import InputRange from 'react-input-range';  
 import HuePicker from "../components/huepicker";
 import ChannelControls from "./channelcontrols";
 import FileBrowserModal from "../components/filebrowsermodal";
@@ -241,6 +242,11 @@ class Controls extends Component {
         />
       </div>
     ) : '';
+    let maskOpacity = 0.5;
+    let handleOpacityChange = (value) => {
+      // assign this value to mask Opacity
+      // TODO
+    };
     let maskData = minerva ? '' : (
       <div className="ui form">
           <div className="row">
@@ -281,6 +287,24 @@ class Controls extends Component {
                 onFileSelected={onMaskMapSelected} 
                 filter={["csv"]}
               />
+            </div>
+          </div>
+          <div className="row">
+            <div className="col-12">
+              <div className="font-white">
+                Mask Opacity:
+              </div>
+              <div className="width-100">
+                <InputRange
+                  minValue={ 0 }
+                  maxValue={ 1 }
+                  value={ maskOpacity }
+                  step={ 1/256. }
+                  formatLabel={ label => '' }
+                  onChange={ handleOpacityChange }
+                  onChangeComplete={ handleOpacityChange }
+                />
+              </div>
             </div>
           </div>
           <div className="row">
