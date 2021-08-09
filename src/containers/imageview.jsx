@@ -642,7 +642,7 @@ class ImageView extends Component {
     }
   }
 
-  updateChannels(viewer, uuid, channels, maskOrder) {
+  updateChannels(viewer, uuid, channels, maskOrder, maskOpacity) {
     const { world } = viewer;
     const ids = new Set(channels.keys());
     // Only check the order of masks that have an associated id map
@@ -690,6 +690,7 @@ class ImageView extends Component {
         }
         const mask_map_id_0 = maskMapOrder[0];
         const tiledImage = this.getTiledImageById(mask_map_id_0);
+        tiledImage.setOpacity(maskOpacity);
         const {many_channels} = tiledImage.source || {};
         if (!many_channels) {
           return;
@@ -738,8 +739,8 @@ class ImageView extends Component {
     // After first render
     if (viewer !== undefined) {
       const { uuid } = this.props.img;
-      const { channels, maskOrder } = this.props;
-      this.updateChannels(viewer, uuid, channels, maskOrder);
+      const { channels, maskOrder, maskOpacity } = this.props;
+      this.updateChannels(viewer, uuid, channels, maskOrder, maskOpacity);
     }
     const overlay_divs = [...Array(100).keys()].map((o,i) => {
       const el = "overlay-" + i;
