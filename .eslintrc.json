@@ -17,7 +17,12 @@
     "plugins": [
         "react"
     ],
+    "settings": {
+      "react": {
+         "version": "detect"
+      }
+    }, 
     "rules": {
-        "react/prop-types": 0
+        "react/prop-types": "off"
     }
 }

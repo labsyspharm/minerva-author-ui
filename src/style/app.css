@@ -1,33 +1,6 @@
-.repo-div {
-    -webkit-transition: 0.5s;
-    -moz-transition: 0.5s;
-    -o-transition: 0.5s;
-    transition: 0.5s;
-    opacity: 0;
-    visibility: hidden; 
-  }
-  .repo-div.show {
-    opacity: 1;
-    visibility: visible; 
-  }
-
-  .preview-div {
-    -webkit-transition: 0.5s;
-    -moz-transition: 0.5s;
-    -o-transition: 0.5s;
-    transition: 0.5s;
-    opacity: 0;
-    visibility: hidden; 
-  }
-  .preview-div.show {
-    opacity: 1;
-    visibility: visible; 
-  }
-
-  .copyright {
-    position: fixed;
-    bottom: 10px;
-    right: 0;
-    font-size: 12px;
-    color: white;
-  }
+.App {
+  background-color: black;
+  display: inline-block;
+  padding: 5px;
+  color: white;
+}
