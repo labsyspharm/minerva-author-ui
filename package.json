@@ -3,9 +3,10 @@
   "version": "1.0.3",
   "description": "Minerva Author UI",
   "scripts": {
-    "start": "MINERVA_AUTHOR_ENV=local webpack-dev-server --host 0.0.0.0 --port 8487 --config ./webpack.config.js --mode development",
+    "start:dev": "cross-env MINERVA_AUTHOR_ENV=local webpack-dev-server --host 0.0.0.0 --port 8487 --config ./webpack.config.js --mode development",
+    "start": "cross-env MINERVA_AUTHOR_ENV=local webpack-dev-server --host 0.0.0.0 --port 8487 --config ./webpack.config.js --mode development",
     "start:cloud": "MINERVA_AUTHOR_ENV=cloud webpack-dev-server --host 0.0.0.0 --port 8487 --config ./webpack.config.js --mode development",
-    "build": "MINERVA_AUTHOR_ENV=local webpack --config ./webpack.config.js --progress --colors -p",
+    "build": "cross-env MINERVA_AUTHOR_ENV=local webpack --config ./webpack.config.js --progress --colors -p",
     "build:cloud": "MINERVA_AUTHOR_ENV=cloud webpack --config ./webpack.config.js --progress --colors -p",
     "deploy-demo": "aws s3 sync build/ s3://minerva-author-ui-demo"
   },
@@ -35,7 +36,8 @@
     "url-loader": "^4.0.0",
     "webpack": "^4.0.1",
     "webpack-cli": "^3.3.10",
-    "webpack-dev-server": "^3.10.1"
+    "webpack-dev-server": "^3.10.1",
+    "cross-env": "^7.0.3"
   },
   "dependencies": {
     "@fortawesome/fontawesome-svg-core": "^1.2.26",
