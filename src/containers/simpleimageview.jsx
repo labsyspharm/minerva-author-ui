@@ -12,7 +12,8 @@ class MinervaImageView extends Component {
   }
 
   makeTileSource() {
-    const {img} = this.props;
+    const {img, channels} = this.props;
+    const { key } = channels.get(0);
     const { url } = img;
 
 		const getTileName = (x, y, level) => {
@@ -23,7 +24,7 @@ class MinervaImageView extends Component {
 			const level = this.maxLevel - l;
 
 			const name = getTileName(x, y, level);
-			return url + '/' + name;
+			return url + '/' + key + '/' + name;
 		}
 
     return {
@@ -41,7 +42,7 @@ class MinervaImageView extends Component {
   addChannels() {
     const {viewer} = this;
     const makeTileSource = this.makeTileSource.bind(this);
-    const {img, channels} = this.props;
+    const {img} = this.props;
     viewer.addTiledImage({
       tileSource: makeTileSource(),
       width: img.width / img.height,
@@ -49,7 +50,7 @@ class MinervaImageView extends Component {
   }
 
   componentDidMount() {
-    const {channels, img, handleViewport} = this.props;
+    const {img, handleViewport} = this.props;
     const {interactor} = this.props;
 
     console.log('Creating new OpenSeadragon');
@@ -82,8 +83,6 @@ class MinervaImageView extends Component {
       const viewport = THIS.viewer.viewport;
       handleViewport(viewport);
     }, this);
-
-    this.viewer.uuid = img.uuid;
 
 		const viewer = this.viewer;
 
