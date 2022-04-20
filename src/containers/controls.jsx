@@ -288,7 +288,7 @@ class Controls extends Component {
           <div className="row">
             <div className="col-12">
               <div className="font-white">
-                Mask Opacity:
+                Mask Opacity: {Math.trunc(maskOpacity * 100)}%
               </div>
               <div className="width-100">
                 <InputRange
