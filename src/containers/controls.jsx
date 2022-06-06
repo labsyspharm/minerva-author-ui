@@ -9,6 +9,7 @@ import {
 import chroma from 'chroma-js';
 
 import Overlays from "./overlays";
+import InputRange from 'react-input-range';
 import HuePicker from "../components/huepicker";
 import ChannelControls from "./channelcontrols";
 import FileBrowserModal from "../components/filebrowsermodal";
@@ -109,6 +110,7 @@ class Controls extends Component {
   render() {
 
     const {addArrowText, rgba, minerva} = this.props;
+    const {maskOpacity, handleOpacityChange} = this.props;
     const {deleteOverlay, deleteArrow, toggleTextTab} = this.props;
     const {activeStory, handleSelectStory} = this.props;
     const {handleSortStoryMasks, handleSelectStoryMasks} = this.props;
@@ -281,6 +283,24 @@ class Controls extends Component {
                 onFileSelected={onMaskMapSelected} 
                 filter={["csv"]}
               />
+            </div>
+          </div>
+          <div className="row">
+            <div className="col-12">
+              <div className="font-white">
+                Mask Opacity: {Math.trunc(maskOpacity * 100)}%
+              </div>
+              <div className="width-100">
+                <InputRange
+                  minValue={ 0 }
+                  maxValue={ 1 }
+                  value={ maskOpacity }
+                  step={ 1/256. }
+                  formatLabel={ label => '' }
+                  onChange={ handleOpacityChange }
+                  onChangeComplete={ handleOpacityChange }
+                />
+              </div>
             </div>
           </div>
           <div className="row">
@@ -583,7 +603,6 @@ class Controls extends Component {
                 MultiValue: SortableMultiValue,
                 MultiValueLabel: SortableMultiValueLabel,
               }}
-            />
             />
           </div>
         </div>
