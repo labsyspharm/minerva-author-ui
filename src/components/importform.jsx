@@ -1,7 +1,6 @@
 import React, { Component } from "react";
 import ClipLoader from "react-spinners/ClipLoader";
 import FileBrowserModal from "./filebrowsermodal";
-import "regenerator-runtime/runtime";
 import 'semantic-ui-css/semantic.min.css';
 import { Confirm } from 'semantic-ui-react';
 import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";

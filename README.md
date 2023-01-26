@@ -15,12 +15,12 @@ The Python Flask server along with automated testing is stored at [minerva-autho
 ### Local environment
 Local environment requires that minerva-author backend is running on the same machine.
 ```
-npm i && npm run start
+pnpm i && pnpm start
 ```
 ### Cloud environment
 Cloud environment uses only endpoints from Minerva Cloud (no local backend is needed).
 ```
-npm i && npm run start:cloud
+pnpm i && pnpm start:cloud
 ```
 
 The server will be running on port `8487`.
