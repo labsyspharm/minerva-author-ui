@@ -85,8 +85,9 @@ const formatChanRender = (chan) => {
 
 const toDefaultChanLabel = (defaults, channels) => {
   return new Map(channels.map((v,k) => {
-    const { label } = defaults[k] || { label: v };
-    return [k, { value: k, id: k, label }];
+    const no_default = { label: v, info: "" };
+    const { info, label } = defaults[k] || no_default;
+    return [k, { value: k, id: k, info: info || "", label }];
   }));
 }
 
@@ -341,6 +342,7 @@ class Repo extends Component {
       rgba: rgba,
       textTab: rgba? 'STORY' : 'GROUP',
       showModal: false,
+      editableChannel: null,
       showSaveAsModal: false,
       renameModal: false,
       addGroupModal: false,
@@ -480,6 +482,7 @@ class Repo extends Component {
     this.boxClick = this.boxClick.bind(this);
     this.handleChange = this.handleChange.bind(this);
     this.handleSelect = this.handleSelect.bind(this);
+    this.showEditInfoModal = this.showEditInfoModal.bind(this);
     this.handleSortChannels = this.handleSortChannels.bind(this);
     this.handleSelectStory = this.handleSelectStory.bind(this);
     this.handleSortStoryMasks = this.handleSortStoryMasks.bind(this);
@@ -513,6 +516,7 @@ class Repo extends Component {
     this.showRenameModal = this.showRenameModal.bind(this);
     this.showAddGroupModal = this.showAddGroupModal.bind(this);
     this.handleGroupRename = this.handleGroupRename.bind(this);
+    this.handleEditInfo = this.handleEditInfo.bind(this);
     this.handleAddGroup = this.handleAddGroup.bind(this);
     this.getCreateLabel = this.getCreateLabel.bind(this);
     this.labelRGBA = this.labelRGBA.bind(this);
@@ -583,7 +587,7 @@ class Repo extends Component {
     ].concat([
       'lastSaveTime', 'isMaskMapLoading', 'invalidMaskMap', 'warning', 'showFileBrowser', 
       'showVisDataBrowser', 'showMaskBrowser', 'showMaskMapBrowser', 'drawType', 'drawing',
-      'textTab', 'showModal', 'renameModal', 'addGroupModal', 'needNewGroup', 'showSaveAsBrowser',
+      'textTab', 'showModal', 'renameModal', 'editableChannel', 'addGroupModal', 'needNewGroup', 'showSaveAsBrowser',
       'activeArrow', 'activeStory', 'saving', 'savingAs', 'published', 'publishing',
       'saveProgress', 'saveProgressMax', 'publishProgress', 'publishProgressMax',
       'activeGroup', 'activeMaskId', 'rangeSliderComplete', 'shownSavePath',
@@ -640,11 +644,13 @@ class Repo extends Component {
           [0, {
             id: 0,
             value: 0,
+            info: '',
             label: 'Hematoxylin'
           }],
           [1, {
             id: 1,
             value: 1,
+            info: '',
             label: 'Eosin'
           }]
         ])
@@ -956,6 +962,10 @@ class Repo extends Component {
     }
   }
 
+  showEditInfoModal(editableChannel) {
+    return () => this.setState({ editableChannel });
+  }
+
   showAddGroupModal() {
     this.setState({ needNewGroup: !this.state.addGroupModal});
     this.setState({ addGroupModal: !this.state.addGroupModal});
@@ -972,6 +982,16 @@ class Repo extends Component {
       return group.label;
     }).indexOf(label) == -1;
     return is_valid && is_unique;
+  }
+
+  handleEditInfo(evt) {
+    const { chanLabel, editableChannel } = this.state;
+    const { value } = evt.target;
+    const newChanLabel = new Map([ ...chanLabel ].map(([k,v]) => {
+      if (v.id !== editableChannel) return [k, v];
+      return [k, {...v, info: value}];
+    }))
+    this.setState({ chanLabel: newChanLabel });
   }
 
   handleAddGroup(evt) {
@@ -1615,6 +1635,7 @@ class Repo extends Component {
       'min': chan.range.min / chan.maxRange,
       'max': chan.range.max / chan.maxRange,
       'label': chanLabel.get(chan.id).label,
+      'info': chanLabel.get(chan.id).info,
       'id': chan.id,
     }
   }
@@ -2931,6 +2952,7 @@ class Repo extends Component {
               boxClick = {this.boxClick}
               handleChange={this.handleChange}
               handleSelect={this.handleSelect}
+              showEditInfoModal={this.showEditInfoModal}
               handleSelectStory={this.handleSelectStory}
               handleSortStoryMasks={this.handleSortStoryMasks}
               handleSelectStoryMasks={this.handleSelectStoryMasks}
@@ -2979,6 +3001,7 @@ class Repo extends Component {
               maskOpacity={this.state.maskOpacity}
               handleOpacityChange={this.handleOpacityChange}
             />
+            {this.renderEditInfoModal()}
             <Confirm
               header="Save file location"
               content={
@@ -3054,6 +3077,28 @@ class Repo extends Component {
           { this.renderErrors() }
           { this.renderExitButton() }
         </div>
+      </div>
+    );
+  }
+
+  renderEditInfoModal() {
+    const close = this.showEditInfoModal(null);
+    const {editableChannel, chanLabel} = this.state;
+    const show = null !== editableChannel;
+    const textInput = !show ? "" : (<input
+      type="text" onChange={this.handleEditInfo}
+      value={chanLabel.get(editableChannel).info}
+    />);
+    return (
+      <div className="">
+        <Modal show={show} toggle={close}>
+        <form className="ui form" onSubmit={close}>
+          <label className="ui label">
+            Good channel descriptions are under 30 characters.
+          </label>
+          {textInput}
+        </form>
+        </Modal>
       </div>
     );
   }

@@ -7,6 +7,7 @@ class ChannelControls extends Component {
 
   render() {
     const { channels, handleChange, className } = this.props;
+    const { showEditInfoModal } = this.props;
 
     const channelControls = Array.from(channels.values()).map(channel => {
       const { id, color, label, range, maxRange, visible } = channel;
@@ -16,7 +17,8 @@ class ChannelControls extends Component {
       return (
         <ChannelControl key={ id } id={ id } color={ color } range={ range }
                         minRange={0} maxRange={maxRange} label={label}
-                        visible={visible} handleChange={ handleChange } />
+                        visible={visible} handleChange={ handleChange }
+                        showEditInfoModal={showEditInfoModal}/>
       );
 
     });

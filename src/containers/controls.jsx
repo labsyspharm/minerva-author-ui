@@ -695,6 +695,7 @@ class Controls extends Component {
     else if (textTab === 'GROUP') {
       const {handleSelect, handleChange} = this.props;
       const {activeChanLabel, chanLabel} = this.props;
+      const {showEditInfoModal} = this.props;
       const {activeChannels} = this.props;
 
       const {handleSortChannels} = this.props;
@@ -722,6 +723,7 @@ class Controls extends Component {
             <ChannelControls className="ChannelControls"
               channels={ activeChannels }
               handleChange={ handleChange }
+              showEditInfoModal={ showEditInfoModal }
             />
           </div>
           {maskData}

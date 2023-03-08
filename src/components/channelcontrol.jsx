@@ -4,6 +4,7 @@ import InputRange from 'react-input-range';
 import HuePicker from "./huepicker";
 import {faEye} from "@fortawesome/free-solid-svg-icons";
 import {faEyeSlash} from "@fortawesome/free-solid-svg-icons";
+import {faInfoCircle} from "@fortawesome/free-solid-svg-icons";
 import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
 
 import '../style/channelcontrol'
@@ -13,10 +14,17 @@ import '../style/channelcontrol'
  * @param {function} onRangeChange - update range state
  */
 const ChannelControl = ({ id, color, range, minRange, maxRange,
-                          label, visible, handleChange }) => {
+                          label, visible, handleChange,
+                          showEditInfoModal }) => {
 
   let stepSize = Math.floor((maxRange - minRange) / 100)
 
+  const showIdInfoModal = showEditInfoModal(id);
+  const infoIcon = (
+    <FontAwesomeIcon icon={faInfoCircle} size="lg"
+      color='white'
+    />
+  );
   let eyeIcon = (
     <FontAwesomeIcon icon={faEye} size="lg"
       color='white'
@@ -71,11 +79,17 @@ const ChannelControl = ({ id, color, range, minRange, maxRange,
             }}
           />
         </div>
-			  <span className="nav-item">
-			     <a className="btn negative-top-margin" title="Toggle" onClick={e => {
+        <span className="nav-item">
+           <a className="btn negative-top-margin" title="Toggle" onClick={e => {
              handleChange(id, null, null, null, !visible);
             }}>
             { eyeIcon }
+          </a>
+        </span>
+        <span className="nav-item">
+           <a className="btn negative-top-margin" title="Info"
+            onClick={ showIdInfoModal }>
+            { infoIcon }
           </a>
         </span>
         <InputRange
