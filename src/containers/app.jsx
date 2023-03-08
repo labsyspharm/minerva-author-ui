@@ -46,6 +46,7 @@ class AuthorApp extends Component {
         'text': '',
         "rotation":0
       },
+      defaults: [],
       waypoints: [],
       masks: [],
       groups: [],
@@ -93,6 +94,7 @@ class AuthorApp extends Component {
         imageFile: input_image_file,
         markerFile: marker_csv_file,
         waypoints: import_result.waypoints,
+        defaults: import_result.defaults || [],
         groups: import_result.groups,
         masks: import_result.masks,
         loaded: import_result.loaded,
@@ -178,7 +180,7 @@ class AuthorApp extends Component {
 
   render() {
     const {loaded, width, height, tilesize, maxLevel, rgba, url, uuid, storyUuid, story, imageName} = this.state;
-    const {channels, sampleInfo, waypoints, groups, warning, masks} = this.state;
+    const {channels, sampleInfo, waypoints, groups, warning, masks, defaults} = this.state;
     const {inputFile, outputSaveFile} = this.state;
     const {imageFile, markerFile} = this.state;
     const {out_name, root_dir, session} = this.state;
@@ -196,7 +198,7 @@ class AuthorApp extends Component {
                     groups={groups} url={url} uuid={uuid} maxLevel={maxLevel}
                     width={width} height={height} tilesize={tilesize}
                     sampleInfo={sampleInfo} warning={warning} storyUuid={storyUuid}
-                    imageName={imageName} story={story}
+                    imageName={imageName} story={story} defaults={defaults}
                     onPreview={this.onPreview}
                     out_name={out_name}
                     root_dir={root_dir}

@@ -53,12 +53,21 @@ const browseFile = (path) => {
 }
 
 const randInt = n => Math.floor(Math.random() * n);
-const randColor = () => {
+const cycleColor = (i) => {
   return [
-    [0,0,255],[0,127,255],[0,255,0],[0,255,127],[0,255,255],
-    [127,0,255],[127,127,127],[127,127,255],[127,255,0],[127,255,127],
-    [255,0,0],[255,0,127],[255,0,255],[255,127,0],[255,127,127],[255,255,0]
-  ][randInt(16)]
+    [0,0,255],[0,255,0],[0,255,255],
+    [255,0,0],[255,0,255],[255,255,0]
+  ][i % 6];
+}
+
+const toEmptyChanRender = (k) => {
+  return {
+    maxRange: 65535,
+    value: k, id: k,
+    color: cycleColor(k),
+    range: {min: 0, max: 32768},
+    visible: true
+  };
 }
 
 const formatChanRender = (chan) => {
@@ -73,6 +82,20 @@ const formatChanRender = (chan) => {
     visible: true
   };
 };
+
+const toDefaultChanLabel = (defaults, channels) => {
+  return new Map(channels.map((v,k) => {
+    const { label } = defaults[k] || { label: v };
+    return [k, { value: k, id: k, label }];
+  }));
+}
+
+const toDefaultChanRender = (defaults) => {
+  return new Map(defaults.map(chan => {
+    return [chan.id, formatChanRender(chan)];
+    return new Map(...chan_render, new_default);
+  }));
+}
 
 const createChanRender = (groups, defaultChanRender) => {
   return groups.reverse().reduce((chan_render, v) => {
@@ -246,15 +269,14 @@ class Repo extends Component {
     const { out_name, root_dir, session } = props;
     const { channels, sampleInfo, waypoints, groups, masks} = props;
 
+    const defaults = props.defaults || [];
+
     const defaultChanRender = createChanRender(groups,
       new Map(channels.map((chan, k) => {
-        return [k, {
-          maxRange: 65535,
-          value: k, id: k,
-          color: randColor(),
-          range: {min: 0, max: 32768},
-          visible: true
-        }];
+        if (k >= defaults.length) {
+          return [k, toEmptyChanRender(k)];
+        }
+        return [k, formatChanRender(defaults[k])];
       }))
     );
     
@@ -416,13 +438,8 @@ class Repo extends Component {
           value: k
         }]
       })),
+      chanLabel: toDefaultChanLabel(defaults, channels),
       activeIds: channels.length < 2 ? [0] : [0, 1],
-      chanLabel: new Map(channels.map((v,k) => {
-        return [k, {
-          value: k, id: k,
-          label: v,
-        }];
-      })),
       maskOpacity: 0.5,
       chanRender: defaultChanRender
     };
@@ -855,8 +872,13 @@ class Repo extends Component {
     });
   }
 
-  updateGroups(groups) {
-    const maxChan = this.state.chanLabel.size - 1;
+  updateGroups(data) {
+    const { groups } = data;
+    const defaults = data.defaults || [];
+    const oldChanLabels = [...this.state.chanLabel.values()];
+    const oldChannels = oldChanLabels.map(v => v.label);
+    const defaultChanRender = toDefaultChanRender(defaults);
+    const maxChan = oldChannels.length - 1;
     let extraChan = false;
 
     const g = new Map(groups.map((v,k) => {
@@ -867,19 +889,20 @@ class Repo extends Component {
           }
           return chan.id;
         }),
-        chanRender: createChanRender([v], this.state.chanRender),
+        chanRender: createChanRender([v], defaultChanRender),
         label: v.label,
         value: k
       }]
     }))
     if (extraChan) {
       this.setState({
-        error: 'Unsupported case of dat file with excess channels'
+        error: 'Unsupported import with excess channels'
       })
     }
     else {
       this.setState({
-        chanRender: createChanRender(groups, this.state.chanRender),
+        chanRender: createChanRender(groups, defaultChanRender),
+        chanLabel: toDefaultChanLabel(defaults, oldChannels),
         groups: g
       })
     }
@@ -916,7 +939,7 @@ class Repo extends Component {
       }
     }).then(data => {
       if (data) {
-        this.updateGroups(data.groups);
+        this.updateGroups(data);
       }
     });
   }
@@ -1586,6 +1609,22 @@ class Repo extends Component {
     this.setState(newState);
   }
 
+  createChannelOutput(chan, chanLabel) {
+    return {
+      'color': rgbToHex(chan.color),
+      'min': chan.range.min / chan.maxRange,
+      'max': chan.range.max / chan.maxRange,
+      'label': chanLabel.get(chan.id).label,
+      'id': chan.id,
+    }
+  }
+
+  createDefaultOutput({chanLabel, chanRender}) {
+    return Array.from(chanRender.values()).map(chan => {
+      return this.createChannelOutput(chan, chanLabel);
+    });
+  }
+
   createMaskOutput({masks, maskOpacity}) {
     return Array.from(masks.values()).map(v => {
       const channels = [{
@@ -1610,24 +1649,13 @@ class Repo extends Component {
     return Array.from(groups.values()).map(v => {
       const channels = v.activeIds.map(id => {
         const chan = v.chanRender.get(id);
-        return {
-          'color': rgbToHex(chan.color),
-          'min': chan.range.min / chan.maxRange,
-          'max': chan.range.max / chan.maxRange,
-          'label': chanLabel.get(id).label,
-          'id': id,
-        }
+        return this.createChannelOutput(chan, chanLabel);
       });
       let render = channels;
       if (rgba) {
         render = Array.from(this.RGBAChannels().values()).map(rgba => {
-          return {
-            'color': rgbToHex(rgba.color),
-            'min': rgba.range.min / rgba.maxRange,
-            'max': rgba.range.max / rgba.maxRange,
-            'label': rgba.label,
-            'id': rgba.id,
-          }
+          const rgbChanLabel = { [rgba.id]: rgba.label };
+          return this.createChannelOutput(rgba, rgbChanLabel);
         });
       }
       let group_out = {
@@ -1722,7 +1750,7 @@ class Repo extends Component {
   }
 
   apiRender(render_url) {
-    const{groups, masks} = this.state;
+    const {groups, masks} = this.state;
     const {rgba, imageFile, maskOpacity} = this.state;
     const {root_dir, out_name} = this.state;
     const {stories, chanLabel} = this.state;
@@ -1829,7 +1857,7 @@ class Repo extends Component {
   async save(is_autosave=false, save_as=false) {
 
     let {groups, masks, saving, rgba, maskOpacity} = this.state;
-    const {stories, chanLabel} = this.state;
+    const {stories, chanLabel, chanRender} = this.state;
     const {img, session} = this.state;
     if (saving) {
       return;
@@ -1843,6 +1871,7 @@ class Repo extends Component {
     let minerva = this.props.env === 'cloud';
 
     const mask_output = this.createMaskOutput({masks, maskOpacity});
+    const default_output = this.createDefaultOutput({chanLabel, chanRender});
     const group_output = this.createGroupOutput({groups, chanLabel, rgba});
     const story_output = this.createWaypoints({stories, groups, masks});
     const story_definition = this.createStoryDefinition(story_output, group_output);
@@ -1875,6 +1904,7 @@ class Repo extends Component {
             method: 'POST',
             body: JSON.stringify({
               'is_autosave': !!is_autosave,
+              'defaults': default_output,
               'waypoints': story_output,
               'groups': group_output,
               'masks': mask_output,
