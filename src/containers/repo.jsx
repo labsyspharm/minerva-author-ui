@@ -916,7 +916,7 @@ class Repo extends Component {
 
   importGroups(event) {
     const filePath = event.target.value;
-    if (!!filePath) {
+    if (!filePath) {
       return;
     }
     fetch('http://127.0.0.1:2020/api/import/groups', {
