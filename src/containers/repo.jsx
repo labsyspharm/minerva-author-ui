@@ -1640,7 +1640,17 @@ class Repo extends Component {
     }
   }
 
-  createDefaultOutput({chanLabel, chanRender}) {
+  get rgbaRenderOutput () {
+    return Array.from(this.RGBAChannels().values()).map(rgbaChan => {
+      const rgbChanLabel = new Map([
+        [rgbaChan.id, { label: rgbaChan.label, info: "" }]
+      ]);
+      return this.createChannelOutput(rgbaChan, rgbChanLabel);
+    });
+  }
+
+  createDefaultOutput({chanLabel, chanRender, rgba}) {
+    if (rgba) return this.rgbaRenderOutput;
     return Array.from(chanRender.values()).map(chan => {
       return this.createChannelOutput(chan, chanLabel);
     });
@@ -1666,31 +1676,36 @@ class Repo extends Component {
     });
   }
 
+  formatGroupOutput (v, channels, render) {
+    const group_out = {
+      'label': v.label,
+      'channels': channels,
+      'render': render 
+    };
+    if (v.id) group_out.id = v.id;
+    if (v.uuid) group_out.uuid = v.uuid;
+    return group_out;
+  }
+
   createGroupOutput({groups, chanLabel, rgba}) {
     return Array.from(groups.values()).map(v => {
+      if (rgba) {
+        const render = this.rgbaRenderOutput;
+        const channels = [{
+          'color': "FFFFFF",
+          'min': 0,
+          'max': 1,
+          'label': v.label,
+          'info': "",
+          'id': 0
+        }];
+        return this.formatGroupOutput(v, channels, render);
+      }
       const channels = v.activeIds.map(id => {
         const chan = v.chanRender.get(id);
         return this.createChannelOutput(chan, chanLabel);
       });
-      let render = channels;
-      if (rgba) {
-        render = Array.from(this.RGBAChannels().values()).map(rgba => {
-          const rgbChanLabel = { [rgba.id]: rgba.label };
-          return this.createChannelOutput(rgba, rgbChanLabel);
-        });
-      }
-      let group_out = {
-        'label': v.label,
-        'channels': channels,
-        'render': render
-      };
-      if (v.id) {
-        group_out.id = v.id;
-      }
-      if (v.uuid) {
-        group_out.uuid = v.uuid;
-      }
-      return group_out;
+      return this.formatGroupOutput(v, channels, channels);
     });
   }
   
@@ -1892,7 +1907,7 @@ class Repo extends Component {
     let minerva = this.props.env === 'cloud';
 
     const mask_output = this.createMaskOutput({masks, maskOpacity});
-    const default_output = this.createDefaultOutput({chanLabel, chanRender});
+    const default_output = this.createDefaultOutput({chanLabel, chanRender, rgba});
     const group_output = this.createGroupOutput({groups, chanLabel, rgba});
     const story_output = this.createWaypoints({stories, groups, masks});
     const story_definition = this.createStoryDefinition(story_output, group_output);
@@ -2479,7 +2494,7 @@ class Repo extends Component {
         color: [255, 0, 0],
         range: {
           min: 0,
-          max: 65535,
+          max: 255,
         },
         maxRange: 255
       }],
@@ -2489,7 +2504,7 @@ class Repo extends Component {
         color: [0, 255, 0],
         range: {
           min: 0,
-          max: 65535
+          max: 255
         },
         maxRange: 255
       }],
@@ -2499,7 +2514,7 @@ class Repo extends Component {
         color: [0, 0, 255],
         range: {
           min: 0,
-          max: 65535
+          max: 255
         },
         maxRange: 255
       }],
