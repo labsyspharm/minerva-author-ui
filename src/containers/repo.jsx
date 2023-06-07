@@ -2589,16 +2589,17 @@ class Repo extends Component {
     const overlays = story.overlays;
     const arrows = story.arrows;
     const activeArrow = this.state.activeArrow;
+    const validArrow = activeArrow < arrows.length;
     let arrowText = '';
-    if (arrows.length > 0) {
+    if (arrows.length > 0 && validArrow) {
       arrowText = arrows[activeArrow].text;
     }
     let arrowAngle = '';
-    if (arrows.length > 0) {
+    if (arrows.length > 0 && validArrow) {
       arrowAngle = arrows[activeArrow].angle;
     }
     let arrowHidden = false;
-    if (arrows.length > 0) {
+    if (arrows.length > 0 && validArrow) {
       arrowHidden = arrows[activeArrow].hide;
     }
 
