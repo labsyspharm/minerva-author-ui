@@ -20,6 +20,7 @@ class ImportForm extends Component {
       autosaveLogic: "ask",
       showFileBrowser: false,
       showMarkerBrowser: false,
+      missingImage: null,
       currentFileFolder: null,
       currentMarkerFolder: null,
       output: '',
@@ -36,24 +37,46 @@ class ImportForm extends Component {
 
     this.filePath = React.createRef();
     this.markerPath = React.createRef();
+    this.missingPath = React.createRef();
 
+  }
+
+  fileBrowserExtensions() {
+    if (this.state.missingImage) {
+      return ["tif", "tiff", "svs"];
+    }
+    return ["dat", "tif", "tiff", "svs", "json"];
+  }
+
+  fileBrowserInstructions() {
+    if (this.state.missingImage) {
+      const img_file = this.state.missingImage;
+      return `Missing "${img_file}". Please find image file location.`;
+    }
+    return 'Select image or story (tiff, svs, json)';
   }
 
   handleError(err) {
     let err_code = null;
+    const err_split = err.split(" ERR: ");
     if (err.includes(" ERR: ")) {
-      const err_split = err.split(" ERR: ");
       if (err_split.length == 2) {
         err_code = err_split[0];
         err = err_split[1];
       }
     }
-    if (err_code == "AUTO ASK") {
+    if (err_code === "AUTO ASK") {
       this.setState({ askAutosaveLogic: true });
       err = null;
     }
+    if (err_code === "IMAGE ASK") {
+      const img_file = err_split[1];
+      this.setState({ missingImage: img_file });
+      this.openFileBrowser();
+      err = null;
+    }
     this.setState({ loading: false, error: err });
-    console.error(err);
+    if (err) console.error(err);
   }
 
   handleSubmit(event, importCallback) {
@@ -101,12 +124,18 @@ class ImportForm extends Component {
     this.setState({ 
       showFileBrowser: false
     });
-    if (file && file.path) {
-      this.filePath.current.value = file.path;
-      this.setState({
-        currentFileFolder: folder
-      });
+    if (!file || !file.path) {
+      return;
     }
+    if (this.state.missingImage) {
+      this.missingPath.current.value = file.path;
+    }
+    else {
+      this.filePath.current.value = file.path;
+    }
+    this.setState({
+      currentFileFolder: folder
+    });
   }
 
   onMarkerFileSelected(file, folder=null) {
@@ -205,11 +234,12 @@ class ImportForm extends Component {
           <div className="field">
           <div className="ui action input">
             <input ref={this.filePath} id="filepath" name="filepath" type="text" />
+            <input ref={this.missingPath} id="missingpath" name="missingpath" type="hidden" />
             <button type="button" onClick={this.openFileBrowser} className="ui button">Browse</button>
             <FileBrowserModal open={this.state.showFileBrowser} close={this.onFileSelected}
-              title="Select image or story (tiff, svs, json)" 
+              title={this.fileBrowserInstructions()} 
               onFileSelected={this.onFileSelected} 
-              filter={["dat", "tif", "tiff", "svs", "json"]}
+              filter={this.fileBrowserExtensions()}
               home={imageHome}
               />
           </div>
