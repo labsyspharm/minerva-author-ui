@@ -139,6 +139,10 @@ const hexToRgb = hex => {
   ] : null;
 }
 
+const invert = (v) => {
+  return v ? 1 / v : 0;
+}
+
 const defaultMask = () => {
   return {
     cache_name: "",
@@ -312,6 +316,7 @@ class Repo extends Component {
       showVisDataBrowser: false,
       showMaskBrowser: false,
       showMaskMapBrowser: false,
+      pixelMicrons: invert(sampleInfo.pixels_per_micron),
       rotation: sampleInfo.rotation,
       sampleName: sampleInfo.name,
       sampleText: sampleInfo.text,
@@ -493,6 +498,7 @@ class Repo extends Component {
     this.handleArrowText = this.handleArrowText.bind(this);
     this.handleSampleText = this.handleSampleText.bind(this);
     this.handleSampleName = this.handleSampleName.bind(this);
+    this.handlePixelMicrons = this.handlePixelMicrons.bind(this);
     this.handleRotation = this.handleRotation.bind(this);
     this.handleArrowHide = this.handleArrowHide.bind(this);
     this.handleArrowAngle = this.handleArrowAngle.bind(this);
@@ -1350,6 +1356,15 @@ class Repo extends Component {
     })
   }
 
+  handlePixelMicrons(event) {
+    let microns = parseFloat(event.target.value)
+    microns = isNaN(microns) ? 0 : microns;
+
+    this.setState({
+      pixelMicrons: microns
+    })
+  }
+
   handleRotation(event) {
     let angle = parseInt(event.target.value)
     angle = isNaN(angle) ? 0 : angle;
@@ -1716,6 +1731,7 @@ class Repo extends Component {
       'waypoints': stories,
       'groups': groups,
       'sample_info': {
+        'pixels_per_micron': invert(this.state.pixelMicrons),
         'rotation': this.state.rotation,
         'name': this.state.sampleName,
         'text': this.state.sampleText
@@ -1805,6 +1821,7 @@ class Repo extends Component {
         'header': this.state.sampleText,
         'rotation': this.state.rotation,
         'image': {
+          'pixels_per_micron': invert(this.state.pixelMicrons),
           'description': this.state.sampleName
         }
       }),
@@ -1912,6 +1929,7 @@ class Repo extends Component {
     const story_output = this.createWaypoints({stories, groups, masks});
     const story_definition = this.createStoryDefinition(story_output, group_output);
     const sample_info = {
+      'pixels_per_micron': invert(this.state.pixelMicrons),
       'rotation': this.state.rotation,
       'name': this.state.sampleName,
       'text': this.state.sampleText
@@ -2786,14 +2804,23 @@ class Repo extends Component {
         <input type='text' placeholder='Author Name'
           value={this.state.authorName} onChange={this.handleAuthorName } />
         <div className="font-white mt-2">
-          Image Rotation:
+          Pixel size, in microns:
+        </div>
+        <div className="field">
+           <input type='text' placeholder='microns'
+            value={this.state.pixelMicrons}
+           onChange={this.handlePixelMicrons || 0}
+           />
+        </div>
+        <div className="font-white mt-2">
+          Image rotation, in degrees:
         </div>
         <div className="field">
            <input type='text' placeholder='Rotation'
-            value={this.state.rotation? this.state.rotation : ''}
+            value={this.state.rotation || 0}
            onChange={this.handleRotation}
            />
-           <input type="range" className="image-rotation-range" min="-180" max="180" value={this.state.rotation} onChange={this.handleRotation} id="myRange"></input>
+           <input type="range" className="image-rotation-range" min="-180" max="180" value={this.state.rotation} onChange={this.handleRotation} id="rotationRange"></input>
         </div>
         <div className="font-white mt-2">
           Import Channel Groups:
