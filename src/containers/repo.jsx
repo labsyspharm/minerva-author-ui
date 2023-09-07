@@ -1645,12 +1645,13 @@ class Repo extends Component {
   }
 
   createChannelOutput(chan, chanLabel) {
+    const cLabel = chanLabel.get(chan.id) || null;
     return {
       'color': rgbToHex(chan.color),
       'min': chan.range.min / chan.maxRange,
       'max': chan.range.max / chan.maxRange,
-      'label': chanLabel.get(chan.id).label,
-      'info': chanLabel.get(chan.id).info,
+      'label': cLabel ? cLabel.label : '',
+      'info': cLabel ? cLabel.info : '',
       'id': chan.id,
     }
   }
