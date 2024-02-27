@@ -100,6 +100,7 @@ class ImportForm extends Component {
           this.handleError(data.error);
         }
         else {
+          console.log(data);
           importCallback(data);
         }
       });
