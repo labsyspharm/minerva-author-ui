@@ -46,6 +46,8 @@ class AuthorApp extends Component {
         'text': '',
         "rotation":0
       },
+      has_auto_groups: false,
+      original_groups: [],
       defaults: [],
       waypoints: [],
       masks: [],
@@ -88,6 +90,19 @@ class AuthorApp extends Component {
       const {output_save_file, input_image_file} = import_result;
       const {sample_info, marker_csv_file} = import_result;
 
+      const original_groups = import_result.groups;
+      const has_auto_groups = import_result.has_auto_groups;
+
+      // Restrict automated groups
+      if (has_auto_groups && original_groups.length) {
+        const channels = original_groups[0].channels;
+        import_result.groups = [{
+          ...original_groups[0],
+          channels: channels.slice(0,2),
+          label: 'Overview'
+        }];
+      }
+
       this.setState({
         outputSaveFile: output_save_file || this.state.outputSaveFile,
         sampleInfo: sample_info || this.state.sampleInfo,
@@ -95,6 +110,8 @@ class AuthorApp extends Component {
         markerFile: marker_csv_file,
         waypoints: import_result.waypoints,
         defaults: import_result.defaults || [],
+        has_auto_groups: !!has_auto_groups,
+        original_groups: original_groups,
         groups: import_result.groups,
         masks: import_result.masks,
         loaded: import_result.loaded,
@@ -199,6 +216,8 @@ class AuthorApp extends Component {
                     width={width} height={height} tilesize={tilesize}
                     sampleInfo={sampleInfo} warning={warning} storyUuid={storyUuid}
                     imageName={imageName} story={story} defaults={defaults}
+                    has_auto_groups={this.state.has_auto_groups}
+                    original_groups={this.state.original_groups}
                     onPreview={this.onPreview}
                     out_name={out_name}
                     root_dir={root_dir}

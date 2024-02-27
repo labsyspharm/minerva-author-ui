@@ -15,7 +15,7 @@ import ClipLoader from "react-spinners/ClipLoader";
 import { Progress, Popup } from 'semantic-ui-react'
 import Client from '../MinervaClient';
 import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
-import { faExclamationCircle, faWindowClose, faShare, faSave, faEye, faBullhorn } from "@fortawesome/free-solid-svg-icons";
+import { faExclamationCircle, faWindowClose, faShare, faSave, faEye, faBullhorn, faLayerGroup } from "@fortawesome/free-solid-svg-icons";
 
 import '../style/repo'
 import PublishStoryModal from "../components/publishstorymodal";
@@ -273,6 +273,7 @@ class Repo extends Component {
     const { imageFile, markerFile } = props;
     const { out_name, root_dir, session } = props;
     const { channels, sampleInfo, waypoints, groups, masks} = props;
+    const { original_groups } = props;
 
     const defaults = props.defaults || [];
 
@@ -445,6 +446,7 @@ class Repo extends Component {
           value: k
         }]
       })),
+      has_auto_groups: props.has_auto_groups,
       chanLabel: toDefaultChanLabel(defaults, channels),
       activeIds: channels.length < 2 ? [0] : [0, 1],
       maskOpacity: 0.5,
@@ -885,38 +887,58 @@ class Repo extends Component {
   }
 
   updateGroups(data) {
-    const { groups } = data;
-    const defaults = data.defaults || [];
+    // Always use existing channel labels
     const oldChanLabels = [...this.state.chanLabel.values()];
     const oldChannels = oldChanLabels.map(v => v.label);
-    const defaultChanRender = toDefaultChanRender(defaults);
+    // Optional: use existing channel rendering as baseline
+    const defaults = data.defaults || [];
+    const chanRender = [
+      this.state.chanRender, toDefaultChanRender(defaults)
+    ][+data.overwrite];
+    // Optional: use existing group keys as baseline
+    const maxGroup = Math.max(-1, ...this.state.groups.keys());
+    const groupOffset = [
+      1 + maxGroup, 0
+    ][+(data.overwrite && data.groups.length)];
     const maxChan = oldChannels.length - 1;
     let extraChan = false;
 
-    const g = new Map(groups.map((v,k) => {
-      return [k, {
+    const new_groups = new Map(data.groups.map((v,k) => {
+      const key = k + groupOffset;
+      return [key, {
         activeIds: v.channels.map(chan => {
           if (chan.id > maxChan) {
             extraChan = true;
           }
           return chan.id;
         }),
-        chanRender: createChanRender([v], defaultChanRender),
+        chanRender: createChanRender([v], chanRender),
         label: v.label,
-        value: k
+        value: key
       }]
     }))
+    const merged_groups = new Map(
+      [...this.state.groups, ...new_groups]
+    );
+    // Optional: Use existing groups
+    const groups = [
+      merged_groups, new_groups
+    ][+data.overwrite];
     if (extraChan) {
       this.setState({
-        error: 'Unsupported import with excess channels'
-      })
+        error: 'Unsupported import: channels mismatch'
+      });
     }
     else {
       this.setState({
-        chanRender: createChanRender(groups, defaultChanRender),
+        activeGroup: groupOffset,
+        chanRender: new Map([
+          ...this.state.chanRender,
+          ...createChanRender(data.groups, chanRender),
+        ]),
         chanLabel: toDefaultChanLabel(defaults, oldChannels),
-        groups: g
-      })
+        groups: groups 
+      });
     }
   }
 
@@ -951,7 +973,7 @@ class Repo extends Component {
       }
     }).then(data => {
       if (data) {
-        this.updateGroups(data);
+        this.updateGroups({...data, overwrite: true});
       }
     });
   }
@@ -1807,6 +1829,7 @@ class Repo extends Component {
     const {rgba, imageFile, maskOpacity} = this.state;
     const {root_dir, out_name} = this.state;
     const {stories, chanLabel} = this.state;
+    const {first_group, first_waypoint} = this.state;
     const mask_output = this.createMaskOutput({masks, maskOpacity});
     const group_output = this.createGroupOutput({groups, chanLabel, rgba});
     const story_output = this.createWaypoints({stories, groups, masks});
@@ -1821,6 +1844,12 @@ class Repo extends Component {
         'waypoints': story_output,
         'header': this.state.sampleText,
         'rotation': this.state.rotation,
+        ...(first_group ? {
+          'first_group': first_group
+        } : { }),
+        ...(first_waypoint ? {
+          'first_waypoint': first_waypoint
+        } : { }),
         'image': {
           'pixels_per_micron': invert(this.state.pixelMicrons),
           'description': this.state.sampleName
@@ -2684,6 +2713,35 @@ class Repo extends Component {
     );
 
     let publishButton = null;
+    let autoGroupButton = null;
+    if (this.state.has_auto_groups) {
+      autoGroupButton = (
+        <button className="ui button primary"
+          onClick={() => {
+            this.setState({
+              activeGroup: 0,
+              has_auto_groups: false,
+            }, () => {
+              this.updateGroups({
+                overwrite: false,
+                groups: [...this.props.original_groups],
+                defaults: this.createDefaultOutput({
+                  chanLabel: this.state.chanLabel, 
+                  chanRender: this.state.chanRender,
+                  rgba: this.state.rgba
+                })
+              })
+            })
+          }}
+          title="Auto Group">
+        <FontAwesomeIcon icon={faLayerGroup} />&nbsp;
+         Auto Group&nbsp;
+         <ClipLoader animation="border"
+            size={12} color={"#FFFFFF"}
+            loading={this.state.publishing}/>
+        </button>
+      );
+    }
     if (group != undefined) {
       publishButton = (
         <button className="ui button primary" disabled={this.state.publishing}
@@ -2743,6 +2801,7 @@ class Repo extends Component {
       <span className="ui buttons">
         {saveButton}
         {saveAsButton}
+        {autoGroupButton}
         {publishButton}
         {previewButton}
         {shareButton}
