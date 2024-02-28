@@ -930,8 +930,15 @@ class Repo extends Component {
       });
     }
     else {
-      this.setState({
+      const activeIds = (
+        groups.get(groupOffset) || {}
+      ).activeIds;
+      const updatedGroupState = activeIds ? ({
         activeGroup: groupOffset,
+        activeIds: activeIds
+      }) : { };
+      this.setState({
+        ...updatedGroupState, 
         chanRender: new Map([
           ...this.state.chanRender,
           ...createChanRender(data.groups, chanRender),
