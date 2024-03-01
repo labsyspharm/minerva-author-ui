@@ -1,6 +1,6 @@
 {
   "name": "minerva-author-ui",
-  "version": "1.7.4",
+  "version": "1.7.5",
   "description": "Minerva Author UI",
   "scripts": {
     "start": "NODE_OPTIONS=--openssl-legacy-provider MINERVA_AUTHOR_ENV=local webpack-dev-server --host 0.0.0.0 --port 8487 --config ./webpack.config.js --mode development",
