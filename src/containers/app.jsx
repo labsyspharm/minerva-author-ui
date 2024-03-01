@@ -112,6 +112,8 @@ class AuthorApp extends Component {
         defaults: import_result.defaults || [],
         has_auto_groups: !!has_auto_groups,
         original_groups: original_groups,
+        first_viewport: import_result.first_viewport,
+        first_group: import_result.first_group,
         groups: import_result.groups,
         masks: import_result.masks,
         loaded: import_result.loaded,
@@ -198,6 +200,7 @@ class AuthorApp extends Component {
   render() {
     const {loaded, width, height, tilesize, maxLevel, rgba, url, uuid, storyUuid, story, imageName} = this.state;
     const {channels, sampleInfo, waypoints, groups, warning, masks, defaults} = this.state;
+    const { first_group, first_viewport } = this.state;
     const {inputFile, outputSaveFile} = this.state;
     const {imageFile, markerFile} = this.state;
     const {out_name, root_dir, session} = this.state;
@@ -216,6 +219,7 @@ class AuthorApp extends Component {
                     width={width} height={height} tilesize={tilesize}
                     sampleInfo={sampleInfo} warning={warning} storyUuid={storyUuid}
                     imageName={imageName} story={story} defaults={defaults}
+                    first_viewport={first_viewport} first_group={first_group}
                     has_auto_groups={this.state.has_auto_groups}
                     original_groups={this.state.original_groups}
                     onPreview={this.onPreview}

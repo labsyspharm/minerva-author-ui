@@ -357,6 +357,8 @@ class Repo extends Component {
       needNewGroup: false,
       activeArrow: 0,
       viewport: null,
+      first_group: props.first_group || null,
+      first_viewport: props.first_viewport || null,
       activeStory: 0,
       activeVisLabel: {
         value: -1, id: -1, label: '', colormapInvert: false,
@@ -672,7 +674,19 @@ class Repo extends Component {
     const {stories, activeStory, activeGroup} = this.state;
     let newStory = {...(stories.get(activeStory) || this.defaultStory())};
 
-    this.setState({viewport: viewport});
+    const newState = {
+      viewport: viewport
+    };
+    if (this.state.textTab == 'INFO') {
+      const zoom = viewport.getZoom();
+      const pan = [
+          viewport.getCenter().x,
+          viewport.getCenter().y
+      ];
+      newState.first_viewport = {
+        Zoom: zoom, Pan: pan
+      };
+    }
     if (this.state.textTab === 'STORY') {
 
       newStory.zoom = viewport.getZoom();
@@ -685,8 +699,9 @@ class Repo extends Component {
                                 ...(new Map([[activeStory, newStory]]))]);
 
 
-      this.setState({stories: newStories});
+      newState.stories = newStories;
     }
+    this.setState(newState);
   }
 
   handleStoryChange(newActiveStory) {
@@ -989,11 +1004,25 @@ class Repo extends Component {
 
   toggleTextTab(value) {
     const {activeStory} = this.state;
-    this.setState({
+    const newState = {
       textTab: value,
       publishProgress: 0,
       publishProgressMax: 0
-    })
+    }
+    if (value === 'INFO') {
+      const {viewport, groups, activeGroup} = this.state;
+      const group = groups.get(activeGroup);
+      newState.first_group = group.label;
+      const zoom = viewport.getZoom();
+      const pan = [
+          viewport.getCenter().x,
+          viewport.getCenter().y
+      ];
+      newState.first_viewport = {
+        Zoom: zoom, Pan: pan
+      };
+    }
+    this.setState(newState);
     if (value === 'STORY') {
       this.handleStoryChange(activeStory);
     }
@@ -1253,19 +1282,25 @@ class Repo extends Component {
 
       const newGroups = new Map([...groups,
                                 ...(new Map([[id, newGroup]]))]);
-
-      this.setState({
+      const newState = {
         groups: newGroups,
         activeGroup: id
-      });
+      }
+      if (this.state.textTab == 'INFO') {
+        newState.first_group = g.value;
+      }
+      this.setState(newState);
       return id;
     }
     else {
-      // Old group values are indices
-      this.setState({
+      const newState = {
         activeGroup: g.value,
         activeIds: g.activeIds
-      });
+      }
+      if (this.state.textTab == 'INFO') {
+        newState.first_group = g.value;
+      }
+      this.setState(newState);
       return g.value;
     }
     return true;
@@ -1838,7 +1873,7 @@ class Repo extends Component {
     const {rgba, imageFile, maskOpacity} = this.state;
     const {root_dir, out_name} = this.state;
     const {stories, chanLabel} = this.state;
-    const {first_group, first_waypoint} = this.state;
+    const {first_group, first_viewport} = this.state;
     const mask_output = this.createMaskOutput({masks, maskOpacity});
     const group_output = this.createGroupOutput({groups, chanLabel, rgba});
     const story_output = this.createWaypoints({stories, groups, masks});
@@ -1856,8 +1891,8 @@ class Repo extends Component {
         ...(first_group ? {
           'first_group': first_group
         } : { }),
-        ...(first_waypoint ? {
-          'first_waypoint': first_waypoint
+        ...(first_viewport ? {
+          'first_viewport': first_viewport
         } : { }),
         'image': {
           'pixels_per_micron': invert(this.state.pixelMicrons),
@@ -1990,12 +2025,19 @@ class Repo extends Component {
       }
       else {
         const {markerFile, imageFile} = this.state;
+        const {first_group, first_viewport} = this.state;
         const {out_name, root_dir, session} = this.state;
         const save_url = `localhost:2020/api/save/${session}`;
         try {
           const res = await fetch('http://'+save_url, {
             method: 'POST',
             body: JSON.stringify({
+              ...(first_group ? {
+                'first_group': first_group
+              } : { }),
+              ...(first_viewport ? {
+                'first_viewport': first_viewport
+              } : { }),
               'is_autosave': !!is_autosave,
               'defaults': default_output,
               'waypoints': story_output,
