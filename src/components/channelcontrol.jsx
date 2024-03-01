@@ -52,7 +52,7 @@ const ChannelControl = ({ id, color, range, minRange, maxRange,
           />
         </div>
         <div className="ui input mini width-75px">
-          <input type="text" value={range.min} 
+          <input type="text" value={Math.round(range.min)} 
             onBlur={ e=> {
               let r0 = range.min >= maxRange ? maxRange - 1 : range.min;
               let r1 = r0 >= range.max ? Math.min(r0 + 1, maxRange) : range.max;
@@ -66,7 +66,7 @@ const ChannelControl = ({ id, color, range, minRange, maxRange,
           />
         </div>
         <div className="ui input mini width-75px">
-          <input type="text" value={range.max} 
+          <input type="text" value={Math.round(range.max)} 
             onBlur={ e=> {
               let r1 = range.max >= maxRange ? maxRange : range.max;
               let r0 = range.min >= r1 ? Math.max(r1 - 1, 0) : range.min;
