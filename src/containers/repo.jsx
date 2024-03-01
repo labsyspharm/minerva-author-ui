@@ -2810,7 +2810,6 @@ class Repo extends Component {
       <span className="ui buttons">
         {saveButton}
         {saveAsButton}
-        {autoGroupButton}
         {publishButton}
         {previewButton}
         {shareButton}
@@ -2854,9 +2853,12 @@ class Repo extends Component {
           />
         </div>
         <div className="col pl-0 pr-0 pt-3">
-          <span className="ui buttons">
+          <span className="ui buttons grid-two-columns">
             {this.renderAddGroupModal()}
             {this.renderRenameModal()}
+            <div className="grid-columns-all">
+              {autoGroupButton}
+            </div>
           </span>
         </div>
       </div>
@@ -3217,9 +3219,9 @@ class Repo extends Component {
 
   renderAddGroupModal() {
     return (
-      <div className="">
-        <button className="ui button compact ml-1 mr-1" onClick={this.showAddGroupModal}>Add Group</button>
-        <Modal show={this.state.addGroupModal} toggle={this.showAddGroupModal}>
+      <div className="grid-wrapper">
+        <button className="ui button compact" onClick={this.showAddGroupModal}>Add Group</button>
+      <Modal show={this.state.addGroupModal} toggle={this.showAddGroupModal}>
         <form className="ui form" onSubmit={this.showAddGroupModal}>
           <label className="ui label">Add group</label>
            <Popup
@@ -3240,7 +3242,7 @@ class Repo extends Component {
       return null;
     }
     return (
-      <div className="all-pointer">
+      <div className="grid-wrapper">
         <button className="ui button compact" onClick={this.showRenameModal}>Rename</button>
         <Modal show={this.state.renameModal} toggle={this.showRenameModal}>
         <form className="ui form" onSubmit={this.showRenameModal}>

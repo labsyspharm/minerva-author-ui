@@ -20,10 +20,6 @@
   pointer-events: None;
 }
 
-.all-pointer {
-  pointer-events: All;
-}
-
 /* Cancel bootstrap .progress class because it conflicts with Semantic UI progress bar */
 .progress {
   display: initial;
@@ -54,4 +50,20 @@
   top: 0;
   right: 0;
   margin-right: 0 !important;
+}
+
+.ui.buttons.grid-two-columns {
+  display: grid;
+  gap: 3px;
+  padding: 3px;
+  grid-template-columns: 1fr 1fr;
+}
+
+.grid-two-columns > .grid-columns-all {
+  grid-column: 1 / -1;
+  display: grid;
+}
+
+.grid-two-columns > .grid-wrapper {
+  display: grid;
 }
