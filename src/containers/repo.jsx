@@ -99,7 +99,7 @@ const toDefaultChanRender = (defaults) => {
 }
 
 const createChanRender = (groups, defaultChanRender) => {
-  return groups.reverse().reduce((chan_render, v) => {
+  return [...groups].reverse().reduce((chan_render, v) => {
     return new Map([...chan_render,
       ...new Map(v.channels.map(chan => {
         return [chan.id, formatChanRender(chan)]
@@ -277,7 +277,9 @@ class Repo extends Component {
 
     const defaults = props.defaults || [];
 
-    const defaultChanRender = createChanRender(groups,
+    const defaultChanRender = createChanRender([
+        ...groups, ...original_groups
+    ],
       new Map(channels.map((chan, k) => {
         if (k >= defaults.length) {
           return [k, toEmptyChanRender(k)];
