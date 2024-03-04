@@ -1285,7 +1285,7 @@ class Repo extends Component {
         activeGroup: id
       }
       if (this.state.textTab == 'INFO') {
-        newState.first_group = g.value;
+        newState.first_group = g.label;
       }
       this.setState(newState);
       return id;
@@ -1296,7 +1296,7 @@ class Repo extends Component {
         activeIds: g.activeIds
       }
       if (this.state.textTab == 'INFO') {
-        newState.first_group = g.value;
+        newState.first_group = g.label;
       }
       this.setState(newState);
       return g.value;
