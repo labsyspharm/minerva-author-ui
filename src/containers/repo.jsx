@@ -19,6 +19,7 @@ import { faExclamationCircle, faWindowClose, faShare, faSave, faEye, faBullhorn,
 
 import '../style/repo'
 import PublishStoryModal from "../components/publishstorymodal";
+import AutoGroupModal from "../components/autogroupmodal";
 
 const validNameRegex = /^([a-zA-Z0-9 _-]+)$/;
 
@@ -312,6 +313,7 @@ class Repo extends Component {
       lastSaveTime: new Date(),
       isMaskMapLoading: false,
       invalidMaskMap: false,
+      autoGroupModal: false,
       warning: warning,
       showFileBrowser: false,
       showSaveAsBrowser: false,
@@ -319,6 +321,7 @@ class Repo extends Component {
       showVisDataBrowser: false,
       showMaskBrowser: false,
       showMaskMapBrowser: false,
+      pixelMicronsInput: '',
       pixelMicrons: invert(sampleInfo.pixels_per_micron),
       rotation: sampleInfo.rotation,
       sampleName: sampleInfo.name,
@@ -677,7 +680,9 @@ class Repo extends Component {
     const newState = {
       viewport: viewport
     };
-    if (this.state.textTab == 'INFO') {
+    const { first_viewport } = this.state;
+    // Set first viewport in info tab, or on start-up
+    if (this.state.textTab == 'INFO' || !first_viewport) {
       const zoom = viewport.getZoom();
       const pan = [
           viewport.getCenter().x,
@@ -909,19 +914,12 @@ class Repo extends Component {
     const oldChannels = oldChanLabels.map(v => v.label);
     // Optional: use existing channel rendering as baseline
     const defaults = data.defaults || [];
-    const chanRender = [
-      this.state.chanRender, toDefaultChanRender(defaults)
-    ][+data.overwrite];
-    // Optional: use existing group keys as baseline
-    const maxGroup = Math.max(-1, ...this.state.groups.keys());
-    const groupOffset = [
-      1 + maxGroup, 0
-    ][+(data.overwrite && data.groups.length)];
+    const chanRender = toDefaultChanRender(defaults)
     const maxChan = oldChannels.length - 1;
     let extraChan = false;
 
     const new_groups = new Map(data.groups.map((v,k) => {
-      const key = k + groupOffset;
+      const key = k;
       return [key, {
         activeIds: v.channels.map(chan => {
           if (chan.id > maxChan) {
@@ -948,10 +946,10 @@ class Repo extends Component {
     }
     else {
       const activeIds = (
-        groups.get(groupOffset) || {}
+        groups.get(0) || {}
       ).activeIds;
       const updatedGroupState = activeIds ? ({
-        activeGroup: groupOffset,
+        activeGroup: 0,
         activeIds: activeIds
       }) : { };
       this.setState({
@@ -1423,11 +1421,14 @@ class Repo extends Component {
   }
 
   handlePixelMicrons(event) {
-    let microns = parseFloat(event.target.value)
-    microns = isNaN(microns) ? 0 : microns;
-
+    const value = event.target.value;
+    const microns = parseFloat(value);
+    if (value.match(/[^0-9.]/)) {
+      return;
+    }
     this.setState({
-      pixelMicrons: microns
+      pixelMicronsInput: value,
+      pixelMicrons: [microns, 0][+isNaN(microns)]
     })
   }
 
@@ -2770,19 +2771,8 @@ class Repo extends Component {
         <button className="ui button primary"
           onClick={() => {
             this.setState({
-              activeGroup: 0,
-              has_auto_groups: false,
-            }, () => {
-              this.updateGroups({
-                overwrite: false,
-                groups: [...this.props.original_groups],
-                defaults: this.createDefaultOutput({
-                  chanLabel: this.state.chanLabel, 
-                  chanRender: this.state.chanRender,
-                  rgba: this.state.rgba
-                })
-              })
-            })
+              autoGroupModal: true
+            });
           }}
           title="Auto Group">
         <FontAwesomeIcon icon={faLayerGroup} />&nbsp;
@@ -2921,8 +2911,8 @@ class Repo extends Component {
         </div>
         <div className="field">
            <input type='text' placeholder='microns'
-            value={this.state.pixelMicrons}
-           onChange={this.handlePixelMicrons || 0}
+            value={this.state.pixelMicronsInput}
+            onChange={this.handlePixelMicrons}
            />
         </div>
         <div className="font-white mt-2">
@@ -2930,7 +2920,7 @@ class Repo extends Component {
         </div>
         <div className="field">
            <input type='text' placeholder='Rotation'
-            value={this.state.rotation || 0}
+            value={this.state.rotation || ''}
            onChange={this.handleRotation}
            />
            <input type="range" className="image-rotation-range" min="-180" max="180" value={this.state.rotation} onChange={this.handleRotation} id="rotationRange"></input>
@@ -3158,6 +3148,28 @@ class Repo extends Component {
               handleOpacityChange={this.handleOpacityChange}
             />
             {this.renderEditInfoModal()}
+            <AutoGroupModal
+              open={this.state.autoGroupModal}
+              original_groups={this.props.original_groups}
+              onCancel={() => this.setState({ autoGroupModal: false })}
+              onConfirm={() => {
+                this.setState({
+                  activeGroup: 0,
+                  autoGroupModal: false,
+                  has_auto_groups: false,
+                }, () => {
+                this.updateGroups({
+                  overwrite: true,
+                  groups: [...this.props.original_groups],
+                  defaults: this.createDefaultOutput({
+                    chanLabel: this.state.chanLabel, 
+                    chanRender: this.state.chanRender,
+                    rgba: this.state.rgba
+                  })
+                })
+              })
+            }}
+            />
             <Confirm
               header="Save file location"
               content={
