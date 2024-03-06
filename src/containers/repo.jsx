@@ -2255,7 +2255,8 @@ class Repo extends Component {
   }
 
   onSetOutName(out_name) {
-    this.checkPathExists(this.state.root_dir, out_name).then((exists)=> {
+    const out_story = `${out_name}.story.json`;
+    this.checkPathExists(this.state.root_dir, out_story).then((exists)=> {
       this.setState({
         out_name: out_name,
         out_exists: exists
