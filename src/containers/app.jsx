@@ -44,7 +44,8 @@ class AuthorApp extends Component {
       sampleInfo: {
         'name': '',
         'text': '',
-        "rotation":0
+        "rotation": 0,
+        'pixels_per_micron': 0
       },
       has_auto_groups: false,
       original_groups: [],
@@ -151,7 +152,6 @@ class AuthorApp extends Component {
   }
 
   onStoryLoaded(story) {
-    console.log('Story loaded: ', story);
     this.setState({
       sampleInfo: story.sample_info,
       waypoints: story.waypoints,

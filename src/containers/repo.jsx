@@ -307,6 +307,7 @@ class Repo extends Component {
 
     const lazyAutosaveDelay = 10000;
 
+    const pixelMicrons = invert(sampleInfo.pixels_per_micron)
     this.state = {
       error: null,
       shownSavePath: false,
@@ -321,8 +322,8 @@ class Repo extends Component {
       showVisDataBrowser: false,
       showMaskBrowser: false,
       showMaskMapBrowser: false,
-      pixelMicronsInput: '',
-      pixelMicrons: invert(sampleInfo.pixels_per_micron),
+      pixelMicrons: pixelMicrons,
+      pixelMicronsInput: `${pixelMicrons || ''}`,
       rotation: sampleInfo.rotation,
       sampleName: sampleInfo.name,
       sampleText: sampleInfo.text,
