@@ -8,6 +8,25 @@ import { faExclamationCircle, faCheckCircle, faAngleLeft, faFileAlt} from "@fort
 import Loader from "../components/loader";
 import ErrorFooter from "../components/errorfooter";
 
+const formatDefaultName = () => {
+  const date = new Date();
+  return 'untitled-'+[
+    [
+      date.getFullYear(),
+      ...[
+        date.getMonth() + 1, date.getDate()
+      ].map((v) => {
+        return v.toString().padStart(2,'0')
+      })
+    ].join(''),
+    [
+      date.getHours(), date.getMinutes(), date.getSeconds()
+    ].map((v) => {
+      return v.toString().padStart(2,'0')
+    }).join('')
+  ].join('-');
+}
+
 class ImportForm extends Component {
   constructor() {
     super();
@@ -82,13 +101,23 @@ class ImportForm extends Component {
   handleSubmit(event, importCallback) {
     event.preventDefault();
     const data = new FormData(event.target);
-    data.set("autosave_logic", this.state.autosaveLogic);
-    this.props.updateInputFile(data.get("filepath"));
-
-    this.setState({
+    const input_name = data.get('filepath');
+    const output_name = data.get('dataset');
+    if (!input_name) {
+      return;
+    }
+    const newState = {
       loading: true,
       error: null
-    });
+    }
+    if (!output_name) {
+      const new_output_name = formatDefaultName();
+      data.set('dataset', new_output_name);
+      newState.output = new_output_name;
+    }
+    data.set("autosave_logic", this.state.autosaveLogic);
+    this.props.updateInputFile(input_name);
+    this.setState(newState);
     
     fetch('http://localhost:2020/api/import', {
       method: 'POST',
