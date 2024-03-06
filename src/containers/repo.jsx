@@ -1,5 +1,5 @@
 import React, { Component } from "react";
-import CreatableSelect from 'react-select/creatable';
+import Select from 'react-select/creatable';
 
 import debounce from 'debounce-async';
 import equal from 'fast-deep-equal/react';
@@ -534,7 +534,6 @@ class Repo extends Component {
     this.handleGroupRename = this.handleGroupRename.bind(this);
     this.handleEditInfo = this.handleEditInfo.bind(this);
     this.handleAddGroup = this.handleAddGroup.bind(this);
-    this.getCreateLabel = this.getCreateLabel.bind(this);
     this.labelRGBA = this.labelRGBA.bind(this);
     this.defaultStory = this.defaultStory.bind(this);
     this.handleUpdateAllMasks = this.handleUpdateAllMasks.bind(this);
@@ -1010,16 +1009,39 @@ class Repo extends Component {
     }
     if (value === 'INFO') {
       const {viewport, groups, activeGroup} = this.state;
-      const group = groups.get(activeGroup);
-      newState.first_group = group.label;
-      const zoom = viewport.getZoom();
-      const pan = [
-          viewport.getCenter().x,
-          viewport.getCenter().y
-      ];
-      newState.first_viewport = {
-        Zoom: zoom, Pan: pan
-      };
+      if (this.state.first_group) {
+        const found_group_kv = [...groups].find(([_, g]) => {
+          return g.label == this.state.first_group;
+        });
+        if (found_group_kv && found_group_kv.length == 2) {
+          const [found_group_id, found_group] = found_group_kv;
+          newState.activeGroup = found_group_id;
+          newState.activeIds = found_group.activeIds;
+        }
+      }
+      else {
+        const group = groups.get(activeGroup);
+        newState.first_group = group.label;
+      }
+      if (this.state.first_viewport) {
+        const {
+          Zoom: zoom, Pan: pan
+        } = this.state.first_viewport;
+        viewport.zoomTo(zoom);
+        viewport.panTo(
+          new OpenSeadragon.Point(...pan)
+        );
+      }
+      else {
+        const zoom = viewport.getZoom();
+        const pan = [
+            viewport.getCenter().x,
+            viewport.getCenter().y
+        ];
+        newState.first_viewport = {
+          Zoom: zoom, Pan: pan
+        };
+      }
     }
     this.setState(newState);
     if (value === 'STORY') {
@@ -1065,23 +1087,24 @@ class Repo extends Component {
       return;
     }
     this.setState({invalidChannelGroupName: false});
+    const chanRender = this.state.chanRender;
     let groups = this.state.groups;
     if (this.state.needNewGroup) {
       const id = groups.size;
       const newGroup = {
-        chanRender: this.state.chanRender,
-        activeIds: this.state.activeIds,
+        chanRender: new Map([...chanRender]),
         label: evt.target.value,
+        activeIds: [],
         value: id
       }
-
       const newGroups = new Map([...groups,
                                 ...(new Map([[id, newGroup]]))]);
 
       this.setState({
         needNewGroup: false,
         groups: newGroups,
-        activeGroup: id
+        activeGroup: id,
+        activeIds: []
       });
     }
     else {
@@ -1670,11 +1693,11 @@ class Repo extends Component {
   }
   handleChange(id, color, range, label, visible, changeComplete=true) {
     const { chanRender, chanLabel, groups, activeGroup } = this.state;
-    const group = groups.get(activeGroup);
-    let newRender = { ...chanRender.get(id) };
-    if (group) {
-      newRender = { ...group.chanRender.get(id) };
-    }
+    const newRender = groups.get(activeGroup) ? ({
+      ...groups.get(activeGroup).chanRender.get(id)
+    }) : ({
+      ...chanRender.get(id)
+    })
     const newLabel = { ...chanLabel.get(id) };
 
     if (color) {
@@ -1689,25 +1712,40 @@ class Repo extends Component {
     if (visible !== null) {
       newRender['visible'] = visible;
     }
+    // Modify global defaults
     const newChanLabel = new Map([...chanLabel,
                                  ...(new Map([[id, newLabel]]))]);
     const newChanRender = new Map([...chanRender,
                                ...(new Map([[id, newRender]]))]);
-
+    // Modify colors, except other groups with channel
+    // Modify rendering settings, in all groups
+    // TODO: once multiple rendering supported
+    const newGroups = new Map(
+      [...this.state.groups].map(([group_id, group]) => {
+        const newGroup = { ...group }
+        const newGroupRender = {...(
+          newGroup.chanRender.get(id)
+          || {...newRender}
+        )}
+        const channel_unused = !group.activeIds.includes(id);
+        if (channel_unused || group_id == activeGroup) {
+          newGroupRender['color'] = newRender['color'];
+        }
+        // TODO: same condition as above once supported
+        newGroupRender['range'] = { ...newRender['range'] };
+        // Update the channel rendering settings for this group
+        newGroup.chanRender = new Map([
+          ...newGroup.chanRender, ...new Map([[id, newGroupRender]])
+        ]);
+        return [group_id, newGroup];
+      })
+    );
     const newState = {
+      groups: newGroups,
       chanLabel: newChanLabel,
       chanRender: newChanRender,
       rangeSliderComplete: changeComplete
     };
-
-    if (group) {
-      const newGroup = {...group}
-      newGroup['chanRender'] = new Map([...group.chanRender,
-                                 ...(new Map([[id, newRender]]))]);
-
-      newState['groups'] = new Map([...groups,
-                                ...(new Map([[activeGroup, newGroup]]))]);
-    }
 
     this.setState(newState);
   }
@@ -2126,13 +2164,6 @@ class Repo extends Component {
         publishProgressMax: progress.max
       });
     });
-  }
-
-  getCreateLabel(label) {
-    if (!this.validateChannelGroupLabel(label)) {
-      return "Name contains invalid characters.";
-    }
-    return "Create Group: " + label;
   }
 
   setPublishStoryModal(showPublishStoryModal, publish=false) {
@@ -2877,12 +2908,12 @@ class Repo extends Component {
             <div className="font-white mt-2">
               Channel Groups:
             </div>
-            <CreatableSelect
+            <Select
             isClearable
             value={group}
+            isValidNewOption={()=>false}
             onChange={this.handleSelectGroup}
             options={Array.from(groups.values())}
-            formatCreateLabel={this.getCreateLabel}
           />
         </div>
         <div className="col pl-0 pr-0 pt-3">
