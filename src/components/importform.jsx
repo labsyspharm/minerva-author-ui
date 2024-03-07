@@ -8,7 +8,10 @@ import { faExclamationCircle, faCheckCircle, faAngleLeft, faFileAlt} from "@fort
 import Loader from "../components/loader";
 import ErrorFooter from "../components/errorfooter";
 
-const formatDefaultName = () => {
+const formatDefaultName = (outputDisabled) => {
+  if (outputDisabled) {
+    return '';
+  }
   const date = new Date();
   return 'untitled-'+[
     [
@@ -42,6 +45,7 @@ class ImportForm extends Component {
       missingImage: null,
       currentFileFolder: null,
       currentMarkerFolder: null,
+      outputDisabled: false,
       output: '',
       loadedChannelNames: null,
       markerFilename: null
@@ -51,6 +55,7 @@ class ImportForm extends Component {
     this.openFileBrowser = this.openFileBrowser.bind(this);
     this.openMarkerBrowser = this.openMarkerBrowser.bind(this);
     this.onFileSelected = this.onFileSelected.bind(this);
+    this.onFileInput = this.onFileInput.bind(this);
     this.onMarkerFileSelected = this.onMarkerFileSelected.bind(this);
     this.outputChanged = this.outputChanged.bind(this);
 
@@ -111,7 +116,10 @@ class ImportForm extends Component {
       error: null
     }
     if (!output_name) {
-      const new_output_name = formatDefaultName();
+      const { outputDisabled } = this.state;
+      const new_output_name = formatDefaultName(
+        outputDisabled
+      );
       data.set('dataset', new_output_name);
       newState.output = new_output_name;
     }
@@ -150,6 +158,32 @@ class ImportForm extends Component {
     this.setState({ showCloudBrowser: true});
   }
 
+  onFileInput(file_path, new_state) {
+    const isJSON = 'json' == (
+      file_path.split('.').slice(-1)
+    )
+    // Disable output if JSON chosen
+    const newState = {
+      ...new_state, outputDisabled: isJSON
+    }
+    if (isJSON) {
+      // Clear output name if JSON file
+      newState.output = '';
+    }
+    if (this.state.missingImage && isJSON) {
+      // Allow new JSON path if manually edited 
+      this.missingPath.current.value = '';
+      newState.missingImage = null;
+    }
+    else if (this.state.missingImage) {
+      this.missingPath.current.value = file_path;
+    }
+    else {
+      this.filePath.current.value = file_path;
+    }
+    this.setState(newState)
+  }
+
   onFileSelected(file, folder=null) {
     this.setState({ 
       showFileBrowser: false
@@ -157,13 +191,7 @@ class ImportForm extends Component {
     if (!file || !file.path) {
       return;
     }
-    if (this.state.missingImage) {
-      this.missingPath.current.value = file.path;
-    }
-    else {
-      this.filePath.current.value = file.path;
-    }
-    this.setState({
+    this.onFileInput(file.path, {
       currentFileFolder: folder
     });
   }
@@ -263,7 +291,10 @@ class ImportForm extends Component {
           <label htmlFor="filepath">Enter path to image or story: </label>
           <div className="field">
           <div className="ui action input">
-            <input ref={this.filePath} id="filepath" name="filepath" type="text" />
+            <input
+              ref={this.filePath} onInput={(e) => this.onFileInput(e.target.value, {})}
+              id="filepath" name="filepath" type="text"
+            />
             <input ref={this.missingPath} id="missingpath" name="missingpath" type="hidden" />
             <button type="button" onClick={this.openFileBrowser} className="ui button">Browse</button>
             <FileBrowserModal open={this.state.showFileBrowser} close={this.onFileSelected}
@@ -289,7 +320,10 @@ class ImportForm extends Component {
           </div>
           <label htmlFor="filepath">Optional output name: </label>
           <div className="field">
-          <input id="dataset" name="dataset" type="text" value={this.state.output} onChange={this.outputChanged} />
+          <input
+            id="dataset" name="dataset" type="text" disabled={this.state.outputDisabled}
+            value={this.state.output} onChange={this.outputChanged}
+          />
           </div>
           <button className="ui button"> Import </button>
           <Loader active={this.state.loading} />
