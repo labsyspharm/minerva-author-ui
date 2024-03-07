@@ -1730,6 +1730,7 @@ class Repo extends Component {
         const channel_unused = !group.activeIds.includes(id);
         if (channel_unused || group_id == activeGroup) {
           newGroupRender['color'] = newRender['color'];
+          newGroupRender['visible'] = newRender['visible'];
         }
         // TODO: same condition as above once supported
         newGroupRender['range'] = { ...newRender['range'] };
