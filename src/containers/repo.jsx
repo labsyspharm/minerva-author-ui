@@ -18,7 +18,6 @@ import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
 import { faExclamationCircle, faWindowClose, faShare, faSave, faEye, faBullhorn, faLayerGroup } from "@fortawesome/free-solid-svg-icons";
 
 import '../style/repo'
-import PublishStoryModal from "../components/publishstorymodal";
 import AutoGroupModal from "../components/autogroupmodal";
 
 const validNameRegex = /^([a-zA-Z0-9 _-]+)$/;
@@ -1911,9 +1910,9 @@ class Repo extends Component {
 
   apiRender(render_url) {
     const {groups, masks} = this.state;
-    const {rgba, imageFile, maskOpacity} = this.state;
-    const {root_dir, out_name} = this.state;
     const {stories, chanLabel} = this.state;
+    const {rgba, imageFile, maskOpacity} = this.state;
+    const {pub_root_dir, pub_out_name} = this.state;
     const {first_group, first_viewport} = this.state;
     const mask_output = this.createMaskOutput({masks, maskOpacity});
     const group_output = this.createGroupOutput({groups, chanLabel, rgba});
@@ -1922,8 +1921,8 @@ class Repo extends Component {
       method: 'POST',
       body: JSON.stringify({
         'in_file': imageFile,
-        'root_dir': root_dir,
-        'out_name': out_name,
+        'root_dir': pub_root_dir,
+        'out_name': pub_out_name,
         'masks': mask_output,
         'groups': group_output,
         'waypoints': story_output,
@@ -1952,7 +1951,7 @@ class Repo extends Component {
       this.setState({publishing: true});
       this.setProgressPolling(true);
 
-      const {out_name, root_dir, session} = this.state;
+      const {pub_root_dir, pub_out_name, session} = this.state;
       const render_url = `localhost:2020/api/render/${session}`;
       this.apiRender(render_url).then(res => {
         this.setState({
@@ -1963,7 +1962,7 @@ class Repo extends Component {
         this.getPublishProgress();
       }).catch(err => {
         this.setState({
-          error: `Unable to publish to ${root_dir}/${out_name}`,
+          error: `Unable to publish to ${pub_root_dir}/${pub_out_name}`,
           publishing: false
         });
         this.setProgressPolling(false);
@@ -2821,9 +2820,9 @@ class Repo extends Component {
       publishButton = (
         <button className="ui button primary" disabled={this.state.publishing}
           onClick={() => this.setPublishStoryModal(true, false)}
-          title="Publish story">
+          title="Export story">
         <FontAwesomeIcon icon={faBullhorn} />&nbsp;
-         Publish&nbsp;
+         Export&nbsp;
          <ClipLoader animation="border"
             size={12} color={"#FFFFFF"}
             loading={this.state.publishing}/>
@@ -3061,13 +3060,9 @@ class Repo extends Component {
         </Confirm>
 
         {
-          (minerva)? (
-            <PublishStoryModal storyUuid={this.state.storyUuid}
-              onClose={() => this.setPublishStoryModal(false, false)}
-              active={this.state.showPublishStoryModal} />
-          ) : (
+          (minerva)? '' : (
             <Confirm
-              header="Publish"
+              header="Export"
               content={
                 <div style={{padding:"2em"}}>
                   <div className="mt-2">
@@ -3101,7 +3096,7 @@ class Repo extends Component {
               cancelButton="Cancel"
               confirmButton={
                 (this.state.pub_root_dir && this.state.pub_out_name) ? 
-                "Publish" : null
+                "Export" : null
               }
               onConfirm={() => this.setPublishStoryModal(false, true)}
               onCancel={() => this.setPublishStoryModal(false, false)}
