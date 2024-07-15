@@ -1,0 +1,32 @@
+:host {
+  --dialog-animation-duration: 0.2s;
+  --dialog-border-radius: var(--radius-notice-1111);
+  --dialog-bg: var(--dark-main-glass);
+  --dialog-padding: var(--gap-medium);
+  --dialog-container-padding: 0;
+  --dialog-width: auto;
+  #backdrop {
+    backdrop-filter: var(--glass-filter);
+    background-color: var(--gray-glass);
+    grid-column: 1 / -1;
+    grid-row: 1 / -1;
+    z-index: 1;
+    position: static;
+    cursor: pointer;
+  }
+  #dialog {
+    box-shadow: var(--floating-box-shadow);
+    backdrop-filter: var(--glass-filter);
+    border-top: var(--thin-glass-border);
+    border: var(--thin-glass-border);
+    grid-column: 2;
+    grid-row: 2;
+    margin: 0;
+  }
+  display: grid;
+  grid-template-columns: 1fr 250px 1fr;
+  grid-template-rows: 1fr 150px 3fr;
+  position: static;
+  padding: 0;
+  height: 100%;
+}

@@ -1,67 +1,36 @@
 {
   "name": "minerva-author-ui",
-  "version": "1.10.2",
-  "description": "Minerva Author UI",
-  "scripts": {
-    "start": "NODE_OPTIONS=--openssl-legacy-provider MINERVA_AUTHOR_ENV=local webpack-dev-server --host 0.0.0.0 --port 8487 --config ./webpack.config.js --mode development",
-    "start:cloud": "NODE_OPTIONS=--openssl-legacy-provider MINERVA_AUTHOR_ENV=cloud webpack-dev-server --host 0.0.0.0 --port 8487 --config ./webpack.config.js --mode development",
-    "build": "NODE_OPTIONS=--openssl-legacy-provider MINERVA_AUTHOR_ENV=local webpack --config ./webpack.config.js --progress --colors -p",
-    "build:cloud": "NODE_OPTIONS=--openssl-legacy-provider MINERVA_AUTHOR_ENV=cloud webpack --config ./webpack.config.js --progress --colors -p",
-    "deploy-demo": "aws s3 sync build/ s3://minerva-author-ui-demo"
+  "version": "2.0.0-beta.1",
+  "description": "UI for Minerva Author 2.0",
+  "main": "bundle.js",
+  "type": "module",
+  "bugs": {
+    "url": "https://github.com/labsyspharm/minerva-ui-mockup/issues"
   },
-  "keywords": [
-    "openseadragon",
-    "image processing",
-    "microscopy",
-    "webgl"
-  ],
-  "author": "John Hoffer, Juha Ruokonen, Douglas Russell",
-  "devDependencies": {
-    "babel-core": "^6.26.3",
-    "babel-loader": "^7.1.5",
-    "babel-plugin-transform-runtime": "^6.23.0",
-    "babel-polyfill": "^6.26.0",
-    "babel-preset-env": "^1.7.0",
-    "babel-preset-react": "^6.24.1",
-    "babel-preset-stage-0": "^6.24.1",
-    "copy-webpack-plugin": "^4.6.0",
-    "css-loader": "^0.28.11",
-    "file-loader": "^1.1.11",
-    "html-webpack-plugin": "^4.5.2",
-    "node-sass": "^8.0.0",
-    "react-hot-loader": "^3.1.3",
-    "sass-loader": "^8.0.2",
-    "style-loader": "^0.21.0",
-    "url-loader": "^4.1.1",
-    "webpack": "^4.46.0",
-    "webpack-cli": "^3.3.12",
-    "webpack-dev-server": "^3.11.3"
+  "scripts": {
+    "build": "rollup -c"
+  },
+  "homepage": "https://github.com/labsyspharm/minerva-ui-mockup",
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/labsyspharm/minerva-ui-mockup.git"
   },
   "dependencies": {
-    "@fortawesome/fontawesome-svg-core": "^1.2.36",
-    "@fortawesome/free-regular-svg-icons": "^5.15.4",
-    "@fortawesome/free-solid-svg-icons": "^5.15.4",
-    "@fortawesome/react-fontawesome": "^0.1.19",
-    "alertifyjs": "^1.13.1",
-    "amazon-cognito-identity-js": "^4.6.3",
-    "bootstrap": "4.1.0",
-    "chroma-js": "^2.4.2",
-    "debounce-async": "0.0.2",
-    "fast-deep-equal": "^3.1.3",
-    "jquery": "3.5.1",
-    "minerva-browser": "2.12.0",
-    "prop-types": "^15.8.1",
-    "react": "^16.14.0",
-    "react-color": "^2.19.3",
-    "react-dom": "^16.14.0",
-    "react-input-range": "^1.3.0",
-    "react-select": "^3.2.0",
-    "react-sortable-hoc": "^2.0.0",
-    "react-spinners": "^0.7.2",
-    "reactcss": "^1.2.3",
-    "semantic-ui-css": "^2.5.0",
-    "semantic-ui-react": "^0.88.2",
-    "styled-components": "^5.3.6",
-    "viawebgl": "github:thejohnhoffer/viaWebGL#ea96d6e4b76dd408b1fc2df4a01d063d0b93d4ff"
+    "@arrow-js/core": "^1.0.0-alpha.10",
+    "@haxtheweb/a11y-collapse": "^9.0.0",
+    "@haxtheweb/d-d-d": "^9.0.0",
+    "@haxtheweb/simple-icon": "^9.0.0",
+    "@lit/reactive-element": "^2.0.4",
+    "@vaadin/form-layout": "^24.4.3",
+    "@vaadin/text-field": "^24.4.3",
+    "foobar-ipsum": "^1.0.3",
+    "web-dialog": "^0.0.11"
+  },
+  "license": "MIT",
+  "devDependencies": {
+    "@rollup/plugin-alias": "^5.1.0",
+    "@rollup/plugin-node-resolve": "^15.2.3",
+    "rollup": "^4.18.1",
+    "rollup-plugin-css-modules": "^0.1.2"
   }
 }
