@@ -4,7 +4,7 @@ import { IndexGrid } from '#index-grid';
 import { nav_config } from '#nav-config';
 import { metadata_config } from '#metadata-config';
 
-const main = async (customSuffix) => {
+const indexgrid = async (customSuffix, options={}) => {
   document.adoptedStyleSheets = [
     globalCSS
   ];
@@ -24,14 +24,11 @@ const main = async (customSuffix) => {
     },
     styleSheet: globalCSS
   });
-  const index = defineElement(IndexGrid, {
+  return defineElement(IndexGrid, {
     defaults: {
       notice: '', dialog: '', tab: 'STORY'
     }
   });
-  toElement(index)``({
-    class: 'contents'
-  })(document.body);
 }
 
-export default main
+export default indexgrid

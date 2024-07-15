@@ -17,7 +17,7 @@ class IndexGrid extends HTMLElement {
       defaults: { expanded: true }
     });
     return toElement('div')`
-      <img src="data/background.png"/>
+      <slot name="image"></slot>
       <${panel_grid} class="stretch grid panel outer">
       </${panel_grid}>
       <${notice_grid} class="notice" open="${

@@ -15,7 +15,7 @@
     grid-column: 1 / -1;
     grid-row: 1 / -1;
   }
-  img {
+  ::slotted([slot="image"]) {
     grid-column: 1 / -1;
     grid-row: 1 / -1;
   }

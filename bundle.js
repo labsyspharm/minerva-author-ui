@@ -1142,7 +1142,7 @@ stylesheet$b.replaceSync(`.root.grid {
     grid-column: 1 / -1;
     grid-row: 1 / -1;
   }
-  img {
+  ::slotted([slot="image"]) {
     grid-column: 1 / -1;
     grid-row: 1 / -1;
   }
@@ -26466,7 +26466,7 @@ class IndexGrid extends HTMLElement {
       defaults: { expanded: true }
     });
     return toElement('div')`
-      <img src="data/background.png"/>
+      <slot name="image"></slot>
       <${panel_grid} class="stretch grid panel outer">
       </${panel_grid}>
       <${notice_grid} class="notice" open="${
@@ -26741,7 +26741,7 @@ const metadata_config = {
   ]
 };
 
-const main = async (customSuffix) => {
+const indexgrid = async (customSuffix, options={}) => {
   document.adoptedStyleSheets = [
     stylesheet$c
   ];
@@ -26761,14 +26761,11 @@ const main = async (customSuffix) => {
     },
     styleSheet: stylesheet$c
   });
-  const index = defineElement(IndexGrid, {
+  return defineElement(IndexGrid, {
     defaults: {
       notice: '', dialog: '', tab: 'STORY'
     }
   });
-  toElement(index)``({
-    class: 'contents'
-  })(document.body);
 };
 
-export { main as default };
+export { indexgrid as default };
