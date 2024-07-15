@@ -2,6 +2,7 @@
   font-family: "lato",sans-serif;
   color: var(--light-main-color);
   top: 0;
+  width: 100%;
   overflow: hidden;
   max-height: 100dvh;
   position: absolute;
