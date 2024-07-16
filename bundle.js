@@ -1129,6 +1129,7 @@ stylesheet$b.replaceSync(`.root.grid {
   font-family: "lato",sans-serif;
   color: var(--light-main-color);
   top: 0;
+  width: 100%;
   overflow: hidden;
   max-height: 100dvh;
   position: absolute;
@@ -26741,7 +26742,7 @@ const metadata_config = {
   ]
 };
 
-const indexgrid = async (customSuffix, options={}) => {
+const indexgrid = (customSuffix, options={}) => {
   document.adoptedStyleSheets = [
     stylesheet$c
   ];

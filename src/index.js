@@ -4,7 +4,7 @@ import { IndexGrid } from '#index-grid';
 import { nav_config } from '#nav-config';
 import { metadata_config } from '#metadata-config';
 
-const indexgrid = async (customSuffix, options={}) => {
+const indexgrid = (customSuffix, options={}) => {
   document.adoptedStyleSheets = [
     globalCSS
   ];
