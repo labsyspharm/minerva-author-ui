@@ -1,11 +1,16 @@
 {
-  "name": "simon-test",
-  "private": true,
-  "version": "0.0.0",
+  "name": "minerva-author-ui",
+  "version": "2.0.0-beta.6",
+  "description": "UI for Minerva Author 2.0",
+  "main": "dist/bundle.js",
   "type": "module",
   "scripts": {
     "dev": "vite",
     "build": "vite build"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/labsyspharm/minerva-ui-mockup.git"
   },
   "dependencies": {
     "@arrow-js/core": "^1.0.0-alpha.10",
@@ -17,8 +22,6 @@
     "@vaadin/form-layout": "^24.4.3",
     "@vaadin/text-field": "^24.4.3",
     "foobar-ipsum": "^1.0.3",
-    "i": "^0.3.7",
-    "less": "^4.2.0",
     "npm": "^10.8.2",
     "vite-plugin-css-injected-by-js": "^3.5.1",
     "vite-plugin-css-modules": "^0.0.1",
