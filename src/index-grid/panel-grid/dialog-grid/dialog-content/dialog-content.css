@@ -1,5 +1,0 @@
-input.button[type='submit'] {
-  background-color: var(--dark-accept-color);
-  margin-top: var(--gap-medium);
-  padding: var(--gap-small);
-}

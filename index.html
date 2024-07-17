@@ -1,103 +1,13 @@
 <!DOCTYPE html>
 <html lang="en">
-<head>
-  <meta charset="utf-8">
-  <meta http-equiv="X-UA-Compatible" content="IE=edge">
-  <meta name="viewport" content="width=device-width, initial-scale=0.8">
-  <link rel="icon" type="image/x-icon" href="./data/favicon48.png">
-  <title>Minerva UI Test</title>
-  <style>
-    html, body {
-      background-color: black;
-      margin: 0;
-    }
-  </style>
-</head>
-<body>
-  <indexgrid-minerva>
-    <img slot="image" src="data/loading.gif"/>
-  </indexgrid-minerva>
-  <script type="module-shim">
-    import indexgrid from 'production-index';
-    // Define the UI component before loading image
-    const tag = indexgrid('minerva');
-    const image = document.querySelector(`${tag} img`);
-    image.src = 'data/background.png';
-  </script>
-  <script async src="https://ga.jspm.io/npm:es-module-shims@1.7.2/dist/es-module-shims.js"></script>
-  <script type="importmap-shim">
-  {
-    "imports": {
-      "dev-index": "./src/index.js",
-      "production-index": "./bundle.js",
-      "#global-css": "./src/global.css",
-      "#form-css": "./src/form/form.css",
-      "#field-css": "./src/field/field.css",
-      "#index-grid-css": "./src/index-grid/index-grid.css",
-      "#panel-grid-css": "./src/index-grid/panel-grid/panel-grid.css",
-      "#icon-button-css": "./src/index-grid/panel-grid/icon-button.css",
-      "#panel-content-css": "./src/index-grid/panel-grid/panel-content/panel-content.css",
-      "#collapse-css": "./src/index-grid/panel-grid/panel-content/collapse.css",
-      "#styled-notice-css": "./src/index-grid/notice-grid/styled-notice/styled-notice.css",
-      "#styled-dialog-css": "./src/index-grid/panel-grid/dialog-grid/styled-dialog/styled-dialog.css",
-      "#dialog-content-css": "./src/index-grid/panel-grid/dialog-grid/dialog-content/dialog-content.css",
-      "#notice-content-css": "./src/index-grid/notice-grid/notice-content/notice-content.css",
-      "#nav-css": "./src/index-grid/panel-grid/nav/nav.css",
-      "#form": "./src/form/form.js",
-      "#field": "./src/field/field.js",
-      "#elements": "./src/lib/elements.js",
-      "#element-state": "./src/lib/element-state.js",
-      "#element-template": "./src/lib/element-template.js",
-      "#nav-config": "./src/config/nav-config.js",
-      "#metadata-config": "./src/config/metadata-config.js",
-      "#index-grid": "./src/index-grid/index-grid.js",
-      "#nav": "./src/index-grid/panel-grid/nav/nav.js",
-      "#styled-notice": "./src/index-grid/notice-grid/styled-notice/styled-notice.js",
-      "#styled-dialog": "./src/index-grid/panel-grid/dialog-grid/styled-dialog/styled-dialog.js",
-      "#dialog-content": "./src/index-grid/panel-grid/dialog-grid/dialog-content/dialog-content.js",
-      "#notice-content": "./src/index-grid/notice-grid/notice-content/notice-content.js",
-      "#panel-content": "./src/index-grid/panel-grid/panel-content/panel-content.js",
-      "#panel-grid": "./src/index-grid/panel-grid/panel-grid.js",
-      "#icon-button": "./src/index-grid/panel-grid/icon-button.js",
-      "#dialog-grid": "./src/index-grid/panel-grid/dialog-grid/dialog-grid.js",
-      "#notice-grid": "./src/index-grid/notice-grid/notice-grid.js",
-      "@haxtheweb/simple-icon/lib/simple-icon-button-lite.js": "https://cdn.jsdelivr.net/npm/@haxtheweb/simple-icon@9.0.0-alpha.0/lib/simple-icon-button-lite.js",
-      "@vaadin/text-field": "https://cdn.jsdelivr.net/npm/@vaadin/text-field@24.4.2/vaadin-text-field.js",
-      "@vaadin/form-layout": "https://cdn.jsdelivr.net/npm/@vaadin/form-layout@24.4.2/src/vaadin-form-layout.js",
-      "@arrow-js/core": "https://cdn.jsdelivr.net/npm/@arrow-js/core@1.0.0-alpha.9/dist/index.mjs",
-      "@lit/reactive-element": "https://cdn.jsdelivr.net/npm/@lit/reactive-element@2.0.4/development/reactive-element.js",
-      "@haxtheweb/a11y-collapse": "https://cdn.jsdelivr.net/npm/@haxtheweb/a11y-collapse@9.0.0-alpha.0/a11y-collapse.js",
-      "foobar-ipsum": "https://cdn.jsdelivr.net/npm/foobar-ipsum@1.0.3/dist/foobar-ipsum.js",
-      "web-dialog": "https://cdn.jsdelivr.net/npm/web-dialog@0.0.11/index.js"
-    },
-    "scopes": {
-      "https://cdn.jsdelivr.net/": {
-        "@vaadin/field-base/src/": "https://cdn.jsdelivr.net/npm/@vaadin/field-base@24.4.2/src/",
-        "@vaadin/input-container/": "https://cdn.jsdelivr.net/npm/@vaadin/input-container@24.4.2/",
-        "@vaadin/vaadin-themable-mixin/": "https://cdn.jsdelivr.net/npm/@vaadin/vaadin-themable-mixin@24.4.2/",
-        "@vaadin/vaadin-lumo-styles/": "https://cdn.jsdelivr.net/npm/@vaadin/vaadin-lumo-styles@24.4.2/",
-        "@vaadin/component-base/src/": "https://cdn.jsdelivr.net/npm/@vaadin/component-base@24.4.2/src/",
-        "@vaadin/vaadin-usage-statistics/vaadin-usage-statistics.js": "https://cdn.jsdelivr.net/npm/@vaadin/vaadin-usage-statistics@2.1.2/vaadin-usage-statistics.js",
-        "@vaadin/vaadin-development-mode-detector/vaadin-development-mode-detector.js": "https://cdn.jsdelivr.net/npm/@vaadin/vaadin-development-mode-detector@2.0.7/vaadin-development-mode-detector.js",
-        "@vaadin/a11y-base/src/": "https://cdn.jsdelivr.net/npm/@vaadin/a11y-base@24.4.2/src/",
-        "@polymer/polymer/": "https://cdn.jsdelivr.net/npm/@polymer/polymer@3.5.1/",
-        "@polymer/polymer": "https://cdn.jsdelivr.net/npm/@polymer/polymer@3.5.1/polymer-element.js",
-        "@a11y/focus-trap": "https://ga.jspm.io/npm:@a11y/focus-trap@1.0.5/index.js",
-        "@haxtheweb/d-d-d/d-d-d.js": "https://cdn.jsdelivr.net/npm/@haxtheweb/d-d-d@9.0.0-alpha.0/d-d-d.js",
-        "@haxtheweb/hax-iconset/lib/simple-hax-iconset.js": "https://cdn.jsdelivr.net/npm/@haxtheweb/hax-iconset@9.0.0-alpha.0/lib/simple-hax-iconset.js",
-        "@haxtheweb/simple-colors-shared-styles/simple-colors-shared-styles.js": "https://cdn.jsdelivr.net/npm/@haxtheweb/simple-colors-shared-styles@9.0.0-alpha.0/simple-colors-shared-styles.js",
-        "@haxtheweb/simple-colors/simple-colors.js": "https://cdn.jsdelivr.net/npm/@haxtheweb/simple-colors@9.0.0-alpha.0/simple-colors.js",
-        "@haxtheweb/simple-icon/lib/": "https://cdn.jsdelivr.net/npm/@haxtheweb/simple-icon@9.0.0-alpha.0/lib/",
-        "@haxtheweb/simple-tooltip/simple-tooltip.js": "https://cdn.jsdelivr.net/npm/@haxtheweb/simple-tooltip@9.0.0-alpha.0/simple-tooltip.js",
-        "@lit/reactive-element": "https://cdn.jsdelivr.net/npm/@lit/reactive-element@2.0.4/development/reactive-element.js",
-        "lit": "https://cdn.jsdelivr.net/npm/lit@3.1.4/index.js",
-        "lit-element/lit-element.js": "https://cdn.jsdelivr.net/npm/lit-element@4.0.6/development/lit-element.js",
-        "lit-html": "https://cdn.jsdelivr.net/npm/lit-html@3.1.4/development/lit-html.js",
-        "lit-html/is-server.js": "https://cdn.jsdelivr.net/npm/lit-html@3.1.4/development/is-server.js"
-      },
-      "https://ga.jspm.io/": {} 
-    }
-  }
-  </script>
-
-</body>
+  <head>
+    <meta charset="UTF-8" />
+    <title>Vite App</title>
+  </head>
+  <body>
+    <indexgrid-minerva>
+      <img slot="image" src="/background.png" />
+    </indexgrid-minerva>
+    <script type="module" src="/main.js"></script>
+  </body>
+</html>

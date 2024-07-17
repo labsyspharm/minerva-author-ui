@@ -1,19 +1,12 @@
 {
-  "name": "minerva-author-ui",
-  "version": "2.0.0-beta.5",
-  "description": "UI for Minerva Author 2.0",
-  "main": "bundle.js",
+  "name": "simon-test",
+  "private": true,
+  "version": "0.0.0",
   "type": "module",
-  "bugs": {
-    "url": "https://github.com/labsyspharm/minerva-ui-mockup/issues"
-  },
   "scripts": {
-    "build": "rollup -c"
-  },
-  "homepage": "https://github.com/labsyspharm/minerva-ui-mockup",
-  "repository": {
-    "type": "git",
-    "url": "git+https://github.com/labsyspharm/minerva-ui-mockup.git"
+    "dev": "vite",
+    "build": "vite build",
+    "preview": "vite preview"
   },
   "dependencies": {
     "@arrow-js/core": "^1.0.0-alpha.10",
@@ -21,16 +14,19 @@
     "@haxtheweb/d-d-d": "^9.0.0",
     "@haxtheweb/simple-icon": "^9.0.0",
     "@lit/reactive-element": "^2.0.4",
+    "@rollup/pluginutils": "^5.1.0",
     "@vaadin/form-layout": "^24.4.3",
     "@vaadin/text-field": "^24.4.3",
     "foobar-ipsum": "^1.0.3",
+    "i": "^0.3.7",
+    "less": "^4.2.0",
+    "npm": "^10.8.2",
+    "vite-plugin-css-injected-by-js": "^3.5.1",
+    "vite-plugin-css-modules": "^0.0.1",
+    "vite-plugin-standard-css-modules": "^0.0.11",
     "web-dialog": "^0.0.11"
   },
-  "license": "MIT",
   "devDependencies": {
-    "@rollup/plugin-alias": "^5.1.0",
-    "@rollup/plugin-node-resolve": "^15.2.3",
-    "rollup": "^4.18.1",
-    "rollup-plugin-css-modules": "^0.1.2"
+    "vite": "^5.3.4"
   }
 }
