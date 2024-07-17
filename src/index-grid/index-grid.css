@@ -1,0 +1,33 @@
+.root.grid {
+  font-family: "lato",sans-serif;
+  color: var(--light-main-color);
+  top: 0;
+  width: 100%;
+  overflow: hidden;
+  max-height: 100dvh;
+  position: absolute;
+  grid-template-columns: auto 1fr;
+  grid-template-rows: 100dvh auto;
+  > .grid {
+    grid-column: 1;
+    grid-row: 1;
+  }
+  .notice {
+    grid-column: 1 / -1;
+    grid-row: 1 / -1;
+  }
+  ::slotted([slot="image"]) {
+    grid-column: 1 / -1;
+    grid-row: 1 / -1;
+  }
+}
+.panel.inner {
+  border-radius: var(--radius-inner-0010);
+  background: var(--gray-glass);
+}
+.panel.outer {
+  border-radius: var(--radius-outer-0010);
+  backdrop-filter: var(--glass-filter);
+  background-color: var(--dark-main-glass);
+  border: var(--thin-glass-border);
+}

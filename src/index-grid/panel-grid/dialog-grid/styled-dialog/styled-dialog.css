@@ -1,0 +1,28 @@
+:host {
+  --dialog-border-radius: var(--radius-inner-0010);
+  --dialog-bg: var(--dark-glass);
+  --dialog-container-padding: 0;
+  --dialog-width: auto;
+  #backdrop {
+    border-radius: var(--radius-outer-0010);
+    backdrop-filter: var(--glass-filter);
+    background-color: var(--dark-main-glass);
+    position: static;
+    grid-column: 1;
+    grid-row: 1;
+  }
+  #dialog {
+    backdrop-filter: var(--glass-filter);
+    border-top: var(--thin-glass-border);
+    border: var(--thin-glass-border);
+    grid-column: 1;
+    grid-row: 1;
+    margin: 0;
+  }
+  display: grid;
+  grid-template-columns: 1fr;
+  grid-template-rows: 1fr;
+  position: static;
+  padding: 0;
+  height: 100%;
+}

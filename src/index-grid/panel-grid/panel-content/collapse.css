@@ -1,0 +1,35 @@
+:host {
+  --a11y-collapse-horizontal-padding: var(--gap-small);
+  --a11y-collapse-padding-bottom: var(--gap-medium);
+  --a11y-collapse-padding-top: 0px;
+  --a11y-collapse-disabled-heading-color: inherit;
+  --a11y-collapse-heading-color: inherit; 
+  --a11y-collapse-border-between: none;
+  --simple-icon-color: inherit;
+  font-family: inherit;
+  border: none;
+  margin: 0;
+  simple-icon-lite#expand {
+    border: var(--thin-glass-border);
+    background-color: var(--dark-main-glass);
+    transition: transform 0.25s ease 0s;
+    padding: var(--gap-tiny);
+    margin: var(--gap-tiny);
+    border-radius: 50%;
+  }
+  button {
+    border-radius: var(--radius-tab-1100);
+    font-size: var(--font-size-header);
+    border: var(--thin-glass-border);
+    border-bottom: none;
+    font-family: inherit;
+    cursor: pointer;
+    color: inherit;
+  }
+  div#content {
+    border-top: none;
+    transition: transform 0s ease 0s;
+    border: var(--thin-glass-border);
+    border-image: var(--glass-gradient) 1 100%;
+  }
+}

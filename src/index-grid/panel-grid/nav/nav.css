@@ -1,0 +1,41 @@
+:host {
+  font-size: var(--menu-font-size);
+  > div > .grid:first-child {
+    grid-row: 1;
+    grid-column: 1;
+    padding-top: var(--gap-small);
+    padding-bottom: var(--gap-small);
+    grid-template-columns: repeat(auto-fill, 100px);
+  }
+  > div > .grid.tabs {
+    grid-row: 2;
+    grid-column: 1;
+    grid-template-columns: repeat(auto-fit, minmax(100px, 1fr));
+  }
+  > div > .grid > .grid {
+    grid-template-columns: auto 1fr auto;
+  }
+  > div > .grid > .grid > button {
+    background-color: var(--dark-main-glass);
+    color: inherit;
+  }
+  > div > .grid > .grid[chosen="true"] > button {
+    color: var(--light-focus-color);
+    box-shadow: var(--white-highlight);
+    text-shadow: var(--dark-focus-shadow);
+    background-color: var(--gray-glass);
+  }
+  > div > .grid.tabs > .grid::before,
+  > div > .grid.tabs > .grid::after {
+    box-shadow: var(--thin-white-shadow);
+  }
+  > div > .grid > .grid::before,
+  > div > .grid > .grid::after {
+    width: var(--gap-tiny);
+    content: '';
+  }
+  > div > .grid > .grid:first-child::before,
+  > div > .grid > .grid:last-child::after {
+    width: 0;
+  }
+}
