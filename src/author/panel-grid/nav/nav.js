@@ -2,6 +2,7 @@ import navCSS from './nav.css' assert { type: 'css' };
 import { toElement } from '../../../lib/elements';
 
 class Nav extends HTMLElement {
+  static name = 'nav'
 
   get elementTemplate() {
     const {

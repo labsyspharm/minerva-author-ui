@@ -3,6 +3,8 @@ import collapseCSS from './collapse.css' assert { type: 'css' };
 import { A11yCollapse } from '@haxtheweb/a11y-collapse';
 import { toElement } from '../../../lib/elements';
 class Collapse extends A11yCollapse {
+  static name = 'panel-content'
+
   static elementProperties = new Map([
     ...A11yCollapse.elementProperties,
     ['ki', Object]

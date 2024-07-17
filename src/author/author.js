@@ -1,11 +1,13 @@
-import indexGridCSS from './index-grid.css' assert { type: "css" };
+import authorCSS from './author.css' assert { type: "css" };
 import { toElement } from '../lib/elements';
 import { PanelGrid } from './panel-grid/panel-grid';
 import { NoticeGrid } from './notice-grid/notice-grid';
 
-class IndexGrid extends HTMLElement {
+class Author extends HTMLElement {
+  static name = 'author'
+
   static get _styleSheet() {
-    return indexGridCSS;
+    return authorCSS;
   }
 
   get elementTemplate() {
@@ -29,4 +31,4 @@ class IndexGrid extends HTMLElement {
   }
 }
 
-export { IndexGrid };
+export { Author };

@@ -3,6 +3,7 @@ import { StyledDialog } from './styled-dialog/styled-dialog';
 import { DialogContent } from './dialog-content/dialog-content';
 
 class DialogGrid extends HTMLElement {
+  static name = 'dialog-grid'
 
   get elementTemplate() {
     const dialog_element = this.defineElement(DialogContent);

@@ -4,6 +4,7 @@ import { Field } from '../../../../field/field';
 import { toElement } from '../../../../lib/elements'
 
 class DialogContent extends HTMLElement {
+  static name = 'dialog-content'
 
   static get _styleSheet() {
     return dialogContentCSS;

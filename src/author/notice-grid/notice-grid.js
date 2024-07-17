@@ -3,6 +3,7 @@ import { StyledNotice } from './styled-notice/styled-notice';
 import { NoticeContent } from './notice-content/notice-content';
 
 class NoticeGrid extends HTMLElement {
+  static name = 'notice-grid'
 
   static allNoticeTimer = new Set();
 

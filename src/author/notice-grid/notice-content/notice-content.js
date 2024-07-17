@@ -3,6 +3,7 @@ import { IconButton } from '../../panel-grid/icon-button';
 import { toElement } from '../../../lib/elements';
 
 class NoticeContent extends HTMLElement {
+  static name = 'notice-content'
 
   static get _styleSheet() {
     return noticeContentCSS;

@@ -6,6 +6,7 @@ import { toElement } from '../../lib/elements';
 import { Nav } from './nav/nav';
 
 class PanelGrid extends HTMLElement {
+  static name = 'panel-grid'
 
   get iconTemplate() {
     const button = this.defineElement(IconButton);
