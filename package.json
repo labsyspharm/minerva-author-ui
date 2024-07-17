@@ -23,8 +23,6 @@
     "@vaadin/text-field": "^24.4.3",
     "foobar-ipsum": "^1.0.3",
     "npm": "^10.8.2",
-    "vite-plugin-css-injected-by-js": "^3.5.1",
-    "vite-plugin-css-modules": "^0.0.1",
     "vite-plugin-standard-css-modules": "^0.0.11",
     "web-dialog": "^0.0.11"
   },
