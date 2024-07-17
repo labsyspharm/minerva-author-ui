@@ -5,6 +5,9 @@ export default {
   plugins: [
       standardCssModules(),
   ],
+  optimizeDeps: {
+    exclude: [ "@haxtheweb/simple-icon" ]
+  },
   build: {
     lib: {
       entry: resolve(__dirname, 'src/index.js'),
