@@ -12,7 +12,10 @@ export default {
   build: {
     assetsInlineLimit: 0,
     rollupOptions: {
-      //external: '/public/.*',
+      preserveEntrySignatures: "allow-extension",
+      input: {
+        'author': resolve(__dirname, 'src/author.js'),
+      },
       output: {
         entryFileNames: `assets/[name].js`,
         chunkFileNames: `assets/[name].js`,

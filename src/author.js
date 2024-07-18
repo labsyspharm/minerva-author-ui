@@ -4,7 +4,7 @@ import { Author } from './author/author.js';
 import { nav_config } from './config/nav-config.js';
 import { metadata_config } from './config/metadata-config';
 
-const indexgrid = (customSuffix, options={}) => {
+const author = (customSuffix, options={}) => {
   document.adoptedStyleSheets = [
     globalCSS
   ];
@@ -31,4 +31,4 @@ const indexgrid = (customSuffix, options={}) => {
   });
 }
 
-export default indexgrid
+export { author } 
