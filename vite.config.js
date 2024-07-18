@@ -9,11 +9,14 @@ export default {
     exclude: [ "@haxtheweb/simple-icon" ]
   },
   build: {
-    lib: {
-      entry: resolve(__dirname, 'src/index.js'),
-      name: 'MinervaAuthorUI',
-      fileName: 'bundle',
-      format: 'es'
-    },
+    assetsInlineLimit: 0,
+    rollupOptions: {
+      //external: '/public/.*',
+      output: {
+        entryFileNames: `assets/[name].js`,
+        chunkFileNames: `assets/[name].js`,
+        assetFileNames: `assets/[name].[ext]`
+      }
+    }
   }
 }
