@@ -2,6 +2,7 @@ import { standardCssModules } from 'vite-plugin-standard-css-modules';
 import { resolve } from 'path'
 
 export default {
+  base: '',
   plugins: [
       standardCssModules(),
   ],
