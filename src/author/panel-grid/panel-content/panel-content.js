@@ -2,8 +2,10 @@ import panelContentCSS from './panel-content.css' assert { type: 'css' };
 import collapseCSS from './collapse.css' assert { type: 'css' };
 import { A11yCollapse } from '@haxtheweb/a11y-collapse';
 import { toElement } from '../../../lib/elements';
+
 class Collapse extends A11yCollapse {
-  static name = 'panel-content'
+
+  static name = 'collapse'
 
   static elementProperties = new Map([
     ...A11yCollapse.elementProperties,
@@ -27,6 +29,9 @@ class Collapse extends A11yCollapse {
 }
 
 class Panel extends HTMLElement {
+
+  static name = 'panel'
+
   static get _styleSheet() {
     return panelContentCSS;
   }
@@ -67,6 +72,9 @@ class Panel extends HTMLElement {
 }
 
 class StoryPanel extends Panel {
+
+  static name = 'story-panel'
+
   get elementContents() {
     const { stories } = this.elementState.metadata_config;
     return {
@@ -76,6 +84,8 @@ class StoryPanel extends Panel {
 }
 
 class PanelContent extends HTMLElement {
+
+  static name = 'panel-content'
 
   static get _styleSheet() {
     return panelContentCSS;

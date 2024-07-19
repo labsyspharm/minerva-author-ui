@@ -6,6 +6,7 @@ import { toElement } from '../../lib/elements';
 import { Nav } from './nav/nav';
 
 class PanelGrid extends HTMLElement {
+
   static name = 'panel-grid'
 
   get iconTemplate() {
@@ -33,6 +34,7 @@ class PanelGrid extends HTMLElement {
       expanded: () => this.elementState.expanded
     })
   }
+
   get elementTemplate() {
     const nav = this.defineElement(Nav);
     const panel = this.defineElement(PanelContent);
