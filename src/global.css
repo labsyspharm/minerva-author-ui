@@ -3,18 +3,18 @@
   src: url(/lato.ttf) format("truetype");
 }
 * {
-  --font-family: "lato",sans-serif;
-  --dark-main-color: hwb(240 6% 60%);
-  --light-contrast-color: hwb(45 98% 0%);
-  --light-focus-color: hwb(45 95% 0%);
-  --dark-accept-color: hwb(170 5% 75%);
-  --dark-reject-color: hwb(25 0% 75%);
-  --dark-focus-color: hwb(45 0% 90%);
-  --glass-edge: color-mix(in xyz, white 50%, transparent);
-  --dark-gray-color: color-mix(in xyz, white 1%, black);
-  --dim-gray-color: color-mix(in xyz, white 2%, black);
-  --glass-filter: blur(32px);
-  --gap-tiny: 0.3em;
+  --font-family: var(--theme-font-family, "lato",sans-serif);
+  --dark-main-color: var(--theme-dark-main-color, navy);
+  --light-focus-color: var(--theme-light-focus-color, white);
+  --light-contrast-color: var(--theme-light-contrast-color, white);
+  --dark-accept-color: var(--theme-dark-accept-color, darkolivegreen);
+  --dark-reject-color: var(--theme-dark-reject-color, darkred);
+  --dark-focus-color: var(--theme-dark-focus-color, black);
+  --glass-edge: var(--theme-glass-edge, rgba(255,255,255,0.5));
+  --dark-gray-color: var(--theme-dark-gray-color, black);
+  --dim-gray-color: var(--theme-dim-gray-color, black);
+  --glass-filter: var(--theme-glass-filter, blur(32px));
+  --gap-tiny: var(--theme-gap-tiny, 0.3em);
   --gap-small: calc(var(--gap-tiny) * 2);
   --gap-medium: calc(var(--gap-tiny) * 3);
   --radius-outer-0010: 0 0 20px 0;
