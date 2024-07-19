@@ -27,6 +27,7 @@
     "web-dialog": "^0.0.11"
   },
   "devDependencies": {
-    "vite": "^5.3.4"
+    "vite": "^5.3.4",
+    "vite-plugin-mkcert": "^1.17.5"
   }
 }

@@ -1,10 +1,13 @@
 import { standardCssModules } from 'vite-plugin-standard-css-modules';
+import mkcert from 'vite-plugin-mkcert'
 import { resolve } from 'path'
 
 export default {
   base: '',
+  server: { https: true },
   plugins: [
-      standardCssModules(),
+    mkcert(), 
+    standardCssModules()
   ],
   optimizeDeps: {
     exclude: [ "@haxtheweb/simple-icon" ]
