@@ -1,6 +1,6 @@
 .root.grid {
-  font-family: "lato",sans-serif;
-  color: var(--light-main-color);
+  font-family: var(--font-family);
+  color: var(--light-contrast-color);
   top: 0;
   width: 100%;
   overflow: hidden;
@@ -23,7 +23,7 @@
 }
 .panel.inner {
   border-radius: var(--radius-inner-0010);
-  background: var(--gray-glass);
+  background: var(--dim-gray-glass);
 }
 .panel.outer {
   border-radius: var(--radius-outer-0010);

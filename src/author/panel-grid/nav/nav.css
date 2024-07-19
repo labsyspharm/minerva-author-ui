@@ -23,7 +23,7 @@
     color: var(--light-focus-color);
     box-shadow: var(--white-highlight);
     text-shadow: var(--dark-focus-shadow);
-    background-color: var(--gray-glass);
+    background-color: var(--dim-gray-glass);
   }
   > div > .grid.tabs > .grid::before,
   > div > .grid.tabs > .grid::after {

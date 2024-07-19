@@ -3,40 +3,43 @@
   src: url(/lato.ttf) format("truetype");
 }
 * {
-  --radius-tab-1100: .6em .6em 0 0;
-  --radius-panel-0011: 0 0 .6em .6em;
-  --padding-border-0110: 0 8px 8px 0;
+  --font-family: "lato",sans-serif;
+  --dark-main-color: hwb(240 6% 60%);
+  --light-contrast-color: hwb(45 98% 0%);
+  --light-focus-color: hwb(45 95% 0%);
+  --dark-accept-color: hwb(170 5% 75%);
+  --dark-reject-color: hwb(25 0% 75%);
+  --dark-focus-color: hwb(45 0% 90%);
+  --glass-edge: color-mix(in xyz, white 50%, transparent);
+  --dark-gray-color: color-mix(in xyz, white 1%, black);
+  --dim-gray-color: color-mix(in xyz, white 2%, black);
+  --glass-filter: blur(32px);
+  --gap-tiny: 0.3em;
+  --gap-small: calc(var(--gap-tiny) * 2);
+  --gap-medium: calc(var(--gap-tiny) * 3);
   --radius-outer-0010: 0 0 20px 0;
   --radius-inner-0010: 0 0 12px 0;
-  --radius-button-1111: .4em .4em .4em .4em;
-  --radius-notice-1111: .8em .8em .8em .8em;
-  --radius-field-1111: .2em .2em .2em .2em;
-  --gap-medium: 0.9em;
-  --gap-small: 0.6em;
-  --gap-tiny: 0.3em;
-  --font-size-header: 1.25em;
-  --thin-border: 1px solid rgba(255,255,255,0.5);
-  --thin-glass-border: 1px solid rgba(255,255,255,0.5);
-  --thin-white-shadow: inset 0em -1px rgba(255,255,255,0.5);
-  --floating-box-shadow: 0px 4px 16px 4px rgba(0,0,0,0.75);
+  --padding-border-0110: 0 8px 8px 0;
+  --floating-box-shadow: 0px 4px 16px 4px black;
+  --radius-panel-0011: 0 0 var(--gap-small) var(--gap-small);
+  --radius-tab-1100: var(--gap-small) var(--gap-small) 0 0;
+  --radius-notice-1111: var(--gap-medium);
+  --radius-button-1111: var(--gap-small);
+  --radius-field-1111: var(--gap-tiny);
+  --thin-border: 1px solid var(--glass-edge);
+  --thin-glass-border: 1px solid var(--glass-edge);
+  --thin-white-shadow: inset 0em -1px var(--glass-edge);
+  --white-highlight: inset 1.0px 1.0px 1.0px var(--glass-edge);
   --glass-gradient: linear-gradient(
-    to bottom, rgba(255, 255, 255, 0.5), rgba(255, 255, 255, 0)
+    to bottom in xyz, var(--glass-edge), transparent 
   );
-  --white-highlight: 
-    inset 1.0px 1.0px 1.0px rgba(255, 255, 255, .75);
   --menu-font-size: 0.75em;
   --panel-font-size: 0.75em;
-  --light-main-color: rgb(255, 247, 222);
-  --light-focus-color: rgb(255, 255, 230);
-  --dark-focus-shadow: rgb(22, 16, 0) 0 0 4px;
-  --main-color-glass: rgba(40, 40, 140, 0.4);
-  --dark-main-glass: rgba(16, 16, 101, 0.4);
-  --dark-accept-color: rgb(0, 82, 68);
-  --dark-reject-color: rgb(69, 28, 0);
-  --white-glass: rgba(200,200,255, 0.1);
-  --gray-glass: rgba(32,32,32, 0.4);
-  --dark-glass: rgba(16,16,16, 0.4);
-  --glass-filter: blur(32px);
+  --header-font-size: 1.25em;
+  --dark-focus-shadow: var(--dark-focus-color) 0 0 4px;
+  --dark-main-glass: color-mix(in xyz, var(--dark-main-color), transparent 60%);
+  --dark-gray-glass: color-mix(in xyz, var(--dark-gray-color), transparent 60%);
+  --dim-gray-glass: color-mix(in xyz, var(--dim-gray-color), transparent 60%);
 }
 .contents {
   display: contents;

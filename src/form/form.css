@@ -1,6 +1,6 @@
 :host {
-  --vaadin-input-field-label-color: var(--light-main-color);
   --vaadin-input-field-value-color: var(--light-focus-color);
+  --vaadin-input-field-label-color: var(--light-contrast-color);
   --vaadin-input-field-focused-label-color: var(--light-focus-color);
   --vaadin-input-field-hovered-label-color: var(--light-focus-color);
 }

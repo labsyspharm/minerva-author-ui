@@ -7,7 +7,7 @@
   --dialog-width: auto;
   #backdrop {
     backdrop-filter: var(--glass-filter);
-    background-color: var(--gray-glass);
+    background-color: var(--dim-gray-glass);
     grid-column: 1 / -1;
     grid-row: 1 / -1;
     z-index: 1;

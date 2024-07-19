@@ -1,6 +1,6 @@
 :host {
   --dialog-border-radius: var(--radius-inner-0010);
-  --dialog-bg: var(--dark-glass);
+  --dialog-bg: var(--dark-gray-glass);
   --dialog-container-padding: 0;
   --dialog-width: auto;
   #backdrop {

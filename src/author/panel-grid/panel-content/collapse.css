@@ -19,7 +19,7 @@
   }
   button {
     border-radius: var(--radius-tab-1100);
-    font-size: var(--font-size-header);
+    font-size: var(--header-font-size);
     border: var(--thin-glass-border);
     border-bottom: none;
     font-family: inherit;
