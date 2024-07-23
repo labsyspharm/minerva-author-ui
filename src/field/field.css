@@ -1,7 +1,0 @@
-::slotted(input) {
-  background-color: var(--dark-gray-glass);
-  border-radius: var(--radius-field-1111);
-  border-bottom: var(--thin-glass-border);
-  border-top: var(--thin-glass-border);
-  margin-top: var(--gap-small);
-}

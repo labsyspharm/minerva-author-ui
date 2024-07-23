@@ -28,7 +28,7 @@ class Nav extends HTMLElement {
   itemsTemplate(item_list, role) {
     const { nav_config } = this.elementState;
     return item_list.map((item_id, i) => {
-      const item = nav_config.get(item_id);
+      const item = nav_config[item_id];
       const item_class = () => {
         return `center grid menu ${role}`;
       }
@@ -43,7 +43,7 @@ class Nav extends HTMLElement {
         },
         '@click': () => {
           const { nav_config } = this.elementState;
-          if ('dialog' in nav_config.get(item.id)) {
+          if ('dialog' in nav_config[item.id]) {
             this.elementState.dialog = item.id;
           }
           else if (role == 'tab') {

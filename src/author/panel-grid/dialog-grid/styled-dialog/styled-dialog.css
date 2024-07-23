@@ -1,4 +1,5 @@
 :host {
+  --dialog-padding: var(--gap-small);
   --dialog-border-radius: var(--radius-inner-0010);
   --dialog-bg: var(--dark-gray-glass);
   --dialog-container-padding: 0;

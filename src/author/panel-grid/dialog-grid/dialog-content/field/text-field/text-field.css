@@ -1,0 +1,16 @@
+:host {
+  display: grid;
+  gap: var(--gap-small);
+  grid-template-rows: 0 auto 0 auto;
+  --lumo-space-m: var(--gap-tiny);
+  --lumo-font-family: var(--font-family);
+  --vaadin-input-field-label-font-size: 1em;
+}
+::slotted(input) {
+  min-height: 0;
+  background-color: var(--dark-gray-glass);
+  border-radius: var(--radius-field-1111);
+  border-bottom: var(--thin-glass-border);
+  border-top: var(--thin-glass-border);
+  margin-top: var(--gap-small);
+}

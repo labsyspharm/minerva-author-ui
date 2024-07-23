@@ -18,7 +18,7 @@ class NoticeContent extends HTMLElement {
   get elementTemplateContent() {
     const button = this.defineElement(IconButton);
     const { nav_config, notice } = this.elementState;
-    const config = nav_config.get(notice) || {};
+    const config = nav_config[notice];
     if (!config.notice) {
       return '';
     }

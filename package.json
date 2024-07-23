@@ -23,6 +23,13 @@
     "@vaadin/text-field": "^24.4.3",
     "foobar-ipsum": "^1.0.3",
     "npm": "^10.8.2",
+    "prosemirror-commands": "^1.5.2",
+    "prosemirror-history": "^1.4.1",
+    "prosemirror-keymap": "^1.2.2",
+    "prosemirror-markdown": "^1.13.0",
+    "prosemirror-schema-list": "^1.4.1",
+    "prosemirror-state": "^1.4.3",
+    "prosemirror-view": "^1.33.9",
     "vite-plugin-standard-css-modules": "^0.0.11",
     "web-dialog": "^0.0.11"
   },

@@ -1,0 +1,149 @@
+:host {
+  margin-top: var(--gap-small);
+  display: grid;
+}
+
+.ProseMirror {
+  padding: var(--gap-tiny);
+  line-height: 1.2;
+  outline: none;
+  min-height: 0;
+  background-color: var(--dark-gray-glass);
+  border-radius: var(--radius-field-1111);
+  border-bottom: var(--thin-glass-border);
+  border-top: var(--thin-glass-border);
+  margin-top: var(--gap-small);
+}
+
+.md-menu {
+  display: grid;
+  align-items: center;
+  justify-items: center;
+  grid-auto-flow: column;
+  grid-auto-columns: auto;
+}
+.md-menuitem {
+  display: contents;
+}
+.md-menu-icon {
+  width: 100%;
+  height: 100%;
+  display: grid;
+  align-items: center;
+  justify-items: center;
+}
+.md-menu-active {
+  background: #eee;
+  border-radius: 4px;
+}
+
+.md-menu {
+  margin: 0 -4px;
+  line-height: 1;
+}
+
+.md-menuseparator {
+  border-right: 1px solid #ddd;
+  margin-right: 3px;
+}
+
+.md-menu-dropdown, .md-menu-dropdown-menu {
+  font-size: 90%;
+  white-space: nowrap;
+}
+
+.md-menu-dropdown {
+  vertical-align: 1px;
+  cursor: pointer;
+  position: relative;
+  padding-right: 15px;
+}
+
+.md-menu-dropdown-wrap {
+  padding: 1px 0 1px 4px;
+  display: inline-block;
+  position: relative;
+}
+
+.md-menu-dropdown:after {
+  content: "";
+  border-left: 4px solid transparent;
+  border-right: 4px solid transparent;
+  border-top: 4px solid currentColor;
+  opacity: .6;
+  position: absolute;
+  right: 4px;
+  top: calc(50% - 2px);
+}
+
+.md-menu-dropdown-menu, .md-menu-submenu {
+  position: absolute;
+  background: white;
+  color: #666;
+  border: 1px solid #aaa;
+  padding: 2px;
+}
+
+.md-menu-dropdown-menu {
+  z-index: 15;
+  min-width: 6em;
+}
+
+.md-menu-dropdown-item {
+  cursor: pointer;
+  padding: 2px 8px 2px 4px;
+}
+
+.md-menu-dropdown-item:hover {
+  background: #f2f2f2;
+}
+
+.md-menu-submenu-wrap {
+  position: relative;
+  margin-right: -4px;
+}
+
+.md-menu-submenu-label:after {
+  content: "";
+  border-top: 4px solid transparent;
+  border-bottom: 4px solid transparent;
+  border-left: 4px solid currentColor;
+  opacity: .6;
+  position: absolute;
+  right: 4px;
+  top: calc(50% - 4px);
+}
+
+.md-menu-submenu {
+  display: none;
+  min-width: 4em;
+  left: 100%;
+  top: -3px;
+}
+
+.md-menu-disabled {
+  opacity: .3;
+}
+
+.md-menu-disabled.md-menu-icon {
+  cursor: default;
+}
+
+.md-menu-icon svg {
+  fill: currentColor;
+  height: 1em;
+}
+
+.md-menu-icon span {
+  vertical-align: text-top;
+}
+
+#editor, .editor {
+  background: white;
+  color: black;
+  background-clip: padding-box;
+  border-radius: 4px;
+  border: 2px solid rgba(0, 0, 0, 0.2);
+  padding: 5px 0;
+  margin-bottom: 23px;
+}

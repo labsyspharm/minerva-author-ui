@@ -7,10 +7,6 @@ class Collapse extends A11yCollapse {
 
   static name = 'collapse'
 
-  static elementProperties = new Map([
-    ...A11yCollapse.elementProperties,
-    ['ki', Object]
-  ])
   static get _styleSheet() {
     return collapseCSS;
   }
@@ -42,17 +38,41 @@ class Panel extends HTMLElement {
   }
   get elementContents() {
     const itemsTemplate = (items) => {
+      const { tab, nav_config } = this.elementState;
+      const actions = nav_config[tab].actions;
       const details = this.defineElement(Collapse, {
         constants: { items }, 
         defaults: { ki: 0 }
       });
       return items.map((item, i) => {
-        const paragraphs = item.content.map(text => {
+        const item_contents = item.content.map(text => {
           return toElement('p')`${() => text}`({});
-        })
+        });
+        const content_action = (({ id }) => {
+          const next_config = nav_config[id];
+          return toElement('button')``({
+//            value: () => next_config.heading,
+            '@click': () => {
+              if (next_config.dialog) {
+                this.elementState.dialog = id;
+              }
+            },
+            class: 'button',
+            type: 'submit'
+          })
+        })(actions.find(
+          ({ slot }) => slot == 'content'
+        ));
         return toElement(details)`
           <p slot="heading">${() => item.summary}</p>
-          <div>${() => paragraphs}</div>
+          <div slot="content">
+            <div class="full text">
+              ${() => item_contents}
+            </div>
+            <div class="full actions">
+              ${() => content_action}
+            </div>
+          </div>
         `({
           accordion: true, ki: i,
           expanded: () => {
@@ -108,15 +128,15 @@ class PanelContent extends HTMLElement {
     return {
       heading: () => {
         const { tab } = this.elementState;
-        if (tab == 'STORY') {
+        if (tab == 'STORY-PANEL') {
           const { metadata_config } = this.elementState;
           return metadata_config['name'];
         }
-        return nav_config.get(tab).heading
+        return nav_config[tab].heading
       },
       content: () => {
         const { tab } = this.elementState;
-        if (tab == 'STORY') {
+        if (tab == 'STORY-PANEL') {
           return toElement(story_panel)``({});
         }
         return toElement(default_panel)``({});
