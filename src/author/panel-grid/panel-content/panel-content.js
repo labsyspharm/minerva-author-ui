@@ -1,107 +1,7 @@
 import panelContentCSS from './panel-content.css' assert { type: 'css' };
-import collapseCSS from './collapse.css' assert { type: 'css' };
-import { A11yCollapse } from '@haxtheweb/a11y-collapse';
 import { toElement } from '../../../lib/elements';
-
-class Collapse extends A11yCollapse {
-
-  static name = 'collapse'
-
-  static get _styleSheet() {
-    return collapseCSS;
-  }
-  get expanded () {
-    const { items={}, ki } = this.elementState;
-    return items[ki].expanded || false;
-  }
-  set expanded (v) {
-    const { items={}, ki } = this.elementState;
-    if (items && ki in items) {
-      items[ki].expanded = v;
-      this.requestUpdate();
-    }
-    return true;
-  }
-}
-
-class Panel extends HTMLElement {
-
-  static name = 'panel'
-
-  static get _styleSheet() {
-    return panelContentCSS;
-  }
-  get elementTemplate() {
-    const { items } = this.elementContents;
-    const { itemsTemplate } = this.elementContents;
-    return itemsTemplate(items || []);
-  }
-  get elementContents() {
-    const itemsTemplate = (items) => {
-      const { tab, nav_config } = this.elementState;
-      const actions = nav_config[tab].actions;
-      const details = this.defineElement(Collapse, {
-        constants: { items }, 
-        defaults: { ki: 0 }
-      });
-      return items.map((item, i) => {
-        const item_contents = item.content.map(text => {
-          return toElement('p')`${() => text}`({});
-        });
-        const content_action = (({ id }) => {
-          const next_config = nav_config[id];
-          return toElement('button')``({
-//            value: () => next_config.heading,
-            '@click': () => {
-              if (next_config.dialog) {
-                this.elementState.dialog = id;
-              }
-            },
-            class: 'button',
-            type: 'submit'
-          })
-        })(actions.find(
-          ({ slot }) => slot == 'content'
-        ));
-        return toElement(details)`
-          <p slot="heading">${() => item.summary}</p>
-          <div slot="content">
-            <div class="full text">
-              ${() => item_contents}
-            </div>
-            <div class="full actions">
-              ${() => content_action}
-            </div>
-          </div>
-        `({
-          accordion: true, ki: i,
-          expanded: () => {
-            return item.expanded
-          },
-          class: () => {
-            if (i+1 == items.length) {
-              return 'end';
-            }
-            return ''
-          }
-        });
-      });
-    }
-    return { itemsTemplate };
-  }
-}
-
-class StoryPanel extends Panel {
-
-  static name = 'story-panel'
-
-  get elementContents() {
-    const { stories } = this.elementState.metadata_config;
-    return {
-      ...super.elementContents, items: stories 
-    };
-  }
-}
+import { Panel } from './panel/panel';
+import { PanelStory } from './panel/panel-story';
 
 class PanelContent extends HTMLElement {
 
@@ -112,36 +12,30 @@ class PanelContent extends HTMLElement {
   }
 
   get elementTemplate() {
-    const { heading, content } = this.elementContents;
+    const { nav_config } = this.elementState;
+    const default_panel = this.defineElement(Panel);
+    const story_panel = this.defineElement(PanelStory);
+    const heading = () => {
+      const { tab } = this.elementState;
+      if (tab == 'STORY-PANEL') {
+        const { metadata_config } = this.elementState;
+        return metadata_config['name'];
+      }
+      return nav_config[tab].heading
+    }
+    const content = () => {
+      const { tab } = this.elementState;
+      const el = {
+        'STORY-PANEL': story_panel 
+      }[tab] || default_panel; 
+      return toElement(el)``({});
+    }
     return toElement('div')`
       <h2 class="indent">${heading}</h2>
       ${content}
     `({
       'class': 'start grid wrapper'
     });
-  }
-
-  get elementContents() {
-    const default_panel = this.defineElement(Panel);
-    const story_panel = this.defineElement(StoryPanel);
-    const { nav_config } = this.elementState;
-    return {
-      heading: () => {
-        const { tab } = this.elementState;
-        if (tab == 'STORY-PANEL') {
-          const { metadata_config } = this.elementState;
-          return metadata_config['name'];
-        }
-        return nav_config[tab].heading
-      },
-      content: () => {
-        const { tab } = this.elementState;
-        if (tab == 'STORY-PANEL') {
-          return toElement(story_panel)``({});
-        }
-        return toElement(default_panel)``({});
-      }
-    }
   }
 }
 

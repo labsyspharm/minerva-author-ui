@@ -7,23 +7,23 @@ const lorem = new foobarIpsum({
   }
 })
 
-const to_story = (expanded, length=1) => {
+const to_story = (expanded, key, length=1) => {
   return {
-    expanded,
-    summary: lorem.sentence(3),
+    expanded, key,
+    title: lorem.sentence(3),
     content: [...new Array(length)].map(() => {
       return lorem.paragraph()
-    })
+    }).join('\n')
   }
 }
 
 const metadata_config = {
-  "name": "Nullam et luctus",
+  "name": "Example Story",
   "stories": [
-    to_story(true, 1),
-    to_story(false, 2),
-    to_story(true, 3),
-    to_story(false, 4)
+    to_story(true, 'A', 1),
+    to_story(false,'B', 2),
+    to_story(true, 'C', 3),
+    to_story(false,'D', 4)
   ]
 }
 

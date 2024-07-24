@@ -11,6 +11,17 @@ const configure = (id) => {
           label: 'Path for the exported story'
         }]
       }
+    case 'LINK-NOTICE': 
+      return {
+        id, heading: 'Create',
+        notice: 'Create Link',
+        fields: [{
+          url: 'link URL'
+        }],
+        actions: [{
+          heading: 'Create link'
+        }]
+      }
     case 'EXPORT-NOTICE':
       return { 
         id, heading: 'Export',
@@ -52,10 +63,14 @@ const configure = (id) => {
         id, heading: 'Edit Waypoint',
         dialog: 'Editing Waypoint',
         fields: [{
-          label: 'Title'
+          id: 'TITLE-FIELD',
+          placeholder: '## HI', label: 'Title'
         }, {
-          label: 'Content',
-          markdown: true
+          id: 'CONTENT-FIELD', markdown: true,
+          placeholder: '## LO', label: 'Content'
+        }],
+        actions: [{
+          heading: 'Accept Edits'
         }]
       }
     case 'GROUP-PANEL':

@@ -4,15 +4,25 @@
 }
 
 .ProseMirror {
+  a[href] {
+    color: var(--light-link-color);
+  }
+}
+
+.ProseMirror[contenteditable="true"] {
   padding: var(--gap-tiny);
   line-height: 1.2;
   outline: none;
   min-height: 0;
+  mask-image: linear-gradient(to left, transparent, #000 1.25em);
   background-color: var(--dark-gray-glass);
   border-radius: var(--radius-field-1111);
   border-bottom: var(--thin-glass-border);
   border-top: var(--thin-glass-border);
   margin-top: var(--gap-small);
+}
+.ProseMirror:focus {
+  mask-image: none;
 }
 
 .md-menu {
@@ -33,7 +43,8 @@
   justify-items: center;
 }
 .md-menu-active {
-  background: #eee;
+  color: var(--dark-focus-color);
+  background-color: var(--light-focus-color);
   border-radius: 4px;
 }
 

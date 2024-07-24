@@ -2,9 +2,11 @@
   display: grid;
   gap: var(--gap-small);
   grid-template-rows: 0 auto 0 auto;
+  --lumo-space-xs: 0px;
   --lumo-space-m: var(--gap-tiny);
   --lumo-font-family: var(--font-family);
   --vaadin-input-field-label-font-size: 1em;
+  --vaadin-input-field-value-color: var(--light-focus-color);
 }
 ::slotted(input) {
   min-height: 0;

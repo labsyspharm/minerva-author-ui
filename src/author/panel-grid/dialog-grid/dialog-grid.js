@@ -6,14 +6,13 @@ class DialogGrid extends HTMLElement {
   static name = 'dialog-grid'
 
   get elementTemplate() {
-    const dialog_element = this.defineElement(DialogContent);
+    const { content } = this.elementContents;
     const dialog_title = () => {
       const { nav_config, dialog } = this.elementState;
       return nav_config[dialog].dialog;
     }
     return toElement(this.defineElement(StyledDialog))`
-      <h3>${dialog_title}</h3>
-      <${dialog_element}></${dialog_element}>
+      <h3>${dialog_title}</h3>${content}
     `({
       open: () => {
         return this.elementState.dialog != '';
@@ -24,6 +23,15 @@ class DialogGrid extends HTMLElement {
         this.elementState.dialog = '';
       }
     })
+  }
+
+  get elementContents() {
+    const dialog = this.defineElement(DialogContent);
+    return {
+      content: () => {
+        return toElement(dialog)``();
+      }
+    }
   }
 }
 

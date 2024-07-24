@@ -6,24 +6,3 @@
   border: var(--thin-border);
   border-image: var(--glass-gradient) 1 100%;
 }
-.end {
-  border-bottom: var(--thin-glass-border);
-  border-radius: var(--radius-panel-0011);
-}
-.end[expanded] {
-  border-radius: 0;
-}
-.full {
-  grid-column: 1 / -1; 
-  grid-row: 1 / -1;
-}
-.full.text {
-  padding-bottom: var(--gap-medium);
-  padding-right: var(--gap-small);
-  padding-left: var(--gap-small);
-}
-.full.actions > button {
-  border: none;
-  height: 100%;
-  width: 100%;
-}

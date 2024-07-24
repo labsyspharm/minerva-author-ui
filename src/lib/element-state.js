@@ -95,10 +95,12 @@ function defineElement(element, options={}) {
       super();
       this._reactiveState = createReactiveState(options, closure);
       for ( let k in this._reactiveState ) {
+        let att_v = this.getAttribute(k);
+        if (att_v === 'false') att_v = null;
         const init_v = convertFromAttribute(
-          this.constructor.elementProperties, k, this.getAttribute(k)
+          this.constructor.elementProperties, k, att_v
         )
-        if (init_v !== null) {
+        if (init_v !== null) { 
           this.elementState[k] = init_v
         }
         else {
