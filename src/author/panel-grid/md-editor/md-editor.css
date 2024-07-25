@@ -7,6 +7,9 @@
   a[href] {
     color: var(--light-link-color);
   }
+  img {
+    width: 100%;
+  }
 }
 
 .ProseMirror[contenteditable="true"] {
