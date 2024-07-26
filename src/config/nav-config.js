@@ -70,7 +70,12 @@ const configure = (id) => {
           placeholder: '## LO', label: 'Content'
         }],
         actions: [{
-          heading: 'Accept Edits'
+          heading: 'Set Channels'
+        },{
+          heading: 'Set Viewport'
+        },{
+          heading: 'Accept Edits',
+          className: 'accept'
         }]
       }
     case 'GROUP-PANEL':

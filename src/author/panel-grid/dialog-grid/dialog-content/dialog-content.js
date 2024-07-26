@@ -38,7 +38,7 @@ class DialogContent extends HTMLElement {
         });
       })
       const actions = config.actions.map(({ 
-        id, heading
+        id, heading, className
       }) => {
         const next_config = nav_config[id];
         return toElement('input')``({
@@ -47,13 +47,17 @@ class DialogContent extends HTMLElement {
               heading || next_config.heading || 'OK'
             );
           },
+          'class': () => {
+            return [
+              'button', className || ''
+            ].join(' ');
+          },
           '@click': () => {
             this.elementState.dialog = '';
             if (next_config.notice) {
               this.elementState.notice = id;
             }
           },
-          class: 'button',
           type: 'submit'
         })
       });
