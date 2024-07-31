@@ -1,5 +1,5 @@
 import { Plugin } from "prosemirror-state"
-import { renderGrouped } from "./md-menu-item"
+import { renderGrouped } from "./md-render-grouped"
 
 const prefix = "md-menu"
 
@@ -24,7 +24,9 @@ class MenuBarView {
     this.dom = document.createElement('div');
     this.dom.className = prefix
 
-    this.grouped = renderGrouped(this.editorView, this.options.content)
+    this.grouped = renderGrouped(
+      this.editorView, this.options.content, prefix
+  )
     this.dom.appendChild(this.grouped.dom)
     this.update()
   }

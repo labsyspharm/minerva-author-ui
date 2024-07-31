@@ -20,6 +20,12 @@
   font-weight: bold;
   font-style: normal;
 }
+@font-face {
+  font-family: "lato";
+  src: url(/lato-italic-700.ttf) format("truetype");
+  font-weight: bold;
+  font-style: italic;
+}
 
 * {
   --font-family: var(--theme-font-family, "lato", sans-serif);

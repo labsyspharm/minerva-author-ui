@@ -4,6 +4,7 @@
 }
 
 .ProseMirror {
+  white-space: pre-wrap;
   a[href] {
     color: var(--light-link-color);
   }

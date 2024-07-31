@@ -3,11 +3,16 @@ import {
   defaultMarkdownParser as parser,
   defaultMarkdownSerializer as serializer
 } from "prosemirror-markdown";
+import { canSplit } from "prosemirror-transform";
 import { EditorState } from "prosemirror-state";
 import { EditorView } from "prosemirror-view";
 import { history } from "prosemirror-history";
 import { keymap } from "prosemirror-keymap";
-import { baseKeymap, toggleMark } from "prosemirror-commands";
+import { splitListItem } from "prosemirror-schema-list";
+import {
+  baseKeymap, chainCommands, toggleMark,
+  deleteSelection, joinBackward
+} from "prosemirror-commands";
 import { buildMenuItems } from './md-menu-items';
 import { menuBar } from './md-menu.js';
 import MDEditorCSS from './md-editor.css' assert { type: 'css' };
@@ -71,16 +76,39 @@ class MDEditor extends HTMLElement {
         }
       )
     }); 
+    const {
+      list_item, hard_break
+    } = schema.nodes;
+
     return EditorState.create({
       doc: parser.parse(content),
       plugins: [
-         keymap(baseKeymap), history(),
-         ...(() => {
-           if (!editable) {
-              return [];
-           }
-           return [mdMenu]
-         })()
+        keymap({
+          Enter: chainCommands(
+            splitListItem(list_item),
+            ({ tr, selection }, dispatch) => {
+              const { $from } = selection;
+              const { doc, mapping } = tr;
+              const start = doc.resolve(
+                mapping.map($from.pos)
+              ).pos;
+              tr.deleteSelection().insert(
+                start, hard_break.create()
+              );
+              this.view.input.mouseDown = null;
+              dispatch(tr);
+              return true;
+            }
+          ),
+          Backspace: chainCommands(
+            deleteSelection, joinBackward
+          )
+        }),
+//        keymap(baseKeymap), 
+        history(),
+        ...(
+          editable ? [ mdMenu ] : []
+        )
       ]
     })
   }
