@@ -32,7 +32,10 @@
 .md-menu {
   display: grid;
   align-items: center;
+  gap: var(--gap-tiny);
+  padding-left: var(--gap-medium);
   justify-items: center;
+  justify-content: start;
   grid-auto-flow: column;
   grid-auto-columns: auto;
 }
@@ -40,7 +43,7 @@
   display: contents;
 }
 .md-menu-icon {
-  width: 100%;
+  width: 2em;
   height: 100%;
   display: grid;
   align-items: center;
@@ -58,8 +61,7 @@
 }
 
 .md-menuseparator {
-  border-right: 1px solid #ddd;
-  margin-right: 3px;
+  width: 20px;
 }
 
 .md-menu-dropdown, .md-menu-dropdown-menu {

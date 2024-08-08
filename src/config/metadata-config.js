@@ -13,7 +13,7 @@ const to_story = (expanded, key, length=1) => {
     title: lorem.sentence(3),
     content: [...new Array(length)].map(() => {
       return lorem.paragraph()
-    }).join('\n')
+    }).join('\n\n')
   }
 }
 

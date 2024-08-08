@@ -1,13 +1,9 @@
-import { lift, joinUp } from "prosemirror-commands"
-import { undo, redo } from "prosemirror-history"
-import { getIcon, icons } from "./md-menu-icons"
-import { wrapInList } from "prosemirror-schema-list"
-import { toggleMark, setBlockType } from 'prosemirror-commands';
+import { getIcon } from "./md-menu-icons";
 
 const prefix = "md-menu"
 
 /// An icon or label that, when clicked, executes a command.
-export class MenuItem {
+class MenuItem {
   /// Create a menu item.
   constructor(spec) {
     this.spec = spec
@@ -45,8 +41,13 @@ export class MenuItem {
 
     dom.addEventListener("mousedown", e => {
       e.preventDefault()
-      if (!dom.classList.contains(prefix + "-disabled"))
-        spec.run(view.state, view.dispatch, view, e)
+      const disabled = dom.classList.contains(
+        prefix + "-disabled"
+      )
+      if (disabled) {
+        return;
+      }
+      spec.run(view.state, view.dispatch, view, e)
     })
 
     const update = (state) => {
@@ -71,124 +72,14 @@ export class MenuItem {
   }
 }
 
+const toMenuItem = (cmd, options) => {
+  return new MenuItem({
+    ...options, run: cmd, enable: cmd
+  });
+}
+
 const translate = (view, text) => {
   return view._props.translate ? view._props.translate(text) : text
 }
 
-/// Menu item for the `joinUp` command.
-export const joinUpItem = new MenuItem({
-  title: "Join with above block",
-  run: joinUp,
-  select: state => joinUp(state),
-  icon: icons.join
-})
-
-/// Menu item for the `lift` command.
-export const liftItem = new MenuItem({
-  title: "Lift out of enclosing block",
-  run: lift,
-  select: state => lift(state),
-  icon: icons.lift
-})
-
-/// Menu item for the `undo` command.
-export const undoItem = new MenuItem({
-  title: "Undo last change",
-  run: undo,
-  enable: state => undo(state),
-  icon: icons.undo
-})
-
-/// Menu item for the `redo` command.
-export const redoItem = new MenuItem({
-  title: "Redo last undone change",
-  run: redo,
-  enable: state => redo(state),
-  icon: icons.redo
-})
-
-export const linkItem = (markType, linkHandlers) => {
-  return new MenuItem({
-    title: "Add or remove link",
-    icon: icons.link,
-    active(state) {
-      return markActive(state, markType);
-    },
-    enable(state) {
-      return !state.selection.empty;
-    },
-    run(state, dispatch, view) {
-      if (markActive(state, markType)) {
-        toggleMark(markType)(state, dispatch);
-        return true;
-      }
-      linkHandlers.openLinkNotice();
-    }
-  });
-}
-
-export const toggleStrong = (markType) => {
-  return cmdItem(
-    toggleMark(markType), {
-      active: (state) => markActive(state, markType),
-      title: "Toggle strong style", icon: icons.strong
-    }
-  )
-}
-
-export const toggleEmphasis = (markType) => {
-  return cmdItem(
-    toggleMark(markType), {
-      active: (state) => markActive(state, markType),
-      title: "Toggle emphasis", icon: icons.em
-    }
-  )
-}
-
-export const wrapList = (nodeType, listType) => {
-  return cmdItem(
-    wrapInList(nodeType), {
-      title: `Wrap in ${listType} list`,
-      icon: icons[listType]
-    }
-  );
-}
-
-export const toggleHeading = (nodeType, level) => {
-  return blockTypeItem(nodeType, {
-    title: "Change to heading",
-    icon: icons.heading,
-    attrs: { level }
-  })
-}
-
-const cmdItem = (cmd, options) => {
-  return new MenuItem({
-    ...options, run: cmd, select: cmd
-  });
-}
-
-const blockTypeItem = (nodeType, options) => {
-  const { attrs } = options;
-  const command = setBlockType(nodeType, attrs)
-  return new MenuItem({
-    run: command, enable: command,
-    active: (state) => {
-      const {$from, node} = state.selection;
-      const item = node || $from.parent;
-      return item.hasMarkup(nodeType, attrs)
-    },
-    ...options
-  })
-}
-
-const markActive = (state, type) => {
-  const { from, $from, to, empty } = state.selection;
-  if (empty) {
-    //console.log('i')
-    const marks = state.storedMarks || $from.marks();
-    return !!type.isInSet(marks);
-  }
-  //console.log('ii')
-  return state.doc.rangeHasMark(from, to, type);
-}
+export { toMenuItem, MenuItem }

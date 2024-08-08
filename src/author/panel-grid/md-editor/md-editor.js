@@ -13,8 +13,9 @@ import {
   baseKeymap, chainCommands, toggleMark,
   deleteSelection, joinBackward
 } from "prosemirror-commands";
-import { buildMenuItems } from './md-menu-items';
-import { menuBar } from './md-menu.js';
+import { buildMenuItems } from './md-menu';
+import { enterNewLine } from './md-new-line'
+import { menuBar } from './md-menu-bar';
 import MDEditorCSS from './md-editor.css' assert { type: 'css' };
 
 const mapFieldToContent = (id) => {
@@ -47,8 +48,9 @@ class MDEditor extends HTMLElement {
       editable: () => this.elementState.editable,
       state: this.createState(this.contentValue),
       dispatchTransaction: (transaction) => {
-        const newState = this.view.state.apply(transaction)
+        const newState = this.view.state.apply(transaction);
         const newContent = serializer.serialize(newState.doc);
+        //console.log(newContent);
         this.view.updateState(newState);
         this.contentValue = newContent;
       }
@@ -62,6 +64,9 @@ class MDEditor extends HTMLElement {
 
   createState(content) {
     const { editable } = this.elementState;
+    const {
+      list_item, hard_break 
+    } = schema.nodes;
     const mdMenu = menuBar({ 
       floating: false,
       content: buildMenuItems(
@@ -76,35 +81,21 @@ class MDEditor extends HTMLElement {
         }
       )
     }); 
-    const {
-      list_item, hard_break
-    } = schema.nodes;
-
     return EditorState.create({
       doc: parser.parse(content),
       plugins: [
         keymap({
           Enter: chainCommands(
             splitListItem(list_item),
-            ({ tr, selection }, dispatch) => {
-              const { $from } = selection;
-              const { doc, mapping } = tr;
-              const start = doc.resolve(
-                mapping.map($from.pos)
-              ).pos;
-              tr.deleteSelection().insert(
-                start, hard_break.create()
-              );
+            (state, dispatch) => {
               this.view.input.mouseDown = null;
-              dispatch(tr);
-              return true;
+              return enterNewLine(state, dispatch);
             }
           ),
           Backspace: chainCommands(
             deleteSelection, joinBackward
           )
         }),
-//        keymap(baseKeymap), 
         history(),
         ...(
           editable ? [ mdMenu ] : []
