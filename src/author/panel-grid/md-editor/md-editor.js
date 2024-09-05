@@ -18,13 +18,6 @@ import { enterNewLine } from './md-new-line'
 import { menuBar } from './md-menu-bar';
 import MDEditorCSS from './md-editor.css' assert { type: 'css' };
 
-const mapFieldToContent = (id) => {
-  return {
-    'TITLE-FIELD': 'title',
-    'CONTENT-FIELD': 'content'
-  }[id] || id;
-}
-
 class MDEditor extends HTMLElement {
   static name = 'md-editor'
 
@@ -50,7 +43,6 @@ class MDEditor extends HTMLElement {
       dispatchTransaction: (transaction) => {
         const newState = this.view.state.apply(transaction);
         const newContent = serializer.serialize(newState.doc);
-        //console.log(newContent);
         this.view.updateState(newState);
         this.contentValue = newContent;
       }
@@ -131,18 +123,16 @@ class MDEditor extends HTMLElement {
   }
 
   get contentValue() {
-    const { contentOptions } = this;
-    const { id } = this.elementState;
-    const key = mapFieldToContent(id);
-    return contentOptions[key];
+    return this.contentOptions.Properties[
+      this.elementState.property
+    ] || '';
   }
 
   set contentValue(v) {
-    const { contentOptions } = this;
-    const { id } = this.elementState;
-    const key = mapFieldToContent(id);
-    if (contentOptions && key in contentOptions) {
-      contentOptions[key] = v;
+    const { property } = this.elementState;
+    const { Properties } = this.contentOptions || {};
+    if (Properties && property in Properties) {
+      Properties[property] = v;
     }
   }
 

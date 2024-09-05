@@ -1,35 +1,35 @@
 import { TextField } from '../../../../../text-field/text-field'
 
-class TextFieldStory extends TextField {
-  static name = 'text-field-story'
+class TextFieldGroup extends TextField {
+  static name = 'text-field-group'
 
   get allContentOptions() {
     const { metadata_config } = this.elementState;
-    return metadata_config.stories;
+    return metadata_config.groups;
   }
 
   get contentOption() {
     const { allContentOptions } = this;
     const { selections } = this.elementState;
-    const { waypoint_key } = selections.find(x => {
-      return x.dialog == 'STORY-DIALOG';
+    const { group_key } = selections.find(x => {
+      return x.dialog == 'GROUP-DIALOG';
     }) || { };
     return allContentOptions.find(x => {
-      return x.key == waypoint_key
+      return x.key == group_key
     }) || null;
   }
 
   get value() {
-    const { contentOption: waypoint } = this;
+    const { contentOption: group } = this;
     const { property } = this.elementState;
-    return waypoint?.Properties[property] || '';
+    return group?.Properties[property] || '';
   }
 
   set value(v) {
-    const { contentOption: waypoint } = this;
+    const { contentOption: group } = this;
     const { property } = this.elementState;
-    waypoint.Properties[property] = v;
+    group.Properties[property] = v;
   }
 }
 
-export { TextFieldStory }
+export { TextFieldGroup }

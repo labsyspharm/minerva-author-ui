@@ -20,6 +20,7 @@
     "@haxtheweb/simple-icon": "^9.0.0",
     "@lit/reactive-element": "^2.0.4",
     "@rollup/pluginutils": "^5.1.0",
+    "@ui5/webcomponents": "^2.2.0",
     "@vaadin/form-layout": "^24.4.3",
     "@vaadin/text-field": "^24.4.3",
     "foobar-ipsum": "^1.0.3",

@@ -1,15 +1,12 @@
 import { Panel } from './panel';
 import { PanelItemStory } from './panel-item-story';
+import { sourceStoryItems } from '../../../../config/source-story-items'
 
-class PanelStory extends Panel {
+class PanelStory extends sourceStoryItems(Panel) {
 
   static name = 'panel-story'
   static itemElement = PanelItemStory
 
-  get allPanelKeys() {
-    const items = this.elementState.metadata_config.stories;
-    return [...new Array(items.length).keys()]
-  }
 }
 
 export { PanelStory }

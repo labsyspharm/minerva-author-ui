@@ -38,7 +38,7 @@ const author = (customSuffix, options={}) => {
   });
   return defineElement(Author, {
     defaults: {
-      notice: '', dialog: '', tab: 'STORY-PANEL',
+      notice: '', dialog: '', tab: 'GROUP-PANEL',
       selections: []
     }
   });

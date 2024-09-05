@@ -82,6 +82,21 @@ function defineElement(element, options={}) {
   } = this;
   return (el => {
     const tag = `${element.name.toLowerCase()}-${customSuffix}`;
+    if (el.define) {
+       // For UI5 Elements
+      function get(...args) {
+        if (args[1] !== 'metadata') {
+          return Reflect.get(...args);
+        }
+        return { ...args[0].metadata, tag };
+      }
+      (class extends el {
+        static getMetadata() {
+          return new Proxy(el.getMetadata(), { get })
+        }
+      }).define();
+      return tag;
+    }
     if (!customElements.get(tag)) customElements.define(tag, el);
     return tag;
   })(class extends element {
@@ -108,7 +123,7 @@ function defineElement(element, options={}) {
         }
       }
       if (this.elementTemplate) {
-        // For elements that don't use Lit
+        // For elements without a framework
         this.attachShadow({mode: 'open'});
         html`${this.elementTemplate}`(
           addStyles.call(this, globalStyleSheet)

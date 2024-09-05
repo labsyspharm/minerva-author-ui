@@ -5,15 +5,27 @@ class Collapse extends A11yCollapse {
 
   static name = 'collapse'
 
+  static elementProperties = new Map([
+    ...A11yCollapse.elementProperties
+  ])
+
   static get _styleSheet() {
     return collapseCSS;
   }
-  get expanded () {
-    const { items={}, ki } = this.elementState;
-    return items[ki].expanded || false;
+
+  get itemSources () {
+    return []; // Defined in derived classes
   }
+
+  get expanded () {
+    const { ki } = this.elementState;
+    const items = this.itemSources;
+    return items[ki]?.expanded || false;
+  }
+
   set expanded (v) {
-    const { items={}, ki } = this.elementState;
+    const { ki } = this.elementState;
+    const items = this.itemSources;
     if (items && ki in items) {
       items[ki].expanded = v;
       this.requestUpdate();

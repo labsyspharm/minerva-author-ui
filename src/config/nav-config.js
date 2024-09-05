@@ -5,7 +5,7 @@ const configure = (id) => {
         id, heading: 'Export',
         dialog: 'Export as Minerva Story',
         actions: [{
-          id: 'EXPORT-NOTICE'
+          next: 'EXPORT-NOTICE'
         }],
         fields: [{
           label: 'Path for the exported story'
@@ -33,7 +33,7 @@ const configure = (id) => {
         id, heading: 'Save As',
         dialog: 'Save as an editable copy',
         actions: [{
-          id: 'SAVEAS-NOTICE'
+          next: 'SAVEAS-NOTICE'
         }],
         fields: [{
           label: 'Path for the new copy',
@@ -54,8 +54,9 @@ const configure = (id) => {
     case 'STORY-PANEL':
       return { 
         id, heading: 'Story',
+        description: '',
         actions: [{
-          id: 'STORY-DIALOG', slot: 'content'
+          next: 'STORY-DIALOG', slot: 'content'
         }]
       }
     case 'STORY-DIALOG':
@@ -63,11 +64,11 @@ const configure = (id) => {
         id, heading: 'Edit Waypoint',
         dialog: 'Editing Waypoint',
         fields: [{
-          id: 'TITLE-FIELD',
-          placeholder: '## HI', label: 'Title'
+          property: 'Name',
+          placeholder: 'Untitled Waypoint', label: 'Title'
         }, {
-          id: 'CONTENT-FIELD', markdown: true,
-          placeholder: '## LO', label: 'Content'
+          property: 'Content', markdown: true,
+          placeholder: '', label: 'Content'
         }],
         actions: [{
           heading: 'Set Channels'
@@ -79,11 +80,36 @@ const configure = (id) => {
         }]
       }
     case 'GROUP-PANEL':
-      return { id, heading: 'Channels' }
+      return {
+        id, heading: 'Channels',
+        description: 'Channel Groups',
+        actions: [{
+//          next: 'GROUP-DIALOG', slot: 'content'
+        }]
+      }
+    case 'GROUP-DIALOG':
+      return {
+        id, heading: 'Edit Channel Group',
+        dialog: 'Editing Channel Group',
+        fields: [{
+          property: 'Title',
+          placeholder: 'Untitled Group', label: 'Title'
+        }],
+        actions: [{
+          heading: 'Accept Edits',
+          className: 'accept'
+        }]
+      }
     case 'IMAGE-PANEL':
-      return { id, heading: 'Images' }
+      return { 
+        id, heading: 'Images',
+        description: 'Image Sources',
+      }
     case 'OVERLAY-PANEL':
-      return { id, heading: 'Overlays' }
+      return {
+        id, heading: 'Overlays',
+        description: 'Image Overlays',
+      }
     default:
       return { id }
   }

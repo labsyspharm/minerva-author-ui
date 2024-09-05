@@ -23,7 +23,7 @@ class DialogContent extends HTMLElement {
       const field = this.defineElement(Field, {
         defaults: { 
           editable: true, markdown: false,
-          label: '', id: ''
+          label: '', property: ''
         }
       });
       const { nav_config, dialog } = this.elementState;
@@ -33,14 +33,14 @@ class DialogContent extends HTMLElement {
       }
       const fields = config.fields.map((x) => {
         return toElement(field)``({
-          label: x.label, id: x.id,
+          label: x.label, property: x.property,
           markdown: x.markdown || false
         });
       })
       const actions = config.actions.map(({ 
-        id, heading, className
+        next, heading, className
       }) => {
-        const next_config = nav_config[id];
+        const next_config = nav_config[next];
         return toElement('input')``({
           value: () => {
             return (
@@ -55,7 +55,7 @@ class DialogContent extends HTMLElement {
           '@click': () => {
             this.elementState.dialog = '';
             if (next_config.notice) {
-              this.elementState.notice = id;
+              this.elementState.notice = next;
             }
           },
           type: 'submit'

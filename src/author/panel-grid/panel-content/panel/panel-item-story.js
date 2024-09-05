@@ -1,27 +1,25 @@
 import { PanelItem } from './panel-item';
 import { MDViewerStory } from './md-viewer/md-viewer-story';
 import { toElement } from '../../../../lib/elements'
+import { sourceStoryItems } from '../../../../config/source-story-items'
+import { CollapseStory } from './collapse/collapse-story';
 
-class PanelItemStory extends PanelItem {
+class PanelItemStory extends sourceStoryItems(PanelItem) {
 
   static name = 'panel-item-story'
-
-  get allPanelItems() {
-    return this.elementState.metadata_config.stories;
-  }
+  static collapseElement = CollapseStory
 
   get itemContents() {
     const { ki } = this.elementState;
     const mdViewerStory = this.defineElement(MDViewerStory, {
       defaults: {
-        id: '', ki: '', editable: false
+        property: '', ki: '', editable: false
       },
       attributes: [ 'dialog' ]
     });
     return toElement(mdViewerStory)``({ 
-      ki, id: 'CONTENT-FIELD',
-      dialog: () => this.elementState.dialog,
-      editable: false,
+      ki, property: 'Content', editable: false,
+      dialog: () => this.elementState.dialog
     });
   }
 }
