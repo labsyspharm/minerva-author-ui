@@ -30,4 +30,7 @@
   backdrop-filter: var(--glass-filter);
   background-color: var(--dark-main-glass);
   border: var(--thin-glass-border);
+  padding-left: var(--gap-tiny);
+  border-left: none;
+  border-top: none;
 }

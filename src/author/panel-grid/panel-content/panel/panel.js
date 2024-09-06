@@ -16,28 +16,20 @@ class Panel extends HTMLElement {
 
   get itemKeys () {
     return [
-      ...new Array(this.itemSources.length).keys()
+      ...Object.keys(this.itemSources)
     ];
   }
 
   get elementTemplate() {
-    const { itemsTemplate } = this.elementContents;
-    return itemsTemplate();
-  }
-
-  get elementContents() {
     const item = this.constructor.itemElement; 
     const panel_item = this.defineElement(item, {
       defaults: { ki: 0 }
     });
-    const itemsTemplate = () => {
-      return this.itemKeys.map(ki => {
-        return toElement(panel_item)``({
-          ki, class: 'contents'
-        });
-      })
-    }
-    return { itemsTemplate };
+    return this.itemKeys.map(ki => {
+      return toElement(panel_item)``({
+        ki, class: 'contents'
+      });
+    })
   }
 
 }

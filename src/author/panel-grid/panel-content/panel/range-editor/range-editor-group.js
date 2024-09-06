@@ -11,7 +11,7 @@ class RangeEditorGroup extends HTMLElement {
   static name = 'range-editor-group'
 
   static elementProperties = new Map([
-    ['ki', { type: Number }],
+    ['group_key', { type: Number }],
     ['expanded', { type: Boolean }]
   ])
 
@@ -22,8 +22,8 @@ class RangeEditorGroup extends HTMLElement {
 
   get contentOption() {
     const { allContentOptions } = this;
-    const { ki } = this.elementState;
-    return allContentOptions[ki] || null;
+    const { group_key } = this.elementState;
+    return allContentOptions[group_key] || null;
   }
 
   get elementTemplate() {

@@ -1,3 +1,7 @@
+.inner {
+  margin-right: var(--gap-tiny);
+  margin-left: var(--gap-medium);
+}
 .full {
   grid-column: 1 / -1; 
   grid-row: 1 / -1;

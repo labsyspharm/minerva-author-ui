@@ -28,7 +28,6 @@ class PanelItem extends HTMLElement {
     const { collapseElement } = this.constructor; 
     const collapse = this.defineElement(collapseElement, {
       defaults: { ki: '' },
-      constants: { items }
     });
     const item_title = () => {
       return item.Properties.Name
@@ -77,14 +76,10 @@ class PanelItem extends HTMLElement {
           ${item_contents}
         </div>
           ${() => content_action}
-        </div>
       </div>
     `({
       accordion: true, ki,
-      expanded: () => {
-        // TODO: Note, must be from item, not from elementState?
-        return item.expanded;
-      },
+      expanded: '',
       class: () => {
         if (ki+1 == n_items) {
           return 'end';

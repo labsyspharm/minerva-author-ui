@@ -42,7 +42,12 @@ const to_group = (expanded, channels=[]) => {
       Name: lorem.sentence(1)
     },
     Associations: {
-      Channels: channels.map(({key}) => key)
+      Channels: channels.map((channel) => {
+        return {
+          ...channel,
+          State: { expanded: true }
+        }
+      })
     }
   }
 }
@@ -76,7 +81,7 @@ const to_metadata_config = () => {
       to_story(true, 3),
       to_story(false, 4)
     ],
-    "channels": channels,
+    "Channels": channels,
     "groups": [
       to_group(true, channels.slice(0,4)),
       to_group(true, channels.slice(4,8)),

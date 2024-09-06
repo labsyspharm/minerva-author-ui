@@ -5,4 +5,6 @@
   padding: var(--gap-tiny);
   border: var(--thin-border);
   border-image: var(--glass-gradient) 1 100%;
+  border-left: none;
+  border-top: none;
 }
