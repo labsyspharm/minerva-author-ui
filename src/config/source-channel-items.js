@@ -2,7 +2,7 @@ const sourceChannelItems = (element) => (
   class extends element {
     get itemSources () {
       const { metadata_config } = this.elementState;
-      const groups = metadata_config?.groups || {};
+      const groups = metadata_config?.Groups || {};
       const { group_key } = this.elementState;
       const { Channels }= groups[
         group_key 

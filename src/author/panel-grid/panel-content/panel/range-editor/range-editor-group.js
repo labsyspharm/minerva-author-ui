@@ -17,7 +17,7 @@ class RangeEditorGroup extends HTMLElement {
 
   get allContentOptions() {
     const { metadata_config } = this.elementState;
-    return metadata_config.groups;
+    return metadata_config.Groups;
   }
 
   get contentOption() {

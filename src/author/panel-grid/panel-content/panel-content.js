@@ -21,7 +21,7 @@ class PanelContent extends HTMLElement {
       const { tab } = this.elementState;
       if (tab == 'STORY-PANEL') {
         const { metadata_config } = this.elementState;
-        return metadata_config['name'];
+        return metadata_config.Name;
       }
       return nav_config[tab].description;
     }

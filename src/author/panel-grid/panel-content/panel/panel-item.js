@@ -48,13 +48,13 @@ class PanelItem extends HTMLElement {
               case 'STORY-DIALOG':
                 this.elementState.selections = [{
                   dialog: next_config.id,
-                  waypoint_key: item.key
+                  waypoint_key: item.UUID
                 }]
                 break;
               case 'GROUP-DIALOG':
                 this.elementState.selections = [{
                   dialog: next_config.id,
-                  group_key: item.key
+                  group_key: item.UUID
                 }]
                 break;
             }

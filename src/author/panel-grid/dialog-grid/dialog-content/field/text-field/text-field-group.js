@@ -5,7 +5,7 @@ class TextFieldGroup extends TextField {
 
   get allContentOptions() {
     const { metadata_config } = this.elementState;
-    return metadata_config.groups;
+    return metadata_config.Groups;
   }
 
   get contentOption() {
@@ -15,7 +15,7 @@ class TextFieldGroup extends TextField {
       return x.dialog == 'GROUP-DIALOG';
     }) || { };
     return allContentOptions.find(x => {
-      return x.key == group_key
+      return x.UUID == group_key
     }) || null;
   }
 

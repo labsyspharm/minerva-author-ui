@@ -10,7 +10,7 @@ class MDViewerStory extends MDEditor {
 
   get allContentOptions() {
     const { metadata_config } = this.elementState;
-    return metadata_config.stories;
+    return metadata_config.Stories;
   }
 
   get contentOptions() {

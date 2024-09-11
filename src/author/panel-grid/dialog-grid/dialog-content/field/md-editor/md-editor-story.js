@@ -5,7 +5,7 @@ class MDEditorStory extends MDEditor {
 
   get allContentOptions() {
     const { metadata_config } = this.elementState;
-    return metadata_config.stories;
+    return metadata_config.Stories;
   }
 
   get contentOptions() {
@@ -15,7 +15,7 @@ class MDEditorStory extends MDEditor {
       return x.dialog == 'STORY-DIALOG';
     }) || { };
     return allContentOptions.find(x => {
-      return x.key == waypoint_key
+      return x.UUID == waypoint_key
     }) || null;
   }
 }

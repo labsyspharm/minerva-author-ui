@@ -1,7 +1,7 @@
 const sourceGroupItems = (element) => (
   class extends element {
     get itemSources () {
-      return this.elementState.metadata_config?.groups;
+      return this.elementState.metadata_config?.Groups;
     }
   }
 )

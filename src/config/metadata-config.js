@@ -17,18 +17,18 @@ const lorem = new foobarIpsum({
 
 const to_image = () => {
   // TODO
-  return { key: new UUID().uuid };
+  return { UUID: new UUID().uuid };
 }
 
 const to_channel = (image, index) => {
   return {
-    key: new UUID().uuid,
+    UUID: new UUID().uuid,
     Properties: {
       Name: lorem.sentence(1), PixelType: 'UINT16',
       LowerRange: 0, UpperRange: 65535
     },
     Associations: {
-      SourceImage: image.key,
+      SourceImage: image.UUID,
       SourceIndex: index
     }
   }
@@ -36,8 +36,7 @@ const to_channel = (image, index) => {
 
 const to_group = (expanded, channels=[]) => {
   return {
-    expanded,
-    key: new UUID().uuid,
+    UUID: new UUID().uuid,
     Properties: {
       Name: lorem.sentence(1)
     },
@@ -45,22 +44,27 @@ const to_group = (expanded, channels=[]) => {
       Channels: channels.map((channel) => {
         return {
           ...channel,
-          State: { expanded: true }
+          State: { Expanded: true }
         }
       })
+    },
+    State: {
+      Expanded: expanded
     }
   }
 }
 
 const to_story = (expanded, length=1) => {
   return {
-    expanded,
-    key: new UUID().uuid,
+    UUID: new UUID().uuid,
     Properties: {
       Name: lorem.sentence(3),
       Content: [...new Array(length)].map(() => {
         return lorem.paragraph()
       }).join('\n\n')
+    },
+    State: {
+      Expanded: expanded
     }
   }
 }
@@ -74,15 +78,15 @@ const to_metadata_config = () => {
     (_, i) => to_channel(image, i)
   );
   return {
-    "name": "Example Story",
-    "stories": [
+    "Name": "Example Story",
+    "Stories": [
       to_story(true, 1),
       to_story(false, 2),
       to_story(true, 3),
       to_story(false, 4)
     ],
     "Channels": channels,
-    "groups": [
+    "Groups": [
       to_group(true, channels.slice(0,4)),
       to_group(true, channels.slice(4,8)),
       to_group(false, channels.slice(8,16)),
@@ -93,4 +97,5 @@ const to_metadata_config = () => {
 
 const metadata_config = to_metadata_config();
 
+console.log(metadata_config);
 export { metadata_config }
