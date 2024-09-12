@@ -1,15 +1,35 @@
-.inner {
-  margin-right: var(--gap-tiny);
-  margin-left: var(--gap-medium);
-}
 .full {
+  margin-right: var(--gap-small);
   grid-column: 1 / -1; 
   grid-row: 1 / -1;
 }
+.full.histogram.placeholder {
+  background: url(histogram-placeholder.png) 0% 0% no-repeat; 
+  background-position: left -400px top 0px;
+  background-size: 1600px 200px;
+  height: 100px;
+  width: 400px;
+  filter: invert(1) brightness(200%) grayscale(100%);
+  mix-blend-mode: lighten;
+}
+.full.histogram.placeholder.i1 {
+  background-position: left -400px top -100px;
+}
+.full.histogram.placeholder.i2 {
+  background-position: left -800px top 0px;
+}
+.full.histogram.placeholder.i3 {
+  background-position: left -800px top -100px;
+}
+.full.histogram.placeholder.i4 {
+  background-position: left -1200px top 0px;
+}
+.full.histogram.placeholder.i5 {
+  background-position: left -1200px top -100px;
+}
 .full.text {
-  padding-bottom: var(--gap-medium);
-  padding-right: var(--gap-small);
   padding-left: var(--gap-small);
+  padding-bottom: var(--gap-medium);
 }
 .full.actions > button {
   padding: 0px;
@@ -23,4 +43,26 @@
 }
 .end[expanded] {
   border-radius: 0;
+}
+[slot=heading].one-line {
+  align-items: center;
+}
+[slot=heading] {
+  grid-template-columns: auto 1fr;
+  padding-left: var(--gap-small);
+  padding-top: var(--gap-tiny);
+  align-items: start;
+  .grid {
+    gap: var(--gap-small);
+    .flex.wrap {
+      gap: var(--gap-tiny);
+    }
+  }
+}
+.item {
+  padding: var(--gap-tiny);
+  padding-left: var(--gap-small);
+  padding-right: var(--gap-small);
+  border-radius: var(--radius-button-1111);
+  border: var(--thin-glass-border);
 }

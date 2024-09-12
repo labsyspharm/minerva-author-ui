@@ -1,4 +1,5 @@
 import { toElement } from '../../../../../lib/elements';
+import rangeEditorGroupCSS from './range-editor-group.css' assert { type: 'css' };
 import UI5Slider from '@ui5/webcomponents/dist/RangeSlider.js';
 
 class RangeSlider extends UI5Slider {
@@ -9,6 +10,10 @@ class RangeSlider extends UI5Slider {
 
 class RangeEditorGroup extends HTMLElement {
   static name = 'range-editor-group'
+
+  static get _styleSheet() {
+    return rangeEditorGroupCSS;
+  }
 
   static elementProperties = new Map([
     ['group_key', { type: Number }],
@@ -31,13 +36,11 @@ class RangeEditorGroup extends HTMLElement {
       RangeSlider, { }
     )
     const rangeInput = toElement(rangeInputElement)``();
-    const expanded = () => {
-      const { expanded } = this.elementState;
-      return expanded ? 'ok' : 'no';
-    }
     return toElement('div')`${
       rangeInput
-    }`({});
+    }`({
+      class: 'grid'
+    });
   }
 }
 

@@ -23,15 +23,12 @@ class PanelItem extends HTMLElement {
     const { ki, tab, nav_config } = this.elementState;
     const items = this.itemSources;
     const n_items = items.length;
-    const item = items[ki];
+    const { UUID } = items[ki];
     const actions = nav_config[tab].actions || [];
     const { collapseElement } = this.constructor; 
     const collapse = this.defineElement(collapseElement, {
       defaults: { ki: '' },
     });
-    const item_title = () => {
-      return item.Properties.Name
-    }
     const item_contents = () => {
       return this.itemContents;
     }
@@ -48,13 +45,13 @@ class PanelItem extends HTMLElement {
               case 'STORY-DIALOG':
                 this.elementState.selections = [{
                   dialog: next_config.id,
-                  waypoint_key: item.UUID
+                  waypoint_key: UUID
                 }]
                 break;
               case 'GROUP-DIALOG':
                 this.elementState.selections = [{
                   dialog: next_config.id,
-                  group_key: item.UUID
+                  group_key: UUID
                 }]
                 break;
             }
@@ -70,7 +67,9 @@ class PanelItem extends HTMLElement {
       ({ slot }) => slot == 'content'
     ));
     return toElement(collapse)`
-      <p slot="heading">${item_title}</p>
+      <div class="grid" slot="heading">
+        ${() => this.itemHeading}
+      </div>
       <div slot="content">
         <div class="full text">
           ${item_contents}
@@ -87,6 +86,13 @@ class PanelItem extends HTMLElement {
         return ''
       }
     });
+  }
+
+  get itemHeading() {
+    const { ki } = this.elementState;
+    const items = this.itemSources;
+    const item = items[ki];
+    return item?.Properties.Name
   }
 
   get itemContents() {

@@ -43,12 +43,18 @@ class PanelItemGroup extends sourceGroupItems(PanelItem) {
       const item_title = () => {
         return channel.Properties.Name;
       };
+      const placeholder = () => {
+        return `full histogram placeholder i${key%6}`;
+      }
       return toElement(collapseChannel)`
-        <p slot="heading">${item_title}</p>
-        <div slot="content">
-          <div class="full text">
-            ${rangeEditor}
+        <div class="grid one-line" slot="heading">
+          <div class="item">
+            ${item_title}
           </div>
+          ${rangeEditor}
+        </div>
+        <div slot="content" class="center grid">
+          <div class="${placeholder}"></div>
         </div>
       `({
         accordion: true,
@@ -60,6 +66,67 @@ class PanelItemGroup extends sourceGroupItems(PanelItem) {
     return toElement('div')`${channels}`();
   }
 
+  get itemHeading () {
+    const { ki: group_key } = this.elementState;
+    const expanded = CollapseGroup.is_expanded_item(
+      this.itemSources[group_key]
+    )
+    const itemTitle = () => {
+      return toElement('div')`${super.itemHeading}`();
+    }
+    const itemHeadings = () => {
+      if (expanded) {
+        return [];
+      }
+      return this.itemKeysForChannels.map(key => {
+        const channel = this.itemSourcesForChannels[key];
+        return toElement('div')`
+          ${channel.Properties.Name}
+        `({
+          class: 'flex item', key
+        });
+      })
+    }
+    const flex = () => {
+      return toElement('div')`${itemHeadings}`({
+        class: 'flex wrap'
+      });
+    }
+    return toElement('div')`${itemTitle}${flex}`({
+      class: 'grid'
+    })
+  }
+
+  get itemHeading () {
+    const { ki: group_key } = this.elementState;
+    const expanded = CollapseGroup.is_expanded_item(
+      this.itemSources[group_key]
+    )
+    const itemTitle = () => {
+      return toElement('div')`${super.itemHeading}`();
+    }
+    const itemHeadings = () => {
+      if (expanded) {
+        return [];
+      }
+      return this.itemKeysForChannels.map(key => {
+        const channel = this.itemSourcesForChannels[key];
+        return toElement('div')`
+          ${channel.Properties.Name}
+        `({
+          class: 'flex item', key
+        });
+      })
+    }
+    const flex = () => {
+      return toElement('div')`${itemHeadings}`({
+        class: 'flex wrap'
+      });
+    }
+    return toElement('div')`${itemTitle}${flex}`({
+      class: 'grid'
+    })
+  }
 }
 
 export { PanelItemGroup }

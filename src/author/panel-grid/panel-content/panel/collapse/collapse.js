@@ -13,14 +13,20 @@ class Collapse extends A11yCollapse {
     return collapseCSS;
   }
 
+  static is_expanded_item(item) {
+    return item?.State.Expanded || false;
+  }
+
   get itemSources () {
     return []; // Defined in derived classes
   }
 
   get expanded () {
-    const { ki } = this.elementState;
     const items = this.itemSources;
-    return items[ki]?.State.Expanded || false;
+    const { ki } = this.elementState;
+    return (
+      this.constructor.is_expanded_item(items[ki])
+    );
   }
 
   set expanded (v) {

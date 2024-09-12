@@ -43,18 +43,21 @@
   --gap-tiny: var(--theme-gap-tiny, 0.3em);
   --gap-small: calc(var(--gap-tiny) * 2);
   --gap-medium: calc(var(--gap-tiny) * 3);
+  --thin: 1px;
   --radius-outer-0010: 0 0 20px 0;
   --radius-inner-0010: 0 0 12px 0;
   --padding-border-0110: 0 8px 8px 0;
+  --expanded-item-inset-height: 25px;
   --floating-box-shadow: 0px 4px 16px 4px black;
   --radius-panel-0011: 0 0 var(--gap-small) var(--gap-small);
   --radius-tab-1100: var(--gap-small) var(--gap-small) 0 0;
   --radius-notice-1111: var(--gap-medium);
   --radius-button-1111: var(--gap-small);
   --radius-field-1111: var(--gap-tiny);
-  --thin-border: 1px solid var(--glass-edge);
-  --thin-glass-border: 1px solid var(--glass-edge);
-  --thin-white-shadow: inset 0em -1px var(--glass-edge);
+  --thin-border: var(--thin) solid var(--glass-edge);
+  --thin-glass-border: var(--thin) solid var(--glass-edge);
+  --thin-white-shadow: 
+    inset 0em calc(var(--thin) * -1) var(--glass-edge);
   --white-highlight: inset 1.0px 1.0px 1.0px var(--glass-edge);
   --glass-gradient: linear-gradient(
     to bottom in xyz, var(--glass-edge), transparent 
@@ -69,6 +72,10 @@
 }
 .contents {
   display: contents;
+}
+.flex.wrap {
+	display: flex;
+	flex-wrap: wrap;
 }
 .grid {
   display: grid;

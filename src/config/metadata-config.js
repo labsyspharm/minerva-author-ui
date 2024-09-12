@@ -44,7 +44,7 @@ const to_group = (expanded, channels=[]) => {
       Channels: channels.map((channel) => {
         return {
           ...channel,
-          State: { Expanded: true }
+          State: { Expanded: false }
         }
       })
     },

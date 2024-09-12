@@ -26,14 +26,14 @@
     cursor: pointer;
     color: inherit;
   }
-  div#heading {
-    padding-left: var(--gap-small);
-  }
   div#content {
     border-top: none;
     transition: transform 0s ease 0s;
     border: var(--thin-glass-border);
     border-image: var(--glass-gradient) 1 100%;
+  }
+  div#heading {
+    align-items: start;
   }
 }
 

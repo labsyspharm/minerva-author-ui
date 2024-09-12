@@ -1,10 +1,15 @@
 import { toElement } from '../../../../lib/elements';
+import panelCSS from './panel.css' assert { type: 'css' };
 import { PanelItem } from './panel-item';
 
 class Panel extends HTMLElement {
 
   static name = 'panel'
   static itemElement = PanelItem 
+
+  static get _styleSheet() {
+    return panelCSS;
+  }
 
   static elementProperties = new Map([
     ['ki', { type: Number }]

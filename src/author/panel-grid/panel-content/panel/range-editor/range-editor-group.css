@@ -1,0 +1,100 @@
+:host {
+  --_ui5-v2-2-0_slider_handle_border_radius: var(
+    --radius-button-1111
+  );
+  --_ui5-v2-2-0_slider_handle_border: var(
+    --thin-border
+  );
+  --_ui5-v2-2-0_slider_handle_focus_border: var(
+    --thin-border
+  );
+  --sapContent_Selected_ForegroundColor: var(
+    --light-contrast-color
+  );
+  --_ui5-v2-2-0_range_slider_handle_background: var(
+    --dark-focus-color
+  );
+  --sapSlider_RangeHandleBackground: var(
+    --dark-focus-color
+  );
+  --_ui5-v2-2-0_range_slider_handle_background_focus: var(
+    --light-focus-color
+  );
+  --_ui5-v2-2-0_range_slider_handle_active_background: var(
+    --light-focus-color
+  );
+  --_ui5-v2-2-0_range_slider_handle_background: var(
+    --dim-gray-color
+  );
+  --_ui5-v2-2-0_range_slider_root_hover_handle_bg: var(
+    --dark-main-color
+  );
+  --_ui5-v2-2-0_range_slider_handle_color: var(
+    --light-contrast-color
+  );
+  --_ui5-v2-2-0_slider_progress_background: var(
+    --glass-edge
+  );
+  --_ui5-v2-2-0_slider_padding: 0 25px 0 25px;
+  --_ui5-v2-2-0_slider_inner_height: var(--thin);
+  --_ui5-v2-2-0_slider_handle_width: 1em;
+  --_ui5-v2-2-0_slider_handle_height: calc(var(
+    --expanded-item-inset-height
+  ) + 2*var(
+    --thin
+  ));
+  --_ui5-v2-2-0_slider_progress_height: var(
+    --expanded-item-inset-height
+  );
+  --_ui5-v2-2-0_slider_active_progress_top: calc(-0.5*var(
+    --expanded-item-inset-height
+  ));
+  --_ui5-v2-2-0_slider_handle_top: calc(-0.5*var(
+    --expanded-item-inset-height
+  ));
+  --_ui5-v2-2-0_range_slider_active_handle_icon_display: block;
+  --_ui5-v2-2-0_range_slider_root_active_handle_icon_display: block; 
+  --_ui5-v2-2-0_slider_progress_before_background: none;
+  --_ui5-v2-2-0_slider_progress_after_background: none;
+
+}
+
+::part(progress-bar)::before {
+  width: 100%;
+  position: relative;
+  display: block;
+  border-top: var(
+    --thin-border
+  );
+  background-color: var(--dim-gray-color);
+  height: calc(0.25*var(
+    --expanded-item-inset-height
+  ));
+  top: 0px;
+  content: '';
+  left: 0px;
+}
+::part(progress-bar)::after {
+  width: 100%;
+  position: relative;
+  display: block;
+  border-bottom: var(
+    --thin-border
+  );
+  background-color: var(--dim-gray-color);
+  height: calc(0.25*var(
+    --expanded-item-inset-height
+  ));
+  top: calc(0.5*var(
+    --expanded-item-inset-height
+  ));
+  content: '';
+  left: 0px;
+}
+::part(root-container) {
+  height: auto;
+}
+::part(handle) {
+  border-right: none; 
+  border-left: none; 
+}
