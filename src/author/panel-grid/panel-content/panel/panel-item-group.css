@@ -1,0 +1,24 @@
+.full.histogram.placeholder {
+  background: url(histogram-placeholder.png) 0% 0% no-repeat; 
+  background-position: left -400px top 0px;
+  background-size: 1600px 200px;
+  height: 100px;
+  width: 400px;
+  filter: invert(1) brightness(200%) grayscale(100%);
+  mix-blend-mode: lighten;
+}
+.full.histogram.placeholder.i1 {
+  background-position: left -400px top -100px;
+}
+.full.histogram.placeholder.i2 {
+  background-position: left -800px top 0px;
+}
+.full.histogram.placeholder.i3 {
+  background-position: left -800px top -100px;
+}
+.full.histogram.placeholder.i4 {
+  background-position: left -1200px top 0px;
+}
+.full.histogram.placeholder.i5 {
+  background-position: left -1200px top -100px;
+}

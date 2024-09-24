@@ -63,7 +63,7 @@ class DialogContent extends HTMLElement {
       });
       return toElement(form)`
         ${() => fields}
-        <div class='start left grid'>
+        <div class='start left grid menu'>
           ${() => actions}
         </div>
       `({});

@@ -4,7 +4,7 @@ const sourceChannelItems = (element) => (
       const { metadata_config } = this.elementState;
       const groups = metadata_config?.Groups || {};
       const { group_key } = this.elementState;
-      const { Channels }= groups[
+      const { Channels } = groups[
         group_key 
       ]?.Associations || {};
       return Channels || [];

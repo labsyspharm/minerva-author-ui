@@ -20,15 +20,20 @@ const to_image = () => {
   return { UUID: new UUID().uuid };
 }
 
-const to_channel = (image, index) => {
+const to_channel = (image, data_type, index) => {
   return {
     UUID: new UUID().uuid,
     Properties: {
-      Name: lorem.sentence(1), PixelType: 'UINT16',
+      Name: lorem.sentence(1),
       LowerRange: 0, UpperRange: 65535
     },
     Associations: {
-      SourceImage: image.UUID,
+      SourceDataType: {
+        UUID: data_type.UUID,
+      },
+      SourceImage: {
+        UUID: image.UUID,
+      },
       SourceIndex: index
     }
   }
@@ -72,10 +77,17 @@ const to_story = (expanded, length=1) => {
 const to_metadata_config = () => {
   const image = to_image();
   const n_channels = 24;
+  const data_type = {
+    UUID: new UUID().uuid,
+    Properties: {
+      LowerRange: 0,
+      UpperRange: 65535
+    }
+  }
   const channels = [
     ...new Array(n_channels).keys()
   ].map(
-    (_, i) => to_channel(image, i)
+    (_, i) => to_channel(image, data_type, i)
   );
   return {
     "Name": "Example Story",
@@ -91,7 +103,9 @@ const to_metadata_config = () => {
       to_group(true, channels.slice(4,8)),
       to_group(false, channels.slice(8,16)),
       to_group(false, channels.slice(16,24))
-    ]
+    ],
+    "Images": [ image ],
+    "DataTypes": [ data_type ]
   };
 }
 

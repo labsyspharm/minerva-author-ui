@@ -1,4 +1,7 @@
 :host {
+  --handle-width: 2em;
+  --slider-height: calc(100% - 2*var(--thin));
+  --_ui5-v2-2-0_slider_progress_container_background: none;
   --_ui5-v2-2-0_slider_handle_border_radius: var(
     --radius-button-1111
   );
@@ -36,40 +39,33 @@
     --glass-edge
   );
   --_ui5-v2-2-0_slider_padding: 0 25px 0 25px;
-  --_ui5-v2-2-0_slider_inner_height: var(--thin);
-  --_ui5-v2-2-0_slider_handle_width: 1em;
-  --_ui5-v2-2-0_slider_handle_height: calc(var(
-    --expanded-item-inset-height
-  ) + 2*var(
-    --thin
-  ));
-  --_ui5-v2-2-0_slider_progress_height: var(
-    --expanded-item-inset-height
-  );
-  --_ui5-v2-2-0_slider_active_progress_top: calc(-0.5*var(
-    --expanded-item-inset-height
-  ));
-  --_ui5-v2-2-0_slider_handle_top: calc(-0.5*var(
-    --expanded-item-inset-height
-  ));
+  --_ui5-v2-2-0_slider_handle_width: var(--handle-width);
+  --_ui5-v2-2-0_slider_handle_height: var(--slider-height); 
+  --_ui5-v2-2-0_slider_progress_height: var(--slider-height);
+  --_ui5-v2-2-0_slider_inner_height: var(--slider-height);
+  --_ui5-v2-2-0_slider_active_progress_top: 0px;
+  --_ui5-v2-2-0_slider_handle_top: 0px; 
   --_ui5-v2-2-0_range_slider_active_handle_icon_display: block;
   --_ui5-v2-2-0_range_slider_root_active_handle_icon_display: block; 
   --_ui5-v2-2-0_slider_progress_before_background: none;
   --_ui5-v2-2-0_slider_progress_after_background: none;
-
+  width: 100%;
+  height: 100%;
 }
-
+.full.grid {
+  width: 100%;
+  height: 100%;
+}
+::part(progress-bar) {
+  opacity: 50%;
+}
 ::part(progress-bar)::before {
   width: 100%;
   position: relative;
   display: block;
-  border-top: var(
-    --thin-border
-  );
+  border-top: var(--thin-border);
   background-color: var(--dim-gray-color);
-  height: calc(0.25*var(
-    --expanded-item-inset-height
-  ));
+  height: var(--gap-medium);
   top: 0px;
   content: '';
   left: 0px;
@@ -78,21 +74,16 @@
   width: 100%;
   position: relative;
   display: block;
-  border-bottom: var(
-    --thin-border
-  );
+  border-bottom: var(--thin-border);
   background-color: var(--dim-gray-color);
-  height: calc(0.25*var(
-    --expanded-item-inset-height
-  ));
-  top: calc(0.5*var(
-    --expanded-item-inset-height
-  ));
+  top: calc(100% - 2*var(--gap-medium));
+  height: var(--gap-medium);
   content: '';
   left: 0px;
 }
 ::part(root-container) {
-  height: auto;
+  height: 100%;
+  width: 100%;
 }
 ::part(handle) {
   border-right: none; 
