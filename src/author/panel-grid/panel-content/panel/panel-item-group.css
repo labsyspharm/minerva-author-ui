@@ -7,6 +7,9 @@
   filter: invert(1) brightness(200%) grayscale(100%);
   mix-blend-mode: lighten;
 }
+.one-line {
+  height: 100%;
+}
 .full.histogram.placeholder.i1 {
   background-position: left -400px top -100px;
 }

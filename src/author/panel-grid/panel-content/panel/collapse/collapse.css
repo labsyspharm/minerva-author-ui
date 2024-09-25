@@ -33,7 +33,13 @@
     border-image: var(--glass-gradient) 1 100%;
   }
   div#heading {
-    align-items: start;
+    align-items: stretch;
+    grid-template-columns: 1fr auto;
+    grid-template-rows: 1fr;
+    display: grid;
+    height: 100%;
+    div#text {
+    }
   }
 }
 
