@@ -111,5 +111,4 @@ const to_metadata_config = () => {
 
 const metadata_config = to_metadata_config();
 
-console.log(metadata_config);
 export { metadata_config }

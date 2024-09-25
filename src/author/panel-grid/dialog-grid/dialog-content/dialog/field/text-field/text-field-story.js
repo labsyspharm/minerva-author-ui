@@ -1,4 +1,4 @@
-import { TextField } from '../../../../../text-field/text-field'
+import { TextField } from '../../../../../../text-field/text-field';
 
 class TextFieldStory extends TextField {
   static name = 'text-field-story'

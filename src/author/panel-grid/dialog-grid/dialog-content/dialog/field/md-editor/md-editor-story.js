@@ -1,4 +1,4 @@
-import { MDEditor } from '../../../../md-editor/md-editor'
+import { MDEditor } from '../../../../../md-editor/md-editor'
 
 class MDEditorStory extends MDEditor {
   static name = 'md-editor-story'

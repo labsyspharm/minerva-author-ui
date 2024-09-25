@@ -88,4 +88,5 @@
 ::part(handle) {
   border-right: none; 
   border-left: none; 
+  z-index: auto;
 }
