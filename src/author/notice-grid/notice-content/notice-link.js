@@ -38,7 +38,7 @@ class NoticeLink extends Notice {
       })
     });
     return toElement('div')`
-      <h2>${() => config.notice}</h2>
+      <h2>${() => config.title}</h2>
       ${this.iconTemplate} 
       ${() => fields}
       ${() => actions}

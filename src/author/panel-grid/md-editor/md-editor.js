@@ -66,8 +66,7 @@ class MDEditor extends HTMLElement {
           openLinkNotice: () => {
             this.elementState.notice = 'LINK-NOTICE'
             this.elementState.selections.push({
-              notice: 'LINK-NOTICE',
-              url: 'https://'
+              role: 'notice', url: 'https://'
             });
           }
         }
@@ -99,7 +98,7 @@ class MDEditor extends HTMLElement {
   closeLinkNotice(view) {
     const { elementState } = this;
     const selection = elementState.selections.find(
-      v => ('notice' in v && 'url' in v)
+      v => (v.role == 'notice' && 'url' in v)
     )
     if (selection == null || !view) {
       return;

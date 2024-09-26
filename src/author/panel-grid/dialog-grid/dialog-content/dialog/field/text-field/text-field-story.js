@@ -1,6 +1,10 @@
 import { TextField } from '../../../../../../text-field/text-field';
+import { sourceStoryItems } from '../../../../../../../config/source-story-items'
+import { sourceItemSelection } from '../../../../../../../config/source-item-selection'
 
-class TextFieldStory extends TextField {
+class TextFieldStory extends sourceItemSelection(
+    sourceStoryItems(TextField)
+) {
   static name = 'text-field-story'
 
   get allContentOptions() {
@@ -8,25 +12,14 @@ class TextFieldStory extends TextField {
     return metadata_config.Stories;
   }
 
-  get contentOption() {
-    const { allContentOptions } = this;
-    const { selections } = this.elementState;
-    const { item_key } = selections.find(x => {
-      return x.dialog == 'STORY-DIALOG';
-    }) || { };
-    return allContentOptions.find(x => {
-      return x.UUID == item_key
-    }) || null;
-  }
-
   get value() {
-    const { contentOption: waypoint } = this;
+    const { itemSource: waypoint } = this;
     const { property } = this.elementState;
     return waypoint?.Properties[property] || '';
   }
 
   set value(v) {
-    const { contentOption: waypoint } = this;
+    const { itemSource: waypoint } = this;
     const { property } = this.elementState;
     waypoint.Properties[property] = v;
   }

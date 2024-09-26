@@ -40,10 +40,11 @@ class PanelItem extends HTMLElement {
           const { tab, tab_dialogs } = this.elementState;
           const dialog = tab_dialogs[tab];
           const { UUID } = items[item_key];
+          console.log(tab, dialog, item_key, UUID);
           if (dialog) {
-          this.elementState.dialog = dialog;
+            this.elementState.dialog = dialog;
             this.elementState.selections = [{
-              dialog, item_key: UUID
+              role: 'dialog', item_key: UUID
             }]
           }
         },

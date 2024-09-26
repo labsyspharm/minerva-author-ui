@@ -1,32 +1,20 @@
 import { TextField } from '../../../../../../text-field/text-field'
+import { sourceGroupItems } from '../../../../../../../config/source-group-items'
+import { sourceItemSelection } from '../../../../../../../config/source-item-selection'
 
-class TextFieldGroup extends TextField {
+class TextFieldGroup extends sourceItemSelection(
+    sourceGroupItems(TextField)
+) {
   static name = 'text-field-group'
 
-  get allContentOptions() {
-    const { metadata_config } = this.elementState;
-    return metadata_config.Groups;
-  }
-
-  get contentOption() {
-    const { allContentOptions } = this;
-    const { selections } = this.elementState;
-    const { item_key } = selections.find(x => {
-      return x.dialog == 'GROUP-DIALOG';
-    }) || { };
-    return allContentOptions.find(x => {
-      return x.UUID == item_key
-    }) || null;
-  }
-
   get value() {
-    const { contentOption: group } = this;
+    const { itemSource: group } = this;
     const { property } = this.elementState;
     return group?.Properties[property] || '';
   }
 
   set value(v) {
-    const { contentOption: group } = this;
+    const { itemSource: group } = this;
     const { property } = this.elementState;
     group.Properties[property] = v;
   }
