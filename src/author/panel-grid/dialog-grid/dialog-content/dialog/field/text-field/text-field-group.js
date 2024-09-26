@@ -11,11 +11,11 @@ class TextFieldGroup extends TextField {
   get contentOption() {
     const { allContentOptions } = this;
     const { selections } = this.elementState;
-    const { group_key } = selections.find(x => {
+    const { item_key } = selections.find(x => {
       return x.dialog == 'GROUP-DIALOG';
     }) || { };
     return allContentOptions.find(x => {
-      return x.UUID == group_key
+      return x.UUID == item_key
     }) || null;
   }
 

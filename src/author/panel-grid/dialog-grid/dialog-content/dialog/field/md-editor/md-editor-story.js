@@ -1,21 +1,17 @@
 import { MDEditor } from '../../../../../md-editor/md-editor'
+import { sourceStoryItems } from '../../../../../../../config/source-story-items'
 
-class MDEditorStory extends MDEditor {
+class MDEditorStory extends sourceStoryItems(MDEditor) {
   static name = 'md-editor-story'
 
-  get allContentOptions() {
-    const { metadata_config } = this.elementState;
-    return metadata_config.Stories;
-  }
-
-  get contentOptions() {
-    const { allContentOptions } = this;
+  get itemSource() {
+    const { itemSources } = this;
     const { selections } = this.elementState;
-    const { waypoint_key } = selections.find(x => {
+    const { item_key } = selections.find(x => {
       return x.dialog == 'STORY-DIALOG';
     }) || { };
-    return allContentOptions.find(x => {
-      return x.UUID == waypoint_key
+    return itemSources.find(x => {
+      return x.UUID == item_key
     }) || null;
   }
 }

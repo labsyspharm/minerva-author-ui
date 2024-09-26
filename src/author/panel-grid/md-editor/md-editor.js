@@ -123,25 +123,22 @@ class MDEditor extends HTMLElement {
   }
 
   get contentValue() {
-    return this.contentOptions.Properties[
+    const { Properties } = this.itemSource || {};
+    return (Properties || {})[
       this.elementState.property
     ] || '';
   }
 
   set contentValue(v) {
     const { property } = this.elementState;
-    const { Properties } = this.contentOptions || {};
+    const { Properties } = this.itemSource || {};
     if (Properties && property in Properties) {
       Properties[property] = v;
     }
   }
 
-  get allContentOptions() {
-    return [];
-  }
-
-  contentOptions() {
-    return null;
+  itemSource() {
+    return null; // Defined in derived classes
   }
 
   attributeChangedCallback(k, old_v, v) {

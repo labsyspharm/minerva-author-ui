@@ -12,7 +12,7 @@ class PanelItem extends HTMLElement {
   }
 
   static elementProperties = new Map([
-    ['ki', { type: Number }]
+    ['item_key', { type: Number }]
   ])
 
   get itemSources () {
@@ -20,14 +20,13 @@ class PanelItem extends HTMLElement {
   }
 
   get elementTemplate() {
-    const { ki, tab, nav_config } = this.elementState;
+    const { item_key, tab, nav_config } = this.elementState;
     const items = this.itemSources;
     const n_items = items.length;
-    const { UUID } = items[ki];
     const actions = nav_config[tab].actions || [];
     const { collapseElement } = this.constructor; 
     const collapse = this.defineElement(collapseElement, {
-      defaults: { ki: '' },
+      defaults: { item_key: '' },
     });
     const item_contents = () => {
       return this.itemContents;
@@ -40,20 +39,12 @@ class PanelItem extends HTMLElement {
         '@click': () => {
           const { tab, tab_dialogs } = this.elementState;
           const dialog = tab_dialogs[tab];
+          const { UUID } = items[item_key];
           if (dialog) {
-            this.elementState.dialog = dialog;
-            switch (dialog) {
-              case 'STORY-DIALOG':
-                this.elementState.selections = [{
-                  dialog, waypoint_key: UUID
-                }]
-                break;
-              case 'GROUP-DIALOG':
-                this.elementState.selections = [{
-                  dialog, group_key: UUID
-                }]
-                break;
-            }
+          this.elementState.dialog = dialog;
+            this.elementState.selections = [{
+              dialog, item_key: UUID
+            }]
           }
         },
         class: 'button',
@@ -76,10 +67,10 @@ class PanelItem extends HTMLElement {
           ${() => content_action}
       </div>
     `({
-      accordion: true, ki,
+      accordion: true, item_key,
       expanded: '',
       class: () => {
-        if (ki+1 == n_items) {
+        if (item_key+1 == n_items) {
           return 'end';
         }
         return ''
@@ -88,15 +79,15 @@ class PanelItem extends HTMLElement {
   }
 
   get itemHeading() {
-    const { ki } = this.elementState;
+    const { item_key } = this.elementState;
     const items = this.itemSources;
-    const item = items[ki];
+    const item = items[item_key];
     return item?.Properties.Name
   }
 
   get itemContents() {
-    const { ki, items } = this.elementState;
-    return items[ki].content.split('\n').map(text => {
+    const { item_key, items } = this.elementState;
+    return items[item_key].content.split('\n').map(text => {
       return toElement('p')`${() => text}`({});
     });
   }

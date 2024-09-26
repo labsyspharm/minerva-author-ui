@@ -23,17 +23,17 @@ class Collapse extends A11yCollapse {
 
   get expanded () {
     const items = this.itemSources;
-    const { ki } = this.elementState;
+    const { item_key } = this.elementState;
     return (
-      this.constructor.is_expanded_item(items[ki])
+      this.constructor.is_expanded_item(items[item_key])
     );
   }
 
   set expanded (v) {
-    const { ki } = this.elementState;
+    const { item_key } = this.elementState;
     const items = this.itemSources;
-    if (items && ki in items) {
-      items[ki].State.Expanded = v;
+    if (items && item_key in items) {
+      items[item_key].State.Expanded = v;
       this.requestUpdate();
     }
     return true;

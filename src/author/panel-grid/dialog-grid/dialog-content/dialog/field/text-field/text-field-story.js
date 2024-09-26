@@ -11,11 +11,11 @@ class TextFieldStory extends TextField {
   get contentOption() {
     const { allContentOptions } = this;
     const { selections } = this.elementState;
-    const { waypoint_key } = selections.find(x => {
+    const { item_key } = selections.find(x => {
       return x.dialog == 'STORY-DIALOG';
     }) || { };
     return allContentOptions.find(x => {
-      return x.UUID == waypoint_key
+      return x.UUID == item_key
     }) || null;
   }
 

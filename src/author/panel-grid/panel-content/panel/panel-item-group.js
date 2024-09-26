@@ -25,37 +25,37 @@ class PanelItemGroup extends sourceGroupItems(PanelItem) {
   }
 
   get itemSourcesForChannels () {
-    const { ki: group_key } = this.elementState;
-    const { Associations } = this.itemSources[group_key];
+    const { item_key } = this.elementState;
+    const { Associations } = this.itemSources[item_key];
     return Associations.Channels;
   }
 
   get itemContents() {
-    const { ki: group_key } = this.elementState;
+    const { item_key } = this.elementState;
     const rangeEditorElement = this.defineElement(
       RangeEditorChannel, {
-        defaults: { group_key: '', channel_key: '' },
+        defaults: { item_key: '', group_key: '' },
         attributes: [ 'dialog' ]
       }
     );
     const collapseChannel = this.defineElement(
       CollapseChannel, {
-        defaults: { ki: '', group_key: '' }
+        defaults: { item_key: '', group_key: '' }
       }
     );
-    const channels = this.itemKeysForChannels.map(key => {
-      const channel = this.itemSourcesForChannels[key];
+    const channels = this.itemKeysForChannels.map(channel_key => {
+      const channel = this.itemSourcesForChannels[channel_key];
       const item_title = () => {
         return channel.Properties.Name;
       };
       const placeholder = () => {
-        return `full histogram placeholder i${key%6}`;
+        return `full histogram placeholder i${channel_key%6}`;
       }
       const rangeEditor = () => {
         return toElement(rangeEditorElement)``({
-          channel_key: key,
-          class: "full",
-          group_key,
+          item_key: channel_key,
+          group_key: item_key,
+          class: "full"
         });
       }
       return toElement(collapseChannel)`
@@ -70,7 +70,8 @@ class PanelItemGroup extends sourceGroupItems(PanelItem) {
         </div>
       `({
         accordion: true,
-        ki: key, group_key,
+        item_key: channel_key,
+        group_key: item_key,
         class: 'inner',
         expanded: ''
       });
@@ -79,9 +80,9 @@ class PanelItemGroup extends sourceGroupItems(PanelItem) {
   }
 
   get itemHeading () {
-    const { ki: group_key } = this.elementState;
+    const { item_key } = this.elementState;
     const expanded = CollapseGroup.is_expanded_item(
-      this.itemSources[group_key]
+      this.itemSources[item_key]
     )
     const itemTitle = () => {
       return toElement('div')`${super.itemHeading}`();

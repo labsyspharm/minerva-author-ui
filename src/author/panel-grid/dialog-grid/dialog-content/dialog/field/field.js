@@ -21,31 +21,31 @@ class Field extends HTMLElement {
   }
 
   get fieldTemplate() {
-    const textField = this.defineElement(TextField);
-    const textFieldStory = this.defineElement(TextFieldStory, {
-      defaults: { property: '' }
-    });
-    const textFieldGroup = this.defineElement(TextFieldGroup, {
-      defaults: { property: '' }
-    });
-    const mdEditor = this.defineElement(MDEditor, {
-      defaults: { property: '', linking: false },
-      attributes: [ 'linking' ]
-    });
-    const mdEditorStory = this.defineElement(MDEditorStory, {
-      defaults: { property: '', linking: false },
-      attributes: [ 'linking' ]
-    });
     const { 
       markdown, label, property,
       dialog, notice
     } = this.elementState;
+    const TextFieldElement = {
+      'STORY-DIALOG': TextFieldStory,
+      'GROUP-DIALOG': TextFieldGroup
+    }[dialog] || TextField;
+    const MDEditorElement = {
+      'STORY-DIALOG': MDEditorStory
+    }[dialog] || MDEditor
+    const textFieldElement = this.defineElement(
+      TextFieldElement, {
+        defaults: { property: '' }
+      }
+    );
+    const mdEditorElement = this.defineElement(
+      MDEditorElement, {
+        defaults: { property: '', linking: false },
+        attributes: [ 'linking' ]
+      }
+    );
     if (markdown) {
-      const el = {
-        'STORY-DIALOG': mdEditorStory
-      }[dialog] || mdEditor
       const editor = () => {
-        return toElement(el)``({ 
+        return toElement(mdEditorElement)``({ 
           property, linking: () => (
             notice == 'LINK-NOTICE'
           )
@@ -58,11 +58,7 @@ class Field extends HTMLElement {
         class: 'contents'
       });
     }
-    const el = {
-      'STORY-DIALOG': textFieldStory,
-      'GROUP-DIALOG': textFieldGroup
-    }[dialog] || textField
-    return toElement(el)``({
+    return toElement(textFieldElement)``({
       label, property
     })
   }

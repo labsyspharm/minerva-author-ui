@@ -12,15 +12,15 @@ class RangeEditorChannel extends sourceChannelItems(HTMLElement) {
   }
 
   static elementProperties = new Map([
-    ['channel_key', { type: Number }],
+    ['item_key', { type: Number }],
     ['group_key', { type: Number }],
     ['expanded', { type: Boolean }]
   ])
 
   get itemSource() {
     const { itemSources } = this;
-    const { channel_key } = this.elementState;
-    return itemSources[channel_key] || null;
+    const { item_key } = this.elementState;
+    return itemSources[item_key] || null;
   }
 
   get dataType() {

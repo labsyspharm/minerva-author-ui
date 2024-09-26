@@ -12,7 +12,7 @@ class Panel extends HTMLElement {
   }
 
   static elementProperties = new Map([
-    ['ki', { type: Number }]
+    ['item_key', { type: Number }]
   ])
 
   get itemSources () {
@@ -28,11 +28,11 @@ class Panel extends HTMLElement {
   get elementTemplate() {
     const item = this.constructor.itemElement; 
     const panel_item = this.defineElement(item, {
-      defaults: { ki: 0 }
+      defaults: { item_key: 0 }
     });
-    return this.itemKeys.map(ki => {
+    return this.itemKeys.map(item_key => {
       return toElement(panel_item)``({
-        ki, class: 'contents'
+        item_key, class: 'contents'
       });
     })
   }

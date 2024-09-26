@@ -1,22 +1,18 @@
 import { MDEditor } from '../../../md-editor/md-editor'
+import { sourceStoryItems } from '../../../../../config/source-story-items'
 
-class MDViewerStory extends MDEditor {
+class MDViewerStory extends sourceStoryItems(MDEditor) {
   static name = 'md-viewer-story'
 
   static elementProperties = new Map([
     ...MDEditor.elementProperties,
-    ['ki', { type: Number }]
+    ['item_key', { type: Number }]
   ])
 
-  get allContentOptions() {
-    const { metadata_config } = this.elementState;
-    return metadata_config.Stories;
-  }
-
-  get contentOptions() {
-    const { allContentOptions } = this;
-    const { ki } = this.elementState;
-    return allContentOptions[ki] || null;
+  get itemSource() {
+    const { itemSources } = this;
+    const { item_key } = this.elementState;
+    return itemSources[item_key] || null;
   }
 
   attributeChangedCallback(k, old_v, v) {

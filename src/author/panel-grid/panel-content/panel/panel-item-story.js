@@ -10,15 +10,15 @@ class PanelItemStory extends sourceStoryItems(PanelItem) {
   static collapseElement = CollapseStory
 
   get itemContents() {
-    const { ki } = this.elementState;
+    const { item_key } = this.elementState;
     const mdViewerStory = this.defineElement(MDViewerStory, {
       defaults: {
-        property: '', ki: '', editable: false
+        property: '', item_key: '', editable: false
       },
       attributes: [ 'dialog' ]
     });
     return toElement(mdViewerStory)``({ 
-      ki, property: 'Content', editable: false,
+      item_key, property: 'Content', editable: false,
       dialog: () => this.elementState.dialog
     });
   }
