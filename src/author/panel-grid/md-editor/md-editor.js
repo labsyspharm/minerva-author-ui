@@ -16,9 +16,17 @@ import {
 import { buildMenuItems } from './md-menu';
 import { enterNewLine } from './md-new-line'
 import { menuBar } from './md-menu-bar';
+import { sourceURLSelection } from '../../../config/source-url-selection'
+import { sourceNamespace } from '../../../config/source-namespace'
 import MDEditorCSS from './md-editor.css' assert { type: 'css' };
 
-class MDEditor extends HTMLElement {
+const namespace = {
+  hyperlinks: sourceURLSelection(
+    Object, 'md-editor'
+  )
+}
+
+class MDEditor extends sourceNamespace(HTMLElement, namespace) {
   static name = 'md-editor'
 
   static get _styleSheet() {
@@ -66,7 +74,7 @@ class MDEditor extends HTMLElement {
           openLinkNotice: () => {
             this.elementState.notice = 'LINK-NOTICE'
             this.elementState.selections.push({
-              role: 'notice', url: 'https://'
+              origin: MDEditor.name, url: 'https://'
             });
           }
         }
@@ -97,18 +105,17 @@ class MDEditor extends HTMLElement {
 
   closeLinkNotice(view) {
     const { elementState } = this;
-    const selection = elementState.selections.find(
-      v => (v.role == 'notice' && 'url' in v)
-    )
-    if (selection == null || !view) {
+    const { hyperlinks } = this.namespaceSources
+    const hyperlink = hyperlinks.itemSource;
+    if (hyperlink == null || !view) {
       return;
     }
     elementState.selections = (
       elementState.selections.filter(
-        v => v != selection
+        v => v != hyperlink
       )
-    )
-    const href = selection.url;
+    );
+    const href = hyperlink.url;
     toggleMark(schema.marks.link, { href })(
       view.state, view.dispatch
     );

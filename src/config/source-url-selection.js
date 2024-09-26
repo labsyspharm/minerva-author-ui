@@ -1,10 +1,10 @@
-const sourceURLSelection = (element) => (
+const sourceURLSelection = (element, origin) => (
   class extends element {
 
     get selectionSources() {
       const { selections } = this.elementState;
       return selections.filter(v => {
-        return v.role == 'notice' && 'url' in v;
+        return v.origin == origin && 'url' in v;
       }) || { };
     }
 

@@ -44,7 +44,7 @@ class PanelItem extends HTMLElement {
           if (dialog) {
             this.elementState.dialog = dialog;
             this.elementState.selections = [{
-              role: 'dialog', item_key: UUID
+              origin: PanelItem.name, item_key: UUID
             }]
           }
         },

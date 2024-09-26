@@ -1,10 +1,10 @@
-const sourceItemSelection = (element) => (
+const sourceItemSelection = (element, origin) => (
   class extends element {
 
     get selectionSources() {
       const { selections } = this.elementState;
       return selections.filter(v => {
-        return v.role == 'dialog' && 'item_key' in v;
+        return v.origin == origin && 'item_key' in v;
       });
     }
 

@@ -68,7 +68,7 @@ const to_story = (expanded, length=1) => {
       }).join('\n\n')
     },
     Associations: {
-      Links: []
+      Hyperlinks: [] //TODO
     },
     State: {
       Expanded: expanded
@@ -107,7 +107,8 @@ const to_metadata_config = () => {
       to_group(false, channels.slice(16,24))
     ],
     "Images": [ image ],
-    "DataTypes": [ data_type ]
+    "DataTypes": [ data_type ],
+    "Hyperlinks": [] //TODO
   };
 }
 
