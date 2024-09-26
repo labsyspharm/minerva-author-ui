@@ -32,7 +32,15 @@ const author = (customSuffix, options={}) => {
           'EXPORT-DIALOG', 'SAVEAS-DIALOG',
           'SAVE-NOTICE'
         ]
-      )
+      ),
+      dialog_notices: {
+        'EXPORT-DIALOG': 'EXPORT-NOTICE',
+        'SAVEAS-DIALOG': 'SAVEAS-NOTICE',
+      },
+      tab_dialogs: {
+        'STORY-PANEL': 'STORY-DIALOG',
+        'GROUP-PANEL': 'GROUP-DIALOG',
+      }
     },
     styleSheet: globalCSS
   });

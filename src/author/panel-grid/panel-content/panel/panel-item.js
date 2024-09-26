@@ -36,22 +36,21 @@ class PanelItem extends HTMLElement {
       if (action == null) {
         return '';
       }
-      const next_config = nav_config[action.next];
       const button = toElement('button')``({
         '@click': () => {
-          if (next_config.dialog) {
-            this.elementState.dialog = action.next;
-            switch (next_config.id) {
+          const { tab, tab_dialogs } = this.elementState;
+          const dialog = tab_dialogs[tab];
+          if (dialog) {
+            this.elementState.dialog = dialog;
+            switch (dialog) {
               case 'STORY-DIALOG':
                 this.elementState.selections = [{
-                  dialog: next_config.id,
-                  waypoint_key: UUID
+                  dialog, waypoint_key: UUID
                 }]
                 break;
               case 'GROUP-DIALOG':
                 this.elementState.selections = [{
-                  dialog: next_config.id,
-                  group_key: UUID
+                  dialog, group_key: UUID
                 }]
                 break;
             }

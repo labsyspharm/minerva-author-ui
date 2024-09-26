@@ -2,10 +2,11 @@ const configure = (id) => {
   switch (id) {
     case 'EXPORT-DIALOG':
       return {
-        id, heading: 'Export',
-        dialog: 'Export as Minerva Story',
+        id, label: 'Export',
+        title: 'Export as Minerva Story',
+        role: 'dialog',
         actions: [{
-          next: 'EXPORT-NOTICE'
+          label: 'Export'
         }],
         fields: [{
           label: 'Path for the exported story'
@@ -13,27 +14,30 @@ const configure = (id) => {
       }
     case 'LINK-NOTICE': 
       return {
-        id, heading: 'Create',
-        notice: 'Create Link',
+        id, label: 'Create',
+        title: 'Create Link',
+        role: 'notice',
         fields: [{
           url: 'link URL'
         }],
         actions: [{
-          heading: 'Create link'
+          label: 'Create link'
         }]
       }
     case 'EXPORT-NOTICE':
       return { 
-        id, heading: 'Export',
-        notice: 'Exported Story',
+        role: 'notice',
+        id, label: 'Export',
+        title: 'Exported Story',
         success: 'Exported Minerva Story'
       }
     case 'SAVEAS-DIALOG':
       return {
-        id, heading: 'Save As',
-        dialog: 'Save as an editable copy',
+        id, label: 'Save As',
+        title: 'Save as an editable copy',
+        role: 'dialog',
         actions: [{
-          next: 'SAVEAS-NOTICE'
+          label: 'Save As'
         }],
         fields: [{
           label: 'Path for the new copy',
@@ -42,27 +46,31 @@ const configure = (id) => {
       }
     case 'SAVEAS-NOTICE':
       return { 
-        id, heading: 'Save As', notice: 'Saved',
+        role: 'notice',
+        id, label: 'Save As', title: 'Saved',
         success: 'Copy saved successfully'
       }
     case 'SAVE-NOTICE':
       return { 
-        id, heading: 'Save', notice: 'Saved',
+        role: 'notice',
+        id, label: 'Save', title: 'Saved',
         success: 'Saved successfully',
         timeout: 3000
       }
     case 'STORY-PANEL':
       return { 
-        id, heading: 'Story',
+        role: 'tab',
+        id, label: 'Story',
         description: '',
         actions: [{
-          next: 'STORY-DIALOG', slot: 'content'
+          slot: 'content'
         }]
       }
     case 'STORY-DIALOG':
       return {
-        id, heading: 'Edit Waypoint',
-        dialog: 'Editing Waypoint',
+        role: 'dialog',
+        id, label: 'Edit Waypoint',
+        title: 'Editing Waypoint',
         fields: [{
           property: 'Name',
           placeholder: 'Untitled Waypoint', label: 'Title'
@@ -71,43 +79,46 @@ const configure = (id) => {
           placeholder: '', label: 'Content'
         }],
         actions: [{
-          heading: 'Set Channels'
+          label: 'Set Channels'
         },{
-          heading: 'Set Viewport'
+          label: 'Set Viewport'
         },{
-          heading: 'Accept Edits',
+          label: 'Accept Edits',
           className: 'accept'
         }]
       }
     case 'GROUP-PANEL':
       return {
-        id, heading: 'Channels',
+        role: 'tab',
+        id, label: 'Channels',
         description: 'Channel Groups',
         actions: [{
-//          next: 'GROUP-DIALOG', slot: 'content'
         }]
       }
     case 'GROUP-DIALOG':
       return {
-        id, heading: 'Edit Channel Group',
-        dialog: 'Editing Channel Group',
+        role: 'dialog',
+        id, label: 'Edit Channel Group',
+        title: 'Editing Channel Group',
         fields: [{
           property: 'Title',
           placeholder: 'Untitled Group', label: 'Title'
         }],
         actions: [{
-          heading: 'Accept Edits',
+          label: 'Accept Edits',
           className: 'accept'
         }]
       }
     case 'IMAGE-PANEL':
       return { 
-        id, heading: 'Images',
+        role: 'tab',
+        id, label: 'Images',
         description: 'Image Sources',
       }
     case 'OVERLAY-PANEL':
       return {
-        id, heading: 'Overlays',
+        role: 'tab',
+        id, label: 'Overlays',
         description: 'Image Overlays',
       }
     default:

@@ -34,7 +34,7 @@ class Nav extends HTMLElement {
       }
       return toElement('div')`
       <button class="${item_class}" role="${role}">
-        <span>${() => item.heading}</span>
+        <span>${() => item.label}</span>
       </button>`({
         'class': 'stretch grid menu',
         'chosen': () => {
@@ -43,15 +43,8 @@ class Nav extends HTMLElement {
         },
         '@click': () => {
           const { nav_config } = this.elementState;
-          if ('dialog' in nav_config[item.id]) {
-            this.elementState.dialog = item.id;
-          }
-          else if (role == 'tab') {
-            this.elementState.tab = item.id;
-          }
-          else {
-            this.elementState.notice = item.id;
-          }
+          const { role } = nav_config[item.id];
+          this.elementState[role] = item.id
         },
       });
     })

@@ -13,7 +13,7 @@ class Notice extends HTMLElement {
     const { nav_config, notice } = this.elementState;
     const config = nav_config[notice];
     return toElement('div')`
-      <h2>${() => config.notice}</h2>
+      <h2>${() => config.title}</h2>
       ${this.iconTemplate} 
       <p>${() => config.success}</p>
     `({

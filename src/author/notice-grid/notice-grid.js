@@ -12,7 +12,7 @@ class NoticeGrid extends HTMLElement {
     const notice_title = () => {
       const { nav_config, notice } = this.elementState;
       const config = nav_config[notice] || {};
-      return config.notice;
+      return config.title;
     }
     return toElement(this.defineElement(StyledNotice))`
       <${notice_element}></${notice_element}>
