@@ -1,6 +1,6 @@
 import { Panel } from './panel';
 import { PanelItemStory } from './panel-item-story';
-import { sourceStoryItems } from '../../../../config/source-story-items'
+import { sourceStoryItems } from '../../../../items/source-story-items'
 
 class PanelStory extends sourceStoryItems(Panel) {
 

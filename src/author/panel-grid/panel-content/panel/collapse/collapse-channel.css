@@ -1,3 +1,9 @@
+:host {
+  simple-icon-lite#expand {
+    padding: calc(var(--gap-tiny)/2);
+  }
+}
+
 ::slotted(.grid[slot=content]) {
   grid-template-columns: 1fr;
   grid-template-rows: 1fr;

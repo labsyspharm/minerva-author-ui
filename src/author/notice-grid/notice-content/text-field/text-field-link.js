@@ -1,8 +1,8 @@
 import { TextField } from '../../../text-field/text-field'
 import { MDEditor } from '../../../panel-grid/md-editor/md-editor';
-import { sourceURLSelection } from '../../../../config/source-url-selection'
+import { sourceHyperlinkItems } from '../../../../items/source-hyperlink-items'
 
-class TextFieldLink extends sourceURLSelection(
+class TextFieldLink extends sourceHyperlinkItems(
   TextField, MDEditor.name
 ) {
   static name = 'text-field-link'

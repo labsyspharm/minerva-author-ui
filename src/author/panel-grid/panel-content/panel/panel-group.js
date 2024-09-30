@@ -1,6 +1,6 @@
 import { Panel } from './panel';
 import { PanelItemGroup } from './panel-item-group';
-import { sourceGroupItems } from '../../../../config/source-group-items'
+import { sourceGroupItems } from '../../../../items/source-group-items'
 
 class PanelGroup extends sourceGroupItems(Panel) {
 

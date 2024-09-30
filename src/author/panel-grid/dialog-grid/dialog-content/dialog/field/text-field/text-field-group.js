@@ -1,9 +1,9 @@
 import { TextField } from '../../../../../../text-field/text-field'
 import { PanelItem } from '../../../../../panel-content/panel/panel-item'
-import { sourceGroupItems } from '../../../../../../../config/source-group-items'
-import { sourceItemSelection } from '../../../../../../../config/source-item-selection'
+import { sourceGroupItems } from '../../../../../../../items/source-group-items'
+import { useItemSelection } from '../../../../../../../filters/use-item-selection'
 
-class TextFieldGroup extends sourceItemSelection(
+class TextFieldGroup extends useItemSelection(
     sourceGroupItems(TextField), PanelItem.name
 ) {
   static name = 'text-field-group'

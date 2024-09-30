@@ -1,19 +1,15 @@
 import { MDEditor } from '../../../md-editor/md-editor'
-import { sourceStoryItems } from '../../../../../config/source-story-items'
+import { useItemIdentifier } from '../../../../../filters/use-item-identifier';
+import { sourceStoryItems } from '../../../../../items/source-story-items'
 
-class MDViewerStory extends sourceStoryItems(MDEditor) {
+class MDViewerStory extends sourceStoryItems(
+  useItemIdentifier(MDEditor)
+) {
   static name = 'md-viewer-story'
 
   static elementProperties = new Map([
-    ...MDEditor.elementProperties,
-    ['item_key', { type: Number }]
+    ...MDEditor.elementProperties
   ])
-
-  get itemSource() {
-    const { itemSources } = this;
-    const { item_key } = this.elementState;
-    return itemSources[item_key] || null;
-  }
 
   attributeChangedCallback(k, old_v, v) {
     if (k == 'dialog' && v == '') {

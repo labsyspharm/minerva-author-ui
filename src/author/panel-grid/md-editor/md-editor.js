@@ -16,17 +16,20 @@ import {
 import { buildMenuItems } from './md-menu';
 import { enterNewLine } from './md-new-line'
 import { menuBar } from './md-menu-bar';
-import { sourceURLSelection } from '../../../config/source-url-selection'
-import { sourceNamespace } from '../../../config/source-namespace'
+import { useItemSelection } from '../../../filters/use-item-selection'
+import { sourceHyperlinkItems } from '../../../items/source-hyperlink-items'
+import { sourceItemMap } from '../../../items/source-item-map'
 import MDEditorCSS from './md-editor.css' assert { type: 'css' };
 
-const namespace = {
-  hyperlinks: sourceURLSelection(
-    Object, 'md-editor'
+const namedSources = {
+  hyperlinks: useItemSelection(
+    sourceHyperlinkItems(Object), 'md-editor'
   )
 }
 
-class MDEditor extends sourceNamespace(HTMLElement, namespace) {
+class MDEditor extends sourceItemMap(
+  HTMLElement, namedSources
+) {
   static name = 'md-editor'
 
   static get _styleSheet() {
@@ -73,8 +76,12 @@ class MDEditor extends sourceNamespace(HTMLElement, namespace) {
         schema, {
           openLinkNotice: () => {
             this.elementState.notice = 'LINK-NOTICE'
+            const hyperlinks = this.itemMap.get('hyperlinks')
+            const UUID = hyperlinks.createItem({
+              url: 'https://'
+            });
             this.elementState.selections.push({
-              origin: MDEditor.name, url: 'https://'
+              origin: MDEditor.name, UUID 
             });
           }
         }
@@ -105,7 +112,7 @@ class MDEditor extends sourceNamespace(HTMLElement, namespace) {
 
   closeLinkNotice(view) {
     const { elementState } = this;
-    const { hyperlinks } = this.namespaceSources
+    const hyperlinks = this.itemMap.get('hyperlinks')
     const hyperlink = hyperlinks.itemSource;
     if (hyperlink == null || !view) {
       return;
@@ -141,10 +148,6 @@ class MDEditor extends sourceNamespace(HTMLElement, namespace) {
     if (Properties && property in Properties) {
       Properties[property] = v;
     }
-  }
-
-  itemSource() {
-    return null; // Defined in derived classes
   }
 
   attributeChangedCallback(k, old_v, v) {

@@ -11,30 +11,16 @@ class Panel extends HTMLElement {
     return panelCSS;
   }
 
-  static elementProperties = new Map([
-    ['item_key', { type: Number }]
-  ])
-
-  get itemSources () {
-    return []; // Defined in derived classes
-  }
-
-  get itemKeys () {
-    return [
-      ...Object.keys(this.itemSources)
-    ];
-  }
-
   get elementTemplate() {
     const item = this.constructor.itemElement; 
     const panel_item = this.defineElement(item, {
-      defaults: { item_key: 0 }
+      defaults: { UUID: '' }
     });
-    return this.itemKeys.map(item_key => {
+    return this.itemSources.map(item => {
       return toElement(panel_item)``({
-        item_key, class: 'contents'
-      });
-    })
+        UUID: item.UUID, class: 'contents'
+      }).key(item.UUID);
+    });
   }
 
 }

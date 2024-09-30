@@ -1,8 +1,9 @@
 import panelItemCSS from './panel-item.css' assert { type: 'css' };
+import { useItemIdentifier } from '../../../../filters/use-item-identifier';
 import { toElement } from '../../../../lib/elements';
 import { Collapse } from './collapse/collapse';
 
-class PanelItem extends HTMLElement {
+class PanelItem extends useItemIdentifier(HTMLElement) {
 
   static name = 'panel-item'
   static collapseElement = Collapse
@@ -11,40 +12,33 @@ class PanelItem extends HTMLElement {
     return panelItemCSS;
   }
 
-  static elementProperties = new Map([
-    ['item_key', { type: Number }]
-  ])
-
-  get itemSources () {
-    return []; // Defined in derived classes
-  }
-
   get elementTemplate() {
-    const { item_key, tab, nav_config } = this.elementState;
-    const items = this.itemSources;
-    const n_items = items.length;
-    const actions = nav_config[tab].actions || [];
     const { collapseElement } = this.constructor; 
     const collapse = this.defineElement(collapseElement, {
-      defaults: { item_key: '' },
+      defaults: { UUID: '', expanded: true },
+      attributes: [ 'expanded' ]
     });
     const item_contents = () => {
       return this.itemContents;
     }
-    const content_action = (action => {
+    const content_action = () => {
+      const { tab, nav_config } = this.elementState;
+      const actions = nav_config[tab].actions || [];
+      const action = actions.find(
+        ({ slot }) => slot == 'content'
+      );
       if (action == null) {
         return '';
       }
       const button = toElement('button')``({
         '@click': () => {
           const { tab, tab_dialogs } = this.elementState;
+          const { UUID } = this.itemSource;
           const dialog = tab_dialogs[tab];
-          const { UUID } = items[item_key];
-          console.log(tab, dialog, item_key, UUID);
           if (dialog) {
             this.elementState.dialog = dialog;
             this.elementState.selections = [{
-              origin: PanelItem.name, item_key: UUID
+              origin: PanelItem.name, UUID
             }]
           }
         },
@@ -54,9 +48,7 @@ class PanelItem extends HTMLElement {
       return toElement('div')`${button}`({
         class: 'full actions'
       });
-    })(actions.find(
-      ({ slot }) => slot == 'content'
-    ));
+    };
     return toElement(collapse)`
       <div class="grid" slot="heading">
         ${() => this.itemHeading}
@@ -65,13 +57,21 @@ class PanelItem extends HTMLElement {
         <div class="full text">
           ${item_contents}
         </div>
-          ${() => content_action}
+          ${content_action}
       </div>
     `({
-      accordion: true, item_key,
-      expanded: '',
+      expanded: String(
+        this.itemSource.State.Expanded
+      ),
+      accordion: 'true',
+      UUID: (
+        this.elementState.UUID
+      ),
       class: () => {
-        if (item_key+1 == n_items) {
+        const item = this.itemSource;
+        const items = this.itemSources;
+        const last_item = [...items].pop();
+        if (last_item.UUID == item.UUID) {
           return 'end';
         }
         return ''
@@ -80,17 +80,8 @@ class PanelItem extends HTMLElement {
   }
 
   get itemHeading() {
-    const { item_key } = this.elementState;
-    const items = this.itemSources;
-    const item = items[item_key];
+    const item = this.itemSource;
     return item?.Properties.Name
-  }
-
-  get itemContents() {
-    const { item_key, items } = this.elementState;
-    return items[item_key].content.split('\n').map(text => {
-      return toElement('p')`${() => text}`({});
-    });
   }
 }
 

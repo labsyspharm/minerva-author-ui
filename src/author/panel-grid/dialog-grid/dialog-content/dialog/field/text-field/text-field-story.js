@@ -1,9 +1,9 @@
 import { TextField } from '../../../../../../text-field/text-field';
 import { PanelItem } from '../../../../../panel-content/panel/panel-item'
-import { sourceStoryItems } from '../../../../../../../config/source-story-items'
-import { sourceItemSelection } from '../../../../../../../config/source-item-selection'
+import { sourceStoryItems } from '../../../../../../../items/source-story-items'
+import { useItemSelection } from '../../../../../../../filters/use-item-selection'
 
-class TextFieldStory extends sourceItemSelection(
+class TextFieldStory extends useItemSelection(
     sourceStoryItems(TextField), PanelItem.name
 ) {
   static name = 'text-field-story'
