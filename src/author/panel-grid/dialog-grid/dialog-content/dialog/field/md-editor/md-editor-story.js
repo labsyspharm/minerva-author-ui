@@ -4,7 +4,7 @@ import { sourceStoryItems } from '../../../../../../../items/source-story-items'
 import { useItemSelection } from '../../../../../../../filters/use-item-selection'
 
 class MDEditorStory extends useItemSelection(
-    sourceStoryItems(MDEditor), PanelItem.name
+    PanelItem.name, sourceStoryItems(MDEditor)
 ) {
   static name = 'md-editor-story'
 }

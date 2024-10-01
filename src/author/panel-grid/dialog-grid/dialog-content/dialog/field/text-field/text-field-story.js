@@ -4,7 +4,7 @@ import { sourceStoryItems } from '../../../../../../../items/source-story-items'
 import { useItemSelection } from '../../../../../../../filters/use-item-selection'
 
 class TextFieldStory extends useItemSelection(
-    sourceStoryItems(TextField), PanelItem.name
+    PanelItem.name, sourceStoryItems(TextField)
 ) {
   static name = 'text-field-story'
 

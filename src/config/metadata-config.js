@@ -12,12 +12,12 @@ const to_image = () => {
   return { UUID: nanoid() };
 }
 
-const to_channel = (image, data_type, index) => {
+const to_source_channel = (image, data_type, index) => {
   return {
     UUID: nanoid(),
     Properties: {
+      SourceIndex: index,
       Name: lorem.sentence(1),
-      LowerRange: 0, UpperRange: 65535
     },
     Associations: {
       SourceDataType: {
@@ -26,24 +26,35 @@ const to_channel = (image, data_type, index) => {
       SourceImage: {
         UUID: image.UUID,
       },
-      SourceIndex: index
     }
   }
 }
 
-const to_group = (expanded, channels=[]) => {
+const to_group_channel = (group, channel, expanded) => {
+  return {
+    UUID: nanoid(),
+    State: {
+      Expanded: expanded
+    },
+    Properties: {
+      LowerRange: 0, UpperRange: 65535
+    },
+    Associations: {
+      Group: {
+        UUID: group.UUID,
+      },
+      SourceChannel: {
+        UUID: channel.UUID
+      }
+    }
+  }
+}
+
+const to_group = (expanded) => {
   return {
     UUID: nanoid(),
     Properties: {
       Name: lorem.sentence(1)
-    },
-    Associations: {
-      Channels: channels.map((channel) => {
-        return {
-          ...channel,
-          State: { Expanded: false }
-        }
-      })
     },
     State: {
       Expanded: expanded
@@ -79,11 +90,24 @@ const to_metadata_config = () => {
       UpperRange: 65535
     }
   }
-  const channels = [
+  const source_channels = [
     ...new Array(n_channels).keys()
-  ].map(
-    (_, i) => to_channel(image, data_type, i)
-  );
+  ].map((_, i) => {
+    return to_source_channel(image, data_type, i)
+  });
+  const groups = [
+    to_group(true),
+    to_group(true),
+    to_group(false),
+    to_group(false)
+  ]
+  const group_channels = source_channels.map((channel,i) => {
+    const size = Math.floor(
+      source_channels.length / groups.length
+    );
+    const group = groups[Math.floor(i/size)]
+    return to_group_channel(group, channel, true);
+  });
   return {
     "Name": "Example Story",
     "Stories": [
@@ -92,13 +116,9 @@ const to_metadata_config = () => {
       to_story(true, 3),
       to_story(false, 4)
     ],
-    "Channels": channels,
-    "Groups": [
-      to_group(true, channels.slice(0,4)),
-      to_group(true, channels.slice(4,8)),
-      to_group(false, channels.slice(8,16)),
-      to_group(false, channels.slice(16,24))
-    ],
+    "SourceChannels": source_channels,
+    "GroupChannels": group_channels,
+    "Groups": groups,
     "Images": [ image ],
     "DataTypes": [ data_type ],
     "Hyperlinks": []

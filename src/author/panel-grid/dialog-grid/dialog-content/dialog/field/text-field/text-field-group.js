@@ -4,7 +4,7 @@ import { sourceGroupItems } from '../../../../../../../items/source-group-items'
 import { useItemSelection } from '../../../../../../../filters/use-item-selection'
 
 class TextFieldGroup extends useItemSelection(
-    sourceGroupItems(TextField), PanelItem.name
+    PanelItem.name, sourceGroupItems(TextField)
 ) {
   static name = 'text-field-group'
 

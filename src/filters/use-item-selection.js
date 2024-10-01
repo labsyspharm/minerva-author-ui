@@ -1,4 +1,4 @@
-const useItemSelection = (element, origin) => (
+const useItemSelection = (origin, element=Object) => (
   class extends element {
 
     get selectionSources() {

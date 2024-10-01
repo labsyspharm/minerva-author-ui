@@ -1,8 +1,11 @@
-const useItemIdentifier = (element) => (
+const useItemIdentifier = (element=Object) => (
   class extends element {
 
     get itemSource() {
-      const { UUID } = this.elementState;
+      const { UUID } = {
+        UUID: this.elementState.UUID,
+        ...(this.itemIdentifiers || null)
+      };
       return (this.itemSources || []).find(x => {
         return x.UUID == UUID; 
       }) || null;

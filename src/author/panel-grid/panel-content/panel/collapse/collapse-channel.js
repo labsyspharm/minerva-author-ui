@@ -7,6 +7,13 @@ class CollapseChannel extends sourceGroupChannels(
   useItemIdentifier(Collapse)
 ) {
 
+  get itemIdentifiers() {
+    return {
+      UUID: this.elementState.UUID,
+      GroupUUID: this.elementState.GroupUUID
+    }
+  }
+
   static get _styleSheet() {
     [...Collapse._styleSheet.cssRules].forEach(
       r => collapseChannelCSS.insertRule(r.cssText)

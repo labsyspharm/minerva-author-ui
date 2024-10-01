@@ -13,6 +13,13 @@ class RangeEditorChannel extends sourceGroupChannels(
     return rangeEditorChannelCSS;
   }
 
+  get itemIdentifiers() {
+    return {
+      UUID: this.elementState.UUID,
+      GroupUUID: this.elementState.GroupUUID
+    }
+  }
+
   get dataType() {
     const { metadata_config } = this.elementState;
     const { Associations } = this.itemSource || {};

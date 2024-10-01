@@ -16,11 +16,11 @@ class NoticeLink extends Notice {
     const config = nav_config[notice];
 
     const text_field_link = this.defineElement(TextFieldLink, {
-      defaults: { id: '' }
+      defaults: { label: '', UUID: '' }
     });
     const fields = config.fields.map((x) => {
       return toElement(text_field_link)``({
-        label: x.label, id: 'STORY-TITLE' // TODO
+        label: x.label, UUID: this.elementState.UUID
       });
     });
     const actions = config.actions.map(({

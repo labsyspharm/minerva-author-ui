@@ -1,15 +1,22 @@
-import { sourceGroupItems } from '../items/source-group-items';
+import { sourceSourceChannels } from './source-source-channels';
 
-const sourceGroupChannels = (element) => (
+const sourceGroupChannels = (element=Object) => (
   class extends element {
 
     get itemSources() {
-      const source = new (sourceGroupItems(Object));
-      source.elementState = this.elementState; 
-      const group = (source.itemSources || []).find(x => {
-        return x.UUID == this.elementState.GROUP_UUID; 
+      const group_channels = this.elementState.metadata_config?.GroupChannels;
+      return (group_channels || []).filter(({ Associations: x }) => {
+        return x.Group.UUID == this.itemIdentifiers.GroupUUID; 
+      });
+    }
+
+    getSourceChannel(group_channel) {
+      const source_channel = group_channel.Associations.SourceChannel;
+      const source = new (sourceSourceChannels(Object));
+      source.elementState = this.elementState;
+      return source.itemSources.find(channel => {
+        return channel.UUID == source_channel.UUID;
       }) || null;
-      return group?.Associations.Channels || [];
     }
   }
 )

@@ -21,14 +21,14 @@ import { sourceHyperlinkItems } from '../../../items/source-hyperlink-items'
 import { sourceItemMap } from '../../../items/source-item-map'
 import MDEditorCSS from './md-editor.css' assert { type: 'css' };
 
-const namedSources = {
+const itemMap = {
   hyperlinks: useItemSelection(
-    sourceHyperlinkItems(Object), 'md-editor'
+    'md-editor', sourceHyperlinkItems()
   )
 }
 
 class MDEditor extends sourceItemMap(
-  HTMLElement, namedSources
+  itemMap, HTMLElement
 ) {
   static name = 'md-editor'
 
@@ -77,7 +77,7 @@ class MDEditor extends sourceItemMap(
           openLinkNotice: () => {
             this.elementState.notice = 'LINK-NOTICE'
             const hyperlinks = this.itemMap.get('hyperlinks')
-            const UUID = hyperlinks.createItem({
+            const UUID = hyperlinks.addNewItemSource({
               url: 'https://'
             });
             this.elementState.selections.push({
@@ -119,7 +119,7 @@ class MDEditor extends sourceItemMap(
     }
     elementState.selections = (
       elementState.selections.filter(
-        v => v != hyperlink
+        v => v.UUID != hyperlink.UUID
       )
     );
     const href = hyperlink.url;

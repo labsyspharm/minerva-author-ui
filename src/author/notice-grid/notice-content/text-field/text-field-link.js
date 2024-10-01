@@ -1,9 +1,10 @@
 import { TextField } from '../../../text-field/text-field'
 import { MDEditor } from '../../../panel-grid/md-editor/md-editor';
 import { sourceHyperlinkItems } from '../../../../items/source-hyperlink-items'
+import { useItemSelection } from '../../../../filters/use-item-selection'
 
-class TextFieldLink extends sourceHyperlinkItems(
-  TextField, MDEditor.name
+class TextFieldLink extends useItemSelection(
+  MDEditor.name, sourceHyperlinkItems(TextField)
 ) {
   static name = 'text-field-link'
 
