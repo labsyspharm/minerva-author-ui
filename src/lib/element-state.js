@@ -40,12 +40,12 @@ const createReactiveState = (options, closure=null) => {
 }
 
 function updateAttribute(k, v_att) {
-  this.__reflectingProperty = k;
+  this.reflectingProperty = k;
   if (v_att == null) {
     return this.removeAttribute(k);
   }
   this.setAttribute(k, v_att)
-  this.__reflectingProperty = null;
+  this.reflectingProperty = null;
 }
 
 function addStyles(globalStyleSheet) {
@@ -169,11 +169,21 @@ function defineElement(element, options={}) {
       addStyles.call(this, globalStyleSheet);
       return rendered;
     }
+    getPropertyOptions(k) {
+      if (this.constructor?.getPropertyOptions) {
+        return this.constructor?.getPropertyOptions(k);
+      }
+      return {};
+    }
     attributeChangedCallback(k, old_v, v) {
+      const { reflect } = this.getPropertyOptions(k);
+      if (reflect && this.reflectingProperty == k) {
+        return;
+      }
       if (super.attributeChangedCallback) {
         super.attributeChangedCallback(k, old_v, v);
       }
-      else if (this.__reflectingProperty != k) {
+      else {
         this.elementState[k] = convertFromAttribute(
           this.constructor.elementProperties, k, v
         );
