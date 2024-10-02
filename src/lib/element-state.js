@@ -7,6 +7,7 @@ const convertToAttribute = (properties, k, v) => {
 }
 
 const convertFromAttribute = (properties, k, v_att) => {
+  if (v_att === 'false') v_att = null;
   const v_type = (properties?.get(k))?.type || String;
   return defaultConverter.fromAttribute(v_att, v_type);
 }
@@ -111,7 +112,6 @@ function defineElement(element, options={}) {
       this._reactiveState = createReactiveState(options, closure);
       for ( let k in this._reactiveState ) {
         let att_v = this.getAttribute(k);
-        if (att_v === 'false') att_v = null;
         const init_v = convertFromAttribute(
           this.constructor.elementProperties, k, att_v
         )

@@ -112,7 +112,7 @@ const to_metadata_config = () => {
     "Name": "Example Story",
     "Stories": [
       to_story(true, 1),
-      to_story(false, 2),
+      to_story(true, 2),
       to_story(true, 3),
       to_story(false, 4)
     ],
