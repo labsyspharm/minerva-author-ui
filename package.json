@@ -1,12 +1,12 @@
 {
   "name": "minerva-author-ui",
-  "version": "2.0.0-beta.22",
+  "version": "2.0.0-beta.23",
   "description": "UI for Minerva Author 2.0",
   "main": "dist/assets/author.js",
   "type": "module",
   "scripts": {
     "dev": "vite",
-    "build": "vite build",
+    "build": "vite build --minify false",
     "pub": "pnpm publish --tag next"
   },
   "repository": {
