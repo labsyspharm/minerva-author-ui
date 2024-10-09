@@ -16,10 +16,9 @@ const author = (customSuffix, options={}) => {
   }
   const defineElement = toElementState(customSuffix, {
     defaults: {
-      content_map: 'content_map',
-      metadata_config
     },
     constants: {
+      metadata_config,
       nav_config,
       tab_order: (
         [ 

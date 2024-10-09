@@ -21,7 +21,7 @@ const to_source_channel = (image, data_type, index) => {
     },
     Associations: {
       SourceDataType: {
-        UUID: data_type.UUID,
+        ID: data_type.ID,
       },
       SourceImage: {
         UUID: image.UUID,
@@ -84,7 +84,7 @@ const to_metadata_config = () => {
   const image = to_image();
   const n_channels = 24;
   const data_type = {
-    UUID: nanoid(),
+    ID: 'uint16',
     Properties: {
       LowerRange: 0,
       UpperRange: 65535
