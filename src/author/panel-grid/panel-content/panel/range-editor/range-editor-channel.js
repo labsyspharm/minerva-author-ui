@@ -21,11 +21,11 @@ class RangeEditorChannel extends sourceGroupChannels(
   }
 
   get dataType() {
-    const { metadata_config } = this.elementState;
+    const { item_registry } = this.elementState;
     const { Associations } = this.itemSource || {};
     const { SourceDataType } = Associations || {};
-    return metadata_config.DataTypes[
-      SourceDataType?.UUID
+    return item_registry.DataTypes[
+      SourceDataType?.ID
     ] || {
       LowerRange: 0, UpperRange: 65535
     };

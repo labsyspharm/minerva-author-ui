@@ -8,11 +8,6 @@ class TextFieldStory extends useItemSelection(
 ) {
   static name = 'text-field-story'
 
-  get allContentOptions() {
-    const { metadata_config } = this.elementState;
-    return metadata_config.Stories;
-  }
-
   get value() {
     const { itemSource: waypoint } = this;
     const { property } = this.elementState;

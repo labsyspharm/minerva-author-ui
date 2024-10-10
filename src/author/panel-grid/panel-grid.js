@@ -9,6 +9,13 @@ class PanelGrid extends HTMLElement {
 
   static name = 'panel-grid'
 
+  static getPropertyOptions(k) {
+    if (k === 'expanded') {
+      return { reflect: true }
+    }
+    return {}
+  }
+
   get iconTemplate() {
     const button = this.defineElement(IconButton);
     return toElement(button)``({

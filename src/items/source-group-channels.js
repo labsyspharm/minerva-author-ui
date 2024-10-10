@@ -4,7 +4,7 @@ const sourceGroupChannels = (element=Object) => (
   class extends element {
 
     get itemSources() {
-      const group_channels = this.elementState.metadata_config?.GroupChannels;
+      const group_channels = this.elementState.item_registry?.GroupChannels;
       return (group_channels || []).filter(({ Associations: x }) => {
         return x.Group.UUID == this.itemIdentifiers.GroupUUID; 
       });

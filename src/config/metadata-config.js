@@ -80,7 +80,7 @@ const to_story = (expanded, length=1) => {
   }
 }
 
-const to_metadata_config = () => {
+const to_item_registry = () => {
   const image = to_image();
   const n_channels = 24;
   const data_type = {
@@ -125,6 +125,6 @@ const to_metadata_config = () => {
   };
 }
 
-const metadata_config = to_metadata_config();
+const item_registry = to_item_registry();
 
-export { metadata_config }
+export { item_registry }

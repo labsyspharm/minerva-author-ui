@@ -3,7 +3,7 @@ import nanoid from '../lib/nanoid/nanoid'
 const sourceHyperlinkItems = (element=Object) => (
   class extends element {
     get itemSources () {
-      return this.elementState.metadata_config?.Hyperlinks;
+      return this.elementState.item_registry?.Hyperlinks;
     }
     addNewItemSource ({ url })  {
       const UUID = nanoid(); 
