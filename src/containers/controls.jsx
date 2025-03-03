@@ -109,7 +109,7 @@ class Controls extends Component {
 
   render() {
 
-    const {addArrowText, rgba, minerva} = this.props;
+    const {addOverlayText, addArrowText, rgba, minerva} = this.props;
     const {maskOpacity, handleOpacityChange} = this.props;
     const {deleteOverlay, deleteArrow, toggleTextTab} = this.props;
     const {activeStory, handleSelectStory} = this.props;
@@ -686,7 +686,7 @@ class Controls extends Component {
               </div>
             </div>
           </div>
-          <Overlays deleteOverlay={deleteOverlay}
+          <Overlays deleteOverlay={deleteOverlay} addOverlayText={addOverlayText}
           deleteArrow={deleteArrow} addArrowText={addArrowText}
           overlays={overlays} arrows={arrows}></Overlays>
         </div>

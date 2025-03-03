@@ -1,5 +1,6 @@
 import React, { Component } from "react";
 import Select from 'react-select/creatable';
+import Markdown from 'react-markdown'
 
 import debounce from 'debounce-async';
 import equal from 'fast-deep-equal/react';
@@ -358,7 +359,8 @@ class Repo extends Component {
       renameModal: false,
       addGroupModal: false,
       needNewGroup: false,
-      activeArrow: 0,
+      activeOverlay: -1,
+      activeArrow: -1,
       viewport: null,
       first_group: props.first_group || null,
       first_viewport: props.first_viewport || null,
@@ -457,7 +459,9 @@ class Repo extends Component {
       chanLabel: toDefaultChanLabel(defaults, channels),
       activeIds: channels.length < 2 ? [0] : [0, 1],
       maskOpacity: 0.5,
-      chanRender: defaultChanRender
+      chanRender: defaultChanRender,
+      quizMarkdown: "",
+      quizPrompt: "",
     };
 
     if (this.state.stories.size == 0) {
@@ -493,6 +497,7 @@ class Repo extends Component {
     this.deleteArrow = this.deleteArrow.bind(this);
     this.deleteOverlay = this.deleteOverlay.bind(this);
     this.addArrowText = this.addArrowText.bind(this);
+    this.addOverlayText = this.addOverlayText.bind(this);
     this.boxClick = this.boxClick.bind(this);
     this.handleChange = this.handleChange.bind(this);
     this.handleSelect = this.handleSelect.bind(this);
@@ -602,7 +607,7 @@ class Repo extends Component {
       'lastSaveTime', 'isMaskMapLoading', 'invalidMaskMap', 'warning', 'showFileBrowser', 
       'showVisDataBrowser', 'showMaskBrowser', 'showMaskMapBrowser', 'drawType', 'drawing',
       'textTab', 'showModal', 'renameModal', 'editableChannel', 'addGroupModal', 'needNewGroup', 'showSaveAsBrowser',
-      'activeArrow', 'activeStory', 'saving', 'savingAs', 'published', 'publishing',
+      'activeArrow', 'ActiveOverlay', 'activeStory', 'saving', 'savingAs', 'published', 'publishing',
       'saveProgress', 'saveProgressMax', 'publishProgress', 'publishProgressMax',
       'activeGroup', 'activeMaskId', 'rangeSliderComplete', 'shownSavePath',
       'showSaveAsModal', 'showPublishStoryModal', 'showPublishBrowser',
@@ -902,8 +907,13 @@ class Repo extends Component {
   }
 
   toggleModal() {
+    const showModal = !this.state.showModal
     this.setState({
-      showModal: !this.state.showModal
+      showModal, 
+      quizPrompt: "",
+      quizMarkdown: "",
+      activeArrow: showModal ? this.state.activeArrow : -1,
+      activeOverlay: showModal ? this.state.activeOverlay : -1
     });
   }
 
@@ -1571,6 +1581,13 @@ class Repo extends Component {
     });
   }
 
+  addOverlayText(i) {
+    this.setState({
+      showModal: true,
+      activeOverlay: i
+    })
+  }
+
   addArrowText(i) {
     this.setState({
       showModal: true,
@@ -1584,16 +1601,11 @@ class Repo extends Component {
 
     newStory.arrows.splice(i, 1);
 
-    if (i <= activeArrow) {
-      this.setState({
-        activeArrow: Math.max(0, activeArrow - 1)
-      })
-    }
-
     const newStories = new Map([...stories,
                               ...(new Map([[activeStory, newStory]]))]);
 
     this.setState({
+      activeArrow: -1,
       stories: newStories
     });
   }
@@ -1608,6 +1620,7 @@ class Repo extends Component {
                               ...(new Map([[activeStory, newStory]]))]);
 
     this.setState({
+      activeOverlay: -1,
       stories: newStories
     });
   }
@@ -2722,7 +2735,9 @@ class Repo extends Component {
     const overlays = story.overlays;
     const arrows = story.arrows;
     const activeArrow = this.state.activeArrow;
-    const validArrow = activeArrow < arrows.length;
+    const activeOverlay = this.state.activeOverlay;
+    const validArrow = activeArrow >= 0 && activeArrow < arrows.length;
+    const validOverlay = activeOverlay >= 0 && activeOverlay < overlays.length;
     let arrowText = '';
     if (arrows.length > 0 && validArrow) {
       arrowText = arrows[activeArrow].text;
@@ -2735,7 +2750,8 @@ class Repo extends Component {
     if (arrows.length > 0 && validArrow) {
       arrowHidden = arrows[activeArrow].hide;
     }
-
+    const { quizPrompt, quizMarkdown } = this.state;
+    const overlayHasContent = quizMarkdown != "";
     let viewer;
     if (minerva) {
       viewer = <MinervaImageView className="ImageView"
@@ -3000,7 +3016,7 @@ class Repo extends Component {
       <div className="container-fluid Repo">
         {viewer}
         <Modal toggle={this.toggleModal}
-          show={this.state.showModal}>
+          show={this.state.showModal && this.state.activeArrow >= 0}>
             <button className="ui button compact" onClick={this.handleArrowHide}>
             {arrowHidden? 'Show Arrow' : 'Hide Arrow'}
             </button>
@@ -3015,7 +3031,45 @@ class Repo extends Component {
               onChange={this.handleArrowText} />
             </form>
         </Modal>
-
+        <Modal toggle={this.toggleModal}
+          show={this.state.showModal && this.state.activeOverlay >= 0}>
+            <button className="ui button compact mb-2" onClick={async () => {
+              const [x0, y0, w, h] = overlays[this.state.activeOverlay];
+              const x1 = x0 + w;
+              const y1 = y0 + h;
+              const group_output = this.createGroupOutput({
+                groups: [ this.state.groups.get(this.state.activeGroup) ],
+                chanLabel: this.state.chanLabel,
+                rgba: this.state.rgba
+              }).pop();
+              const group_string = group_output.render.map(({id, min, max, color}) => (
+                "c="+[id, min.toPrecision(6), max.toPrecision(6), color].join('_')
+              )).join("&");
+              const key = encodeURIComponent(encodeURIComponent(imageFile))
+              const text = encodeURIComponent(encodeURIComponent(quizPrompt))
+              const endpoint = (
+                "http://localhost:2020"+
+                `/api/cropped/${key}/${text || 'null'}`+
+                `/${x0}_${x1}_${y0}_${y1}?${group_string}`
+              );
+              const response = await fetch(endpoint);
+              const output_text = await response.text();
+              this.setState({ quizMarkdown: output_text });
+            }}>
+              {overlayHasContent? 'Regenerate' : 'Generate'}
+            </button>
+            <label className="ui label my-1">
+              Prompt for quiz generation
+            </label>
+            <textarea placeholder='Prompt' value={quizPrompt}
+            onChange={(e) => {
+              this.setState({ quizPrompt: e.target.value })
+            }} />
+            <label className="ui label my-1">
+              Generated quiz:
+            </label>
+            <Markdown>{quizMarkdown}</Markdown>
+        </Modal>
         <Confirm
           header="Save Story As"
           content={
@@ -3119,6 +3173,7 @@ class Repo extends Component {
               rgba={this.state.rgba}
               stories={this.state.stories}
               addArrowText={this.addArrowText}
+              addOverlayText={this.addOverlayText}
               deleteArrow={this.deleteArrow}
               deleteOverlay={this.deleteOverlay}
               drawType = {this.state.drawType}

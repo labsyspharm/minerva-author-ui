@@ -7,11 +7,11 @@ class Overlays extends Component {
   render() {
     const { overlays, arrows } = this.props;
     const { deleteOverlay, deleteArrow } = this.props;
-    const { addArrowText } = this.props;
+    const { addArrowText, addOverlayText } = this.props;
 
     const arrowDivs = arrows.map((o, i) => {
       return (
-      <div className="ui buttons">
+      <div className="ui buttons" key={i}>
         <button className="ui button red compact overlay-x" title="Delete" onClick={()=>{
 						deleteArrow(i);
 					}}>
@@ -27,13 +27,17 @@ class Overlays extends Component {
     });
     const overlayDivs = overlays.map((o, i) => {
       return (
-      <div className="ui buttons">
+      <div className="ui buttons" key={i}>
         <button className="ui button red compact overlay-x" title="Delete" onClick={()=>{
 						deleteOverlay(i);
 					}}>
           X
         </button>
-        <button className="ui button compact">Overlay {i}</button>
+        <button className="ui button compact" title="Generate text" onClick={()=>{
+            addOverlayText(i);
+        }}>
+        Overlay {i}
+        </button>
       </div>
       );
     });
