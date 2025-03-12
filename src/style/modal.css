@@ -1,6 +1,8 @@
 /* The Modal (background) */
 .minerva.modal {
-  display: block;
+  display: grid;
+  grid-template-rows: 15% auto 1fr;
+  grid-template-columns: 1fr 80% 1fr;
   position: fixed; /* Stay in place */
   z-index: 1; /* Sit on top */
   left: 0;
@@ -11,14 +13,18 @@
   background-color: rgb(0,0,0); /* Fallback color */
   background-color: rgba(0,0,0,0.4); /* Black w/ opacity */
 }
+.minerva.modal.full {
+  grid-template-rows: 0 1fr 0;
+  grid-template-columns: 0 1fr 0;
+}
 
 /* Modal Content/Box */
 .modal-content {
   background-color: #fefefe;
-  margin: 15% auto; /* 15% from the top and centered */
   padding: 20px;
   border: 1px solid #888;
-  width: 80%; /* Could be more or less, depending on screen size */
+  grid-column: 2;
+  grid-row: 2;
 }
 
 /* The Close Button */

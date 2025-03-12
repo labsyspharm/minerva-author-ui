@@ -1,6 +1,5 @@
 import React, { Component } from "react";
 import Select from 'react-select/creatable';
-import Markdown from 'react-markdown'
 
 import debounce from 'debounce-async';
 import equal from 'fast-deep-equal/react';
@@ -460,7 +459,8 @@ class Repo extends Component {
       activeIds: channels.length < 2 ? [0] : [0, 1],
       maskOpacity: 0.5,
       chanRender: defaultChanRender,
-      quizMarkdown: "",
+      quizQuestionsLoading: false,
+      quizQuestions: [],
       quizPrompt: "",
     };
 
@@ -911,7 +911,7 @@ class Repo extends Component {
     this.setState({
       showModal, 
       quizPrompt: "",
-      quizMarkdown: "",
+      quizQuestions: [],
       activeArrow: showModal ? this.state.activeArrow : -1,
       activeOverlay: showModal ? this.state.activeOverlay : -1
     });
@@ -2750,8 +2750,8 @@ class Repo extends Component {
     if (arrows.length > 0 && validArrow) {
       arrowHidden = arrows[activeArrow].hide;
     }
-    const { quizPrompt, quizMarkdown } = this.state;
-    const overlayHasContent = quizMarkdown != "";
+    const { quizPrompt, quizQuestions, quizQuestionsLoading } = this.state;
+    const overlayHasContent = Object.values(quizQuestions).length > 0;
     let viewer;
     if (minerva) {
       viewer = <MinervaImageView className="ImageView"
@@ -3011,6 +3011,89 @@ class Repo extends Component {
     </div>
     ) : '';
 
+    const updateQuestion = (
+      group_idx, question_idx, score=null, notes=null
+    ) => {
+      this.setState({
+        quizQuestions: Object.fromEntries(
+          Object.entries(quizQuestions).map(([key, group], i) => {
+            if (i !== group_idx) {
+              return [key, group]; 
+            }
+            return [
+              key, group.map((question_item, j) => {
+                if (j !== question_idx) {
+                  return question_item;
+                }
+                if ( score !== null ) {
+                  console.log(question_item.score, score);
+                  return { ...question_item, score };
+                }
+                if ( notes !== null ) {
+                  console.log(question_item.notes, notes);
+                  return { ...question_item, notes };
+                }
+              })
+            ]
+          })
+        )
+      })
+    }
+    const spinner = (
+      <div className="minerva-spinner">
+        <img src="image/Minerva_FinalLogo_NoText_RGB.svg" />
+      </div>
+    );
+    const questions = Object.values(quizQuestions).map((group_in, i) => {
+      const group_out = group_in.map((question_item, j) => {
+        const { a, b, c, d, answer, question, notes } = question_item;
+        const opts = ["", "answer-yes"];
+        const radios = [1,2,3,4,5].map(n => {
+          const id = `rate${n}`;
+          const value = `${n}`;
+          return (
+            <div key={id}>
+              <input type="radio" id={id} name="rating" value={value}
+                onChange={(e) => {
+                  updateQuestion(i, j, parseInt(e.target.value), null)
+                }}
+              />
+              <label htmlFor={id}>{n}</label>
+            </div>
+          );
+        });
+        return (
+          <div className="question-item" key={j}>
+            <div className="question">{question}</div>
+            <ul className="question-answers">
+              <li className={opts[+("a" == answer)]}>A) {a}</li>
+              <li className={opts[+("b" == answer)]}>B) {b}</li>
+              <li className={opts[+("c" == answer)]}>C) {c}</li>
+              <li className={opts[+("d" == answer)]}>D) {d}</li>
+            </ul>
+            <input type='text' placeholder='Notes'
+             value={notes || ''}
+             onChange={(e) => {
+                updateQuestion(i, j, null, e.target.value)
+             }}
+            />
+            <div className="question-item-score">
+              {radios}
+            </div>
+          </div>
+        );
+      })
+      return (
+        <div className="question-group-grid" key={i}>{group_out}</div>
+      );
+    });
+
+    const quiz_results_label = (
+      <label className="ui label my-1">
+        Generated quiz:
+      </label>
+    );
+
     return (
 
       <div className="container-fluid Repo">
@@ -3031,8 +3114,16 @@ class Repo extends Component {
               onChange={this.handleArrowText} />
             </form>
         </Modal>
-        <Modal toggle={this.toggleModal}
+        <Modal toggle={this.toggleModal} full={true}
           show={this.state.showModal && this.state.activeOverlay >= 0}>
+          <div className="all-questions-heading">
+            <label className="ui label my-1">
+              Prompt for quiz generation
+            </label>
+            <textarea placeholder='Prompt' value={quizPrompt}
+            onChange={(e) => {
+              this.setState({ quizPrompt: e.target.value })
+            }} />
             <button className="ui button compact mb-2" onClick={async () => {
               const [x0, y0, w, h] = overlays[this.state.activeOverlay];
               const x1 = x0 + w;
@@ -3052,23 +3143,25 @@ class Repo extends Component {
                 `/api/cropped/${key}/${text || 'null'}`+
                 `/${x0}_${x1}_${y0}_${y1}?${group_string}`
               );
+              this.setState(
+                { quizQuestionsLoading: true }
+              )
               const response = await fetch(endpoint);
-              const output_text = await response.text();
-              this.setState({ quizMarkdown: output_text });
+              const output = await response.json();
+              this.setState({
+                quizQuestions: output,
+                quizQuestionsLoading: false 
+              });
             }}>
-              {overlayHasContent? 'Regenerate' : 'Generate'}
+              { (overlayHasContent)? 'Regenerate' : 'Generate' }
             </button>
-            <label className="ui label my-1">
-              Prompt for quiz generation
-            </label>
-            <textarea placeholder='Prompt' value={quizPrompt}
-            onChange={(e) => {
-              this.setState({ quizPrompt: e.target.value })
-            }} />
-            <label className="ui label my-1">
-              Generated quiz:
-            </label>
-            <Markdown>{quizMarkdown}</Markdown>
+            { (overlayHasContent)? quiz_results_label: null }
+          </div>
+          <div className="quiz-wrapper">
+            <div className="all-questions-grid">
+              { quizQuestionsLoading? spinner : questions }
+            </div>
+          </div>
         </Modal>
         <Confirm
           header="Save Story As"

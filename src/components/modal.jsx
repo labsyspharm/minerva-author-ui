@@ -7,9 +7,13 @@ export default class Modal extends React.Component {
       return null;
     }
     const OK = this.props.confirmButton || 'OK';
+    const modalClassName = [
+      "minerva", "modal", "full"
+    ].filter(
+      (k) => k !== "full" || this.props.full
+    ).join(" ");
     return (
-			<div id="myModal" className="minerva modal">
-
+			<div className={modalClassName}>
 				<div className="modal-content">
 					{this.props.children}
 					<button className="ui button" onClick={this.props.toggle}>{OK}</button>
