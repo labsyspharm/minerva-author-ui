@@ -460,7 +460,10 @@ class Repo extends Component {
       maskOpacity: 0.5,
       chanRender: defaultChanRender,
       quizQuestionsLoading: false,
-      quizQuestions: [],
+      quizQuestions: {
+        groups: [],
+        image: ""
+      },
       quizPrompt: "",
     };
 
@@ -498,6 +501,7 @@ class Repo extends Component {
     this.deleteOverlay = this.deleteOverlay.bind(this);
     this.addArrowText = this.addArrowText.bind(this);
     this.addOverlayText = this.addOverlayText.bind(this);
+    this.generateOverlayText = this.generateOverlayText.bind(this);
     this.boxClick = this.boxClick.bind(this);
     this.handleChange = this.handleChange.bind(this);
     this.handleSelect = this.handleSelect.bind(this);
@@ -911,7 +915,10 @@ class Repo extends Component {
     this.setState({
       showModal, 
       quizPrompt: "",
-      quizQuestions: [],
+      quizQuestions: {
+        groups: [],
+        image: {}
+      },
       activeArrow: showModal ? this.state.activeArrow : -1,
       activeOverlay: showModal ? this.state.activeOverlay : -1
     });
@@ -1585,7 +1592,73 @@ class Repo extends Component {
     this.setState({
       showModal: true,
       activeOverlay: i
+    }, async () => {
+      await this.generateOverlayText(false);
     })
+  }
+
+  async generateOverlayText(make_quiz) {
+    const { stories, activeStory, imageFile } = this.state;
+    const story = stories.get(activeStory) || this.defaultStory();
+    const overlays = story.overlays;
+    const { quizPrompt, quizQuestions, quizQuestionsLoading } = this.state;
+    const [x0, y0, w, h] = overlays[this.state.activeOverlay];
+    const x1 = x0 + w;
+    const y1 = y0 + h;
+    const group_output = this.createGroupOutput({
+      groups: [ this.state.groups.get(this.state.activeGroup) ],
+      chanLabel: this.state.chanLabel,
+      rgba: this.state.rgba
+    }).pop();
+    const group_string = group_output.render.map(({id, min, max, color}) => (
+      "c="+[id, min.toPrecision(6), max.toPrecision(6), color].join('_')
+    )).join("&");
+    const key = encodeURIComponent(encodeURIComponent(imageFile))
+    const channelText = group_output.render.map(({label, color}) => {
+      const color_name = {
+        "0000ff": "blue", "00ff00": "green", "ff0000": "red",
+        "00ffff": "cyan", "ff00ff": "magenta", "ffff00": "yellow"
+      }[color];
+      if (!color_name) {
+        return null;
+      }
+      return ` "${label}" is shown in ${color_name}`;
+    }).filter(
+      x => x
+    ).join(', ');
+    const text = encodeURIComponent(encodeURIComponent(
+      [channelText, quizPrompt].join('. ')
+    ))
+    const image_endpoint = (
+      "http://localhost:2020"+
+      `/api/cropped/${key}/${text || 'null'}`+
+      `/${x0}_${x1}_${y0}_${y1}?${group_string}`
+    );
+    const endpoint = (
+      image_endpoint + "&quiz"
+    );
+    const overlayHasImage = quizQuestions.image.length > 0;
+    if (!overlayHasImage) {
+      const image_response = await fetch(image_endpoint);
+      const image_output = await image_response.json();
+      this.setState({
+        quizQuestions: {
+          ...quizQuestions, ...image_output
+        },
+      });
+      if (make_quiz == false) {
+        return;
+      }
+    }
+    this.setState(
+      { quizQuestionsLoading: true }
+    )
+    const response = await fetch(endpoint);
+    const output = await response.json();
+    this.setState({
+      quizQuestions: output,
+      quizQuestionsLoading: false 
+    });
   }
 
   addArrowText(i) {
@@ -2751,7 +2824,11 @@ class Repo extends Component {
       arrowHidden = arrows[activeArrow].hide;
     }
     const { quizPrompt, quizQuestions, quizQuestionsLoading } = this.state;
-    const overlayHasContent = Object.values(quizQuestions).length > 0;
+    const overlayHasContent = Object.values(quizQuestions.groups).length > 0;
+    const overlayHasImage = quizQuestions.image.length > 0;
+    const overlay_image = (
+      <img src={quizQuestions.image}></img>
+    );
     let viewer;
     if (minerva) {
       viewer = <MinervaImageView className="ImageView"
@@ -3015,28 +3092,31 @@ class Repo extends Component {
       group_idx, question_idx, score=null, notes=null
     ) => {
       this.setState({
-        quizQuestions: Object.fromEntries(
-          Object.entries(quizQuestions).map(([key, group], i) => {
-            if (i !== group_idx) {
-              return [key, group]; 
-            }
-            return [
-              key, group.map((question_item, j) => {
-                if (j !== question_idx) {
-                  return question_item;
-                }
-                if ( score !== null ) {
-                  console.log(question_item.score, score);
-                  return { ...question_item, score };
-                }
-                if ( notes !== null ) {
-                  console.log(question_item.notes, notes);
-                  return { ...question_item, notes };
-                }
-              })
-            ]
-          })
-        )
+        quizQuestions: {
+          ...quizQuestions,
+          groups: Object.fromEntries(
+            Object.entries(quizQuestions.groups).map(([key, group], i) => {
+              if (i !== group_idx) {
+                return [key, group]; 
+              }
+              return [
+                key, group.map((question_item, j) => {
+                  if (j !== question_idx) {
+                    return question_item;
+                  }
+                  if ( score !== null ) {
+                    console.log(question_item.score, score);
+                    return { ...question_item, score };
+                  }
+                  if ( notes !== null ) {
+                    console.log(question_item.notes, notes);
+                    return { ...question_item, notes };
+                  }
+                })
+              ]
+            })
+          )
+        }
       })
     }
     const spinner = (
@@ -3044,55 +3124,68 @@ class Repo extends Component {
         <img src="image/Minerva_FinalLogo_NoText_RGB.svg" />
       </div>
     );
-    const questions = Object.values(quizQuestions).map((group_in, i) => {
-      const group_out = group_in.map((question_item, j) => {
-        const { a, b, c, d, answer, question, notes } = question_item;
-        const opts = ["", "answer-yes"];
-        const radios = [1,2,3,4,5].map(n => {
-          const id = `rate${n}`;
-          const value = `${n}`;
+    const group_headings = {
+      "group1": "General Questions",
+      "group2": "More Specific Questions",
+      "group3": "Highly Specialized Questions"
+    }
+    const questions = Object.entries(quizQuestions.groups).map(
+      ([group_key, group_in], i) => {
+        const group_out = group_in.map((question_item, j) => {
+          const { a, b, c, d, answer, question, notes } = question_item;
+          const opts = ["", "answer-yes"];
+          const radios = [1,2,3,4,5].map(n => {
+            const id = `rate${n}`;
+            const value = `${n}`;
+            return (
+              <div key={id}>
+                <input type="radio" id={id} name="rating" value={value}
+                  onChange={(e) => {
+                    updateQuestion(i, j, parseInt(e.target.value), null)
+                  }}
+                />
+                <label htmlFor={id}>{n}</label>
+              </div>
+            );
+          });
           return (
-            <div key={id}>
-              <input type="radio" id={id} name="rating" value={value}
-                onChange={(e) => {
-                  updateQuestion(i, j, parseInt(e.target.value), null)
-                }}
+            <div className="question-item" key={j}>
+              <div className="question">{question}</div>
+              <ul className="question-answers">
+                <li className={opts[+("a" == answer)]}>A) {a}</li>
+                <li className={opts[+("b" == answer)]}>B) {b}</li>
+                <li className={opts[+("c" == answer)]}>C) {c}</li>
+                <li className={opts[+("d" == answer)]}>D) {d}</li>
+              </ul>
+              <input type='text' placeholder='Notes'
+               value={notes || ''}
+               onChange={(e) => {
+                  updateQuestion(i, j, null, e.target.value)
+               }}
               />
-              <label htmlFor={id}>{n}</label>
+              <div className="question-item-score">
+                {radios}
+              </div>
             </div>
           );
-        });
+        })
         return (
-          <div className="question-item" key={j}>
-            <div className="question">{question}</div>
-            <ul className="question-answers">
-              <li className={opts[+("a" == answer)]}>A) {a}</li>
-              <li className={opts[+("b" == answer)]}>B) {b}</li>
-              <li className={opts[+("c" == answer)]}>C) {c}</li>
-              <li className={opts[+("d" == answer)]}>D) {d}</li>
-            </ul>
-            <input type='text' placeholder='Notes'
-             value={notes || ''}
-             onChange={(e) => {
-                updateQuestion(i, j, null, e.target.value)
-             }}
-            />
-            <div className="question-item-score">
-              {radios}
-            </div>
+          <div className="question-group-grid" key={i}>
+            <h3>{group_headings[group_key]}</h3>
+            {group_out}
           </div>
         );
-      })
-      return (
-        <div className="question-group-grid" key={i}>{group_out}</div>
-      );
-    });
+      }
+    );
+    const all_questions_grid = !overlayHasContent? null : (
+      <div className="all-questions-grid">{questions}</div>
+    );
 
     const quiz_results_label = (
       <label className="ui label my-1">
         Generated quiz:
       </label>
-    );
+    ); 
 
     return (
 
@@ -3114,7 +3207,15 @@ class Repo extends Component {
               onChange={this.handleArrowText} />
             </form>
         </Modal>
-        <Modal toggle={this.toggleModal} full={true}
+        <Modal toggle={() => {
+            const value = `${quizPrompt}
+\`\`\`
+${JSON.stringify(quizQuestions)}
+\`\`\`
+`;
+            this.handleStoryText({ target: { value } });
+            this.toggleModal();
+          }} full={true}
           show={this.state.showModal && this.state.activeOverlay >= 0}>
           <div className="all-questions-heading">
             <label className="ui label my-1">
@@ -3124,43 +3225,18 @@ class Repo extends Component {
             onChange={(e) => {
               this.setState({ quizPrompt: e.target.value })
             }} />
-            <button className="ui button compact mb-2" onClick={async () => {
-              const [x0, y0, w, h] = overlays[this.state.activeOverlay];
-              const x1 = x0 + w;
-              const y1 = y0 + h;
-              const group_output = this.createGroupOutput({
-                groups: [ this.state.groups.get(this.state.activeGroup) ],
-                chanLabel: this.state.chanLabel,
-                rgba: this.state.rgba
-              }).pop();
-              const group_string = group_output.render.map(({id, min, max, color}) => (
-                "c="+[id, min.toPrecision(6), max.toPrecision(6), color].join('_')
-              )).join("&");
-              const key = encodeURIComponent(encodeURIComponent(imageFile))
-              const text = encodeURIComponent(encodeURIComponent(quizPrompt))
-              const endpoint = (
-                "http://localhost:2020"+
-                `/api/cropped/${key}/${text || 'null'}`+
-                `/${x0}_${x1}_${y0}_${y1}?${group_string}`
-              );
-              this.setState(
-                { quizQuestionsLoading: true }
-              )
-              const response = await fetch(endpoint);
-              const output = await response.json();
-              this.setState({
-                quizQuestions: output,
-                quizQuestionsLoading: false 
-              });
+            <button className="ui button compact mb-2" onClick={() => {
+                this.generateOverlayText(true);
             }}>
               { (overlayHasContent)? 'Regenerate' : 'Generate' }
             </button>
             { (overlayHasContent)? quiz_results_label: null }
           </div>
           <div className="quiz-wrapper">
-            <div className="all-questions-grid">
-              { quizQuestionsLoading? spinner : questions }
+            <div className="all-questions-image">
+              { (overlayHasImage)? overlay_image: null }
             </div>
+            { quizQuestionsLoading? spinner : all_questions_grid }
           </div>
         </Modal>
         <Confirm

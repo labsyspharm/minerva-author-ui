@@ -14,8 +14,16 @@
   background-color: rgba(0,0,0,0.4); /* Black w/ opacity */
 }
 .minerva.modal.full {
+  overflow: hidden;
   grid-template-rows: 0 1fr 0;
   grid-template-columns: 0 1fr 0;
+}
+.minerva.modal.full > .modal-content {
+  overflow: hidden;
+}
+.modal-content > button.ui.button {
+  margin-top: 1em;
+  min-height: 3em;
 }
 
 /* Modal Content/Box */

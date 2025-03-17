@@ -4,30 +4,48 @@
 } */
 
 div.quiz-wrapper {
+  gap: 2em;
   display: grid;
-  grid-template-columns: 1fr 1fr;
+  padding: 0 1em;
+  overflow: hidden;
+  justify-items: center;
+  grid-template-columns: 512px 1fr;
+}
+
+div.quiz-wrapper > div.all-questions-image {
+  display: grid;
+  align-items: center;
+  justify-items: center;
+}
+
+div.quiz-wrapper > div.all-questions-image > img {
+  max-width: 100%;
+  max-height: 300px;
 }
 
 div.all-questions-grid {
+  overflow: scroll;
   display: grid;
   gap: 3em;
 }
 
 div.all-questions-heading {
   display: grid;
+  gap: 0.5em;
 }
 
 div.quiz-modal {
   background-color: blue;
 }
 
-div.all-questions-grid > div.minerva-spinner {
+div.quiz-wrapper > div.minerva-spinner {
   padding: 1em;
   display: grid;
+  align-items: center;
   justify-items: center;
 }
 
-div.all-questions-grid > div.minerva-spinner > img {
+div.quiz-wrapper > div.minerva-spinner > img {
   width: 35px;
   height: 35px;
   animation-name: ckw;
@@ -51,6 +69,12 @@ div.all-questions-grid > div.question-group-grid {
   gap: 0.25em;
 }
 
+div.all-questions-grid > * > h3 {
+  background-color: white;
+  margin: 0 0 0 0.5em;
+  padding: 0.5em 0 0.5em 0.5em;
+}
+
 div.all-questions-grid > * > div.question-item {
   display: grid;
   background-color: white;
@@ -62,6 +86,9 @@ div.all-questions-grid > * > div.question-item {
 div.all-questions-grid > * > * > ul.question-answers {
   display: grid;
   gap: 0.125em;
+}
+div.all-questions-grid > * > * > ul.question-answers > li {
+  padding: 0.125em;
 }
 
 div.all-questions-grid > * > * > div.question-item-score {
