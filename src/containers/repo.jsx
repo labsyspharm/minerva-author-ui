@@ -461,7 +461,7 @@ class Repo extends Component {
       chanRender: defaultChanRender,
       quizQuestionsLoading: false,
       quizQuestions: {
-        groups: [],
+        groups: {},
         image: ""
       },
       quizPrompt: "",
@@ -916,7 +916,7 @@ class Repo extends Component {
       showModal, 
       quizPrompt: "",
       quizQuestions: {
-        groups: [],
+        groups: {},
         image: {}
       },
       activeArrow: showModal ? this.state.activeArrow : -1,
@@ -3213,7 +3213,10 @@ class Repo extends Component {
 ${JSON.stringify(quizQuestions)}
 \`\`\`
 `;
-            this.handleStoryText({ target: { value } });
+            if (Object.keys(quizQuestions.groups || {}).length) {
+              this.handleStoryText({ target: { value } });
+              this.handleStoryChange(this.state.activeStory + 1);
+            }
             this.toggleModal();
           }} full={true}
           show={this.state.showModal && this.state.activeOverlay >= 0}>
