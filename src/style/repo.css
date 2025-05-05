@@ -91,18 +91,18 @@ div.all-questions-grid > * > * > ul.question-answers > li {
   padding: 0.125em;
 }
 
-div.all-questions-grid > * > * > div.question-item-score {
+div.all-questions-grid > * > * > fieldset.question-item-score {
   display: grid;
   grid-auto-flow: column;
 }
 
-div.all-questions-grid > * > * > div.question-item-score:before {
+div.all-questions-grid > * > * > fieldset.question-item-score:before {
   content: "Score";
   text-align: right;
   padding-right: 0.25em;
 }
 
-div.all-questions-grid > * > * > div.question-item-score > div {
+div.all-questions-grid > * > * > fieldset.question-item-score > div {
   display: grid;
   justify-content: center;
 }

@@ -1622,9 +1622,11 @@ class Repo extends Component {
       if (!color_name) {
         return null;
       }
-      return ` "${label}" is shown in ${color_name}`;
+      return [label, color_name];
     }).filter(
-      x => x
+      ([label, color_name]) => label.toLowerCase() !== color_name
+    ).map(
+      ([label, color_name]) => `"${label}" is shown in ${color_name}`
     ).join(', ');
     const text = encodeURIComponent(encodeURIComponent(
       [channelText, quizPrompt].join('. ')
@@ -3105,7 +3107,7 @@ class Repo extends Component {
                     return question_item;
                   }
                   if ( score !== null ) {
-                    console.log(question_item.score, score);
+                    console.log(group_idx, question_idx, question_item.score, score);
                     return { ...question_item, score };
                   }
                   if ( notes !== null ) {
@@ -3135,7 +3137,7 @@ class Repo extends Component {
           const { a, b, c, d, answer, question, notes } = question_item;
           const opts = ["", "answer-yes"];
           const radios = [1,2,3,4,5].map(n => {
-            const id = `rate${n}`;
+            const id = `${i}-${j}-rate${n}`;
             const value = `${n}`;
             return (
               <div key={id}>
@@ -3157,15 +3159,6 @@ class Repo extends Component {
                 <li className={opts[+("c" == answer)]}>C) {c}</li>
                 <li className={opts[+("d" == answer)]}>D) {d}</li>
               </ul>
-              <input type='text' placeholder='Notes'
-               value={notes || ''}
-               onChange={(e) => {
-                  updateQuestion(i, j, null, e.target.value)
-               }}
-              />
-              <div className="question-item-score">
-                {radios}
-              </div>
             </div>
           );
         })
