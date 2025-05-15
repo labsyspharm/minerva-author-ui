@@ -1620,7 +1620,7 @@ class Repo extends Component {
         "00ffff": "cyan", "ff00ff": "magenta", "ffff00": "yellow"
       }[color];
       if (!color_name) {
-        return null;
+        return [label, label];
       }
       return [label, color_name];
     }).filter(
@@ -3091,7 +3091,7 @@ class Repo extends Component {
     ) : '';
 
     const updateQuestion = (
-      group_idx, question_idx, score=null, notes=null
+      group_idx, question_idx, notes=null
     ) => {
       this.setState({
         quizQuestions: {
@@ -3105,10 +3105,6 @@ class Repo extends Component {
                 key, group.map((question_item, j) => {
                   if (j !== question_idx) {
                     return question_item;
-                  }
-                  if ( score !== null ) {
-                    console.log(group_idx, question_idx, question_item.score, score);
-                    return { ...question_item, score };
                   }
                   if ( notes !== null ) {
                     console.log(question_item.notes, notes);
@@ -3136,20 +3132,6 @@ class Repo extends Component {
         const group_out = group_in.map((question_item, j) => {
           const { a, b, c, d, answer, question, notes } = question_item;
           const opts = ["", "answer-yes"];
-          const radios = [1,2,3,4,5].map(n => {
-            const id = `${i}-${j}-rate${n}`;
-            const value = `${n}`;
-            return (
-              <div key={id}>
-                <input type="radio" id={id} name="rating" value={value}
-                  onChange={(e) => {
-                    updateQuestion(i, j, parseInt(e.target.value), null)
-                  }}
-                />
-                <label htmlFor={id}>{n}</label>
-              </div>
-            );
-          });
           return (
             <div className="question-item" key={j}>
               <div className="question">{question}</div>
@@ -3159,6 +3141,12 @@ class Repo extends Component {
                 <li className={opts[+("c" == answer)]}>C) {c}</li>
                 <li className={opts[+("d" == answer)]}>D) {d}</li>
               </ul>
+              <input type='text' placeholder='Notes'
+                 value={notes || ''}
+                 onChange={(e) => {
+                    updateQuestion(i, j, null, e.target.value)
+                 }}
+              />
             </div>
           );
         })
