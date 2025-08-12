@@ -1,4 +1,5 @@
 import panelGridCSS from './panel-grid.css' assert { type: 'css' };
+import { PanelContentOverlay } from './panel-content/panel-content-overlay';
 import { PanelContentGroup } from './panel-content/panel-content-group';
 import { PanelContentStory } from './panel-content/panel-content-story';
 import { PanelContent } from './panel-content/panel-content';
@@ -48,6 +49,7 @@ class PanelGrid extends HTMLElement {
     const nav = this.defineElement(Nav);
     const choose_content = (tab) => {
       return {
+        'OVERLAY-PANEL': PanelContentOverlay,
         'STORY-PANEL': PanelContentStory,
         'GROUP-PANEL': PanelContentGroup
       }[tab] || PanelContent; 
@@ -58,7 +60,9 @@ class PanelGrid extends HTMLElement {
           defaults: { items: [] }
         }
       );
-      return toElement(panel)``({
+      return toElement(panel)`
+        <slot slot="overlays" name="overlays"></slot>
+      `({
         class: 'stretch panel grid inner'
       })
     }

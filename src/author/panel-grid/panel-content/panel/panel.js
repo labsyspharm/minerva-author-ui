@@ -36,7 +36,9 @@ class Panel extends HTMLElement {
         return content(item);
       });
     }
-    return toElement('div')`${sources}`({
+    return toElement('div')`
+        <slot name="overlays"></slot>
+    `({
       class: 'grid'
     })
   }
