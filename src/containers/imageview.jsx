@@ -30,7 +30,7 @@ class ImageView extends Component {
     const { u32, map_ids, key, color, range, maxRange } = channel;
     let { url } = img;
     if (u32 === true) {
-      url = 'http://localhost:2020/api/u32';
+      url = '/api/u32';
     }
 
     const getTileName = (x, y, level, channel) => {
