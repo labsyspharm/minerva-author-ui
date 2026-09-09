@@ -69,9 +69,9 @@ var webpackConfig = {
     contentBase: "./build",
     hot: true,
     proxy: {
-      "/dev/**": {
-        "target": "https://nldzj7hd69.execute-api.us-east-1.amazonaws.com",
-        "changeOrigin": true
+      '/api': {
+        target: 'http://localhost:2020',
+        changeOrigin: true,
       }
     }
   }
