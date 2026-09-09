@@ -36,7 +36,7 @@ class AuthorApp extends Component {
       inputFile: '',
       rgba: false,
       warning: '',
-      url: 'http://localhost:2020/api/u16',
+      url: '/api/u16',
       uuid: null,
       storyUuid: null,
       story: null,

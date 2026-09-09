@@ -127,7 +127,7 @@ class ImportForm extends Component {
     this.props.updateInputFile(input_name);
     this.setState(newState);
     
-    fetch('http://localhost:2020/api/import', {
+    fetch('/api/import', {
       method: 'POST',
       body: data,
     }).then(response => {

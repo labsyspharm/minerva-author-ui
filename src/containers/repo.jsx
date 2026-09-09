@@ -41,7 +41,7 @@ const moveIndex = (arr, oldIndex, newIndex) => {
 }
 
 const browseFile = (path) => {
-  return fetch('http://' + `127.0.0.1:2020/api/filebrowser?path=${path}`, {
+  return fetch(`/api/filebrowser?path=${path}`, {
     headers: {
       'pragma': 'no-cache',
       'cache-control': 'no-cache'
@@ -968,7 +968,7 @@ class Repo extends Component {
     if (!filePath) {
       return;
     }
-    fetch('http://127.0.0.1:2020/api/import/groups', {
+    fetch('/api/import/groups', {
       method: 'POST',
       body: JSON.stringify({
         'filepath': filePath
@@ -1917,7 +1917,7 @@ class Repo extends Component {
     const mask_output = this.createMaskOutput({masks, maskOpacity});
     const group_output = this.createGroupOutput({groups, chanLabel, rgba});
     const story_output = this.createWaypoints({stories, groups, masks});
-    return fetch('http://'+render_url, {
+    return fetch(render_url, {
       method: 'POST',
       body: JSON.stringify({
         'in_file': imageFile,
@@ -1952,7 +1952,7 @@ class Repo extends Component {
       this.setProgressPolling(true);
 
       const {pub_root_dir, pub_out_name, session} = this.state;
-      const render_url = `localhost:2020/api/render/${session}`;
+      const render_url = `/api/render/${session}`;
       this.apiRender(render_url).then(res => {
         this.setState({
           error: null,
@@ -2067,9 +2067,9 @@ class Repo extends Component {
         const {markerFile, imageFile} = this.state;
         const {first_group, first_viewport} = this.state;
         const {out_name, root_dir, session} = this.state;
-        const save_url = `localhost:2020/api/save/${session}`;
+        const save_url = `/api/save/${session}`;
         try {
-          const res = await fetch('http://'+save_url, {
+          const res = await fetch(save_url, {
             method: 'POST',
             body: JSON.stringify({
               ...(first_group ? {
@@ -2150,8 +2150,8 @@ class Repo extends Component {
 
   getPublishProgress() {
     const {session} = this.state;
-    const progress_url = `localhost:2020/api/render/${session}/progress`;
-    fetch('http://'+progress_url).then(response => {
+    const progress_url = `/api/render/${session}/progress`;
+    fetch(progress_url).then(response => {
       return response.json();
     }).then(progress => {
       if (progress.progress >= progress.max && progress.max != 0) {
@@ -2338,7 +2338,7 @@ class Repo extends Component {
     const key = encodeURIComponent(encodeURIComponent(map_path));
 
     try {
-      const url = `http://localhost:2020/api/mask_subsets/${key}`;
+      const url = `/api/mask_subsets/${key}`;
       const response = await fetch(url, {
         headers: {
           'pragma': 'no-cache',
@@ -2444,7 +2444,7 @@ class Repo extends Component {
     }
     // Double encoded URI component is required for flask
     const key = encodeURIComponent(encodeURIComponent(mask_path))
-    const response =  await fetch(`http://localhost:2020/api/validate/u32/${key}`, {
+    const response =  await fetch(`/api/validate/u32/${key}`, {
       headers: {
         'pragma': 'no-cache',
         'cache-control': 'no-store'
@@ -2848,8 +2848,8 @@ class Repo extends Component {
       shareButton = null;
       if (group != undefined) {
         const {session} = this.state;
-        const story_url = 'http://'+`localhost:2020/story/${session}`;
-        const preview_url = `localhost:2020/api/preview/${session}`;
+        const story_url = `/story/${session}`;
+        const preview_url = `/api/preview/${session}`;
         previewButton = (
           <button className="ui button teal" onClick={() => {
             this.apiRender(preview_url).then(res => {
