@@ -1,10 +1,12 @@
 onlyBuiltDependencies:
   - "openseadragon"
+blockExoticSubdeps: false
 allowBuilds:
-  '@fortawesome/fontawesome-common-types': set this to true or false
-  '@fortawesome/fontawesome-svg-core': set this to true or false
-  '@fortawesome/free-regular-svg-icons': set this to true or false
-  '@fortawesome/free-solid-svg-icons': set this to true or false
-  core-js: set this to true or false
-  node-sass: set this to true or false
+  '@fortawesome/fontawesome-common-types': false
+  '@fortawesome/fontawesome-svg-core': false
+  '@fortawesome/free-regular-svg-icons': false
+  '@fortawesome/free-solid-svg-icons': false
+  core-js: false
+  fsevents: true
+  node-sass: false
   openseadragon@https://codeload.github.com/thejohnhoffer/openseadragon/tar.gz/88a3858e8bb38d90831f2ae410e24ec7b8eb8873: true
